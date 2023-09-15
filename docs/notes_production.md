@@ -20,7 +20,7 @@
 
 1. Get the project:
     ```sh
-    git clone ...
+    git clone https://github.com/tigion/htwd-project-se-team-management.git
     ```
 
 ### Configuration
@@ -28,7 +28,7 @@
 1. Go to the project folder:
 
     ```sh
-    cd <project_folder>
+    cd htwd-project-se-team-management
     ```
 
 2. Copy or rename the `.env.template` file to `.env`:
@@ -48,7 +48,7 @@
 
 1. Go to the project folder:
     ```sh
-    cd <project_folder>
+    cd htwd-project-se-team-management
     ```
 
 2. Start with:
@@ -96,7 +96,7 @@
 
 1. Go to the project folder:
     ```sh
-    cd <project_folder>
+    cd htwd-project-se-team-management
     ```
 
 2. Stop Docker with:
@@ -120,7 +120,7 @@
 5. Remove project folder
    ```sh
    cd ..
-   rm -rf <project_folder>
+   rm -rf htwd-project-se-team-management
    ```
 
 ### Backup & Restore

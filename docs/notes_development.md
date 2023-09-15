@@ -28,10 +28,10 @@
 
 ```sh
 # Clone the source code
-git clone <project_git_repository>
+git clone https://github.com/tigion/htwd-project-se-team-management.git
 
 # Switch to project folder
-cd <project_folder>
+cd htwd-project-se-team-management
 
 # Use default config (or change something)
 cp .env.template .env
@@ -69,7 +69,7 @@ python3 manage.py collectstatic
     ```sh
     # - URI: localhost:8000
     # Start
-    cd <project_folder>/src/backend/
+    cd htwd-project-se-team-management/src/backend/
     python3 manage.py runserver 0.0.0.0:8000
     # Stop: CTRL+C
     ```
@@ -77,7 +77,7 @@ python3 manage.py collectstatic
 - **Gunicorn server**:
     ```sh
     # - URI: localhost:8000
-    cd <project_folder>/src/backend/
+    cd htwd-project-se-team-management/src/backend/
     gunicorn config.wsgi:application -c gunicorn.conf.py
     # Stop: CTRL+C
     ```
@@ -85,7 +85,7 @@ python3 manage.py collectstatic
 - **Docker**:
     ```sh
     # - URI: localhost
-    cd <project_folder>/
+    cd htwd-project-se-team-management/
     (sudo) docker compose up -d
     # Stop
     (sudo) docker compose down
