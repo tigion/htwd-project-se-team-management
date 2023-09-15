@@ -106,7 +106,7 @@ class AssignmentAlgo:
     :type: float
     """
 
-    def __init__(self, project_answers, role_answers, wing_answers):
+    def __init__(self, project_answers, role_answers, wing_answers, max_scores):
         # init model
         self.__model_vars = {}
         self.__model = cpm.CpModel()
@@ -115,6 +115,10 @@ class AssignmentAlgo:
         self.__project_answers = project_answers
         self.__role_answers = role_answers
         self.__wing_answers = wing_answers
+
+        # set answer scores
+        self.__max_project_score = max_scores["project"]
+        self.__max_role_score = max_scores["role"]
 
         # set number of elements
         self.__n_projects = len(project_answers.get(0))
@@ -188,14 +192,10 @@ class AssignmentAlgo:
     def __init_bounds(self):
         # number of students per role lower bound =
         # (lower bound of students per project - manager)//(number of roles - manager)
-        self.n_students_per_role_lb = (self.__n_students // self.__n_projects - 1) // (
-            self.__n_roles - 1
-        )
+        self.n_students_per_role_lb = (self.__n_students // self.__n_projects - 1) // (self.__n_roles - 1)
         # number of students per role upper bound =
         # ceil((upper bound of students per project - manager)/(number of roles - manager))
-        self.n_students_per_role_ub = math.ceil(
-            (self.__n_project_slots - 1) / (self.__n_roles - 1)
-        )
+        self.n_students_per_role_ub = math.ceil((self.__n_project_slots - 1) / (self.__n_roles - 1))
 
         # minimum number of students per project
         self.lb_students_per_project = self.__n_students // self.__n_projects
@@ -301,7 +301,7 @@ class AssignmentAlgo:
               zwischen 0 und 100 von der ``role_score()`` Funktion bewertet.
 
         Der project_score und der role_score werden mit ihren entsprechenden
-        Gain Faktoren multipliziert und anschließend in der Variablen factor
+        Gain Faktoren multipliziert und anschließend in der Variablen score
         summiert. Dieser Wert bestimmt wie gut eine spezifische Zuordnung
         ist. Je höher der Wert desto besser passt die Zuordnung auf die
         Wünsche des jeweiligen Studenten. Mittels
@@ -315,14 +315,9 @@ class AssignmentAlgo:
         for p_id in range(self.__n_projects):
             for s_id in range(self.__n_students):
                 for r_id in range(self.__n_roles):
-                    factor = self.__project_gain * self.project_score(
-                        p_id, self.__project_answers.get(s_id)
-                    ) + self.__role_gain * self.role_score(
-                        r_id, self.__role_answers.get(s_id)
-                    )
-                    soft_constraints.append(
-                        factor * self.__model_vars[(p_id, s_id, r_id)]
-                    )
+                    score = self.total_score(p_id, s_id, r_id)
+                    soft_constraints.append(score * self.__model_vars[(p_id, s_id, r_id)])
+
         self.__model.Maximize(sum(soft_constraints))
 
     def __extract_solution(self, solver):
@@ -342,7 +337,9 @@ class AssignmentAlgo:
             for s_id in range(self.__n_students):
                 for r_id in range(self.__n_roles):
                     if solver.Value(self.__model_vars[(p_id, s_id, r_id)]) == 1:
-                        self.__result.append((p_id, s_id, r_id))
+                        # Also return the score of the result
+                        score = self.total_score(p_id, s_id, r_id)
+                        self.__result.append((p_id, s_id, r_id, score))
 
     def project_score(self, project, answers):
         """Bewertungsfunktion/ weiche Restriktion für die Projekte.
@@ -355,24 +352,44 @@ class AssignmentAlgo:
         :return: Normalisierter Score zwischen 0-100. Je höher desto besser
          hat der Student das Projekt bewertet.
         :rtype: int"""
-        # normalize score (1-5) to (0-100)
-        score = answers.get(project)
-        return (score - 1) * 25
+
+        return self.normalize_score(answers.get(project))
 
     def role_score(self, role, answers):
         """Bewertungsfunktion/ weiche Restriktion für die Rollen.
 
-        :param project: id der Rolle
-        :type project: int
+        :param role: id der Rolle
+        :type role: int
         :param answers: beinhaltet die vom Studenten abgegebenen
          Bewertungen zu den Rollen. Aufbau: ``{role_id:score, ....}``
         :type answers: dict{int:int}
         :return: Normalisierter Score zwischen 0-100. Je höher desto besser
          hat der Student die Rolle bewertet.
         :rtype: int"""
-        # normalize score (1-5) to (0-100)
-        score = answers.get(role)
-        return (score - 1) * 25
+
+        return self.normalize_score(answers.get(role))
+
+    def normalize_score(self, answer_score):
+        # shift answer score to start with 0
+        # - (1 to max) -> (0 to (max-1))
+        score = answer_score - 1
+        max_score = self.__max_project_score - 1
+
+        # normalize answer score to between 0 and 100
+        # - (0 to (max-1)) -> (0 to 100)
+        score = score * 100 / max_score
+
+        return score
+
+    def total_score(self, project, student, role):
+        # Weights the normalized project score (project gain .8)
+        p_score = self.__project_gain * self.project_score(project, self.__project_answers.get(student))
+        # Weights the normalized role score (role gain .2)
+        r_score = self.__role_gain * self.role_score(role, self.__role_answers.get(student))
+        # Total project and role score between 0 and 100
+        score = p_score + r_score
+
+        return score
 
     def set_project_gain(self, project_gain: float):
         """Setzt den Gain/ die Wichtung für die weiche Restriktion der
