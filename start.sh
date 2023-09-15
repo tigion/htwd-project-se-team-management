@@ -14,7 +14,7 @@
 
 # Need root for Linux
 if [[ "$(uname -s)" == "Linux" && "$(id -u)" -ne 0 ]]; then
-  print "Please run this script as root\nsudo %s\n" "$0" >&2
+  printf "Please run this script as root\nsudo %s\n" "$0" >&2
   exit 1
 fi
 
