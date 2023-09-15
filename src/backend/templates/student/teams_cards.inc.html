@@ -17,7 +17,7 @@
           {% for student in team.students %}
             <li class="list-group-item text-break{% if student.is_project_leader %} fw-semibold{% endif %}">
               <span class="text-truncate">{{ student.student.name }}</span>
-              {% if student.is_wing %}<span class="badge rounded-pill text-bg-secondary ms-1 float-end">WI</span>{% endif %}
+              {% if student.is_wing %}<span class="badge rounded-pill text-bg-secondary ms-1 float-end">WIng</span>{% endif %}
               {% if student.is_project_leader %}<span class="badge rounded-pill text-bg-primary ms-1 float-end">PL</span>{% endif %}
             </li>
           {% endfor %}
