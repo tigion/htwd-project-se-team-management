@@ -40,7 +40,7 @@
     ```sh
     vim .env
     ```
-    > **Warning**
+    > [!WARNING]
     > The default configuration is for local testing only. Values must be adjusted for productive use!
     - 🚧 ... A more detailed description of the settings follows later in a separate document
 
@@ -89,7 +89,7 @@
     # Start Docker with newly created containers, images and networks
     sudo docker compose up -d
     ```
-    > **Warning**
+    > [!WARNING]
     > With an additional `--volume` in `docker compose down --rmi all --volumes --remove-orphans` also volumes with important data will be removed!
 
 ### Deinstall

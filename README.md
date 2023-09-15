@@ -5,7 +5,7 @@ A web application to manage teams, projects, roles and students.
 Developed in and for the study course Software Engineering I+II at the HTW Dresden.
 - Technologies: Django Python web framework, Docker
 
-> **Warning**
+> [!WARNING]
 > Work in progress. Not yet fully tested. Use at your own risk.
 
 - [Features](#features)

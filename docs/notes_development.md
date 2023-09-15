@@ -108,7 +108,7 @@ python3 manage.py collectstatic
     pip freeze -l > requirments.freeze.txt
     ```
 
-> **Warning**
+> [!WARNING]
 > For final deployment use the [Deployment checklist](https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/):
 >
 > `python3 manage.py check --deploy`.
@@ -156,7 +156,7 @@ pip freeze -l > requirments.freeze.txt
 
 #### Reset Migrations
 
-> **Warning**
+> [!WARNING]
 > This will delete the database! Relevant data must be backed up.
 
 ```sh
