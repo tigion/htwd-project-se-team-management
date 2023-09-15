@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% load django_bootstrap5 %}
+
+{% block content %}
+
+<div class="container my-5">
+  <h2>Einstellungen</h2>
+  <form method="post" class="form">
+    {% csrf_token %}
+    {% bootstrap_form SettingsForm %}
+    {% bootstrap_button button_type="submit" content="Speichern" %}
+  </form>
+</div>
+
+<div class="container my-5">
+  <h2>Zurücksetzen</h2>
+  <div class="alert alert-danger" role="alert">
+    Achtung, hiermit werden alle Projekte, Studenten, Fragebogenantworten und Teams gelöscht und die Rollen und Einstellungen auf die Standardwerte zurückgesetzt!
+  </div>
+  <form action="{% url 'reset' %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form SettingsResetForm %}
+    <button class="btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal-reset"><i class="bi bi-trash3 me-2"></i>Teamverwaltung zurücksetzen</button>
+    <!-- Modal: for delete confirmation dialog-->
+    <div class="modal fade" id="deleteConfirmationModal-reset" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel-reset" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="deleteConfirmationModalLabel-reset">Löschbestätigung</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Sollen wirklich alle <strong>Daten</strong> zurückgesetzt werden?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+            <button class="btn btn-danger" type="submit"><i class="bi bi-trash3 me-2"></i>Teamverwaltung zurücksetzen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="container my-5">
+  <h2>Backup</h2>
+  ...
+</div>
+
+{% endblock content %}

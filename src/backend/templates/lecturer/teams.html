@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container my-5">
+  <h2>Teamverwaltung</h2>
+
+  <div class="d-flex flex-row bd-highlight mb-3">
+    <div class="bd-highlight">
+      <form action="{% url 'teams-generate' %}" method="POST">
+        {% csrf_token %}
+        <button id="buttonGenerateTeams" class="btn {% if teams %}btn-warning{% else %}btn-success{% endif %}" type="submit"><i class="bi bi-play-circle me-2"></i>Teams {% if teams %}erneut {% endif %}generieren</button>
+      </form>
+    </div>
+    <div class="ms-3 bd-highlight">
+      <form action="{% url 'teams-delete' %}" method="POST">
+        {% csrf_token %}
+        <!-- <button id="buttonDeleteTeams" class="btn btn-danger" type="submit"><i class="bi bi-trash3 me-2"></i>Teams löschen</button> -->
+        <button id="buttonDeleteTeams" class="btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal-teams"{% if not teams %} disabled{% endif %}><i class="bi bi-trash3 me-2"></i>Teams löschen</button>
+        <!-- Modal: for delete confirmation dialog-->
+        <div class="modal fade" id="deleteConfirmationModal-teams" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel-teams" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="deleteConfirmationModalLabel-teams">Löschbestätigung</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                Sollen alle <strong>Teams</strong> ({{ teams|length }}) wirklich gelöscht werden?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <button class="btn btn-danger" type="submit"><i class="bi bi-trash3 me-2"></i>Löschen</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// if the team generation button is clicked:
+// - disable the buttons and replace the icon with a spinner (bootstrap)
+document.querySelector('#buttonGenerateTeams').addEventListener('click', (e) => {
+  e.target.disabled = true  // buttonGenerateTeams
+  document.querySelector('#buttonDeleteTeams').disabled = true // buttonDeleteTeams
+  const span1 = document.createElement("span")
+  span1.setAttribute('class', 'spinner-border spinner-border-sm me-2')
+  span1.setAttribute('aria-hidden', 'true')
+  const span2 = document.createElement("span")
+  span2.setAttribute('class', 'visually-hidden')
+  span2.setAttribute('role', 'status')
+  span2.textContent = 'Generating...'
+  e.target.getElementsByTagName('i')[0].replaceWith(span1, span2)
+})
+</script>
+
+<div id="teams" class="container my-5">
+  <h2>Teams</h2>
+  {% include "student/teams_cards.inc.html" %}
+</div>
+
+
+{% endblock content %}

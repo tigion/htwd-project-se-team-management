@@ -1,0 +1,91 @@
+name: team-management
+
+services:
+
+  # Reverse Proxy
+  nginx:
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - frontend
+    volumes:
+      - ./docker/nginx/templates/:/etc/nginx/templates/:ro
+      - ./docker/ssl/:/etc/nginx/ssl/:ro
+      - ./docker/logs/nginx/:/var/log/nginx/
+      - static_volume:/usr/src/app/staticfiles
+    environment:
+      - DJANGO_PORT
+      - NGINX_SERVER_NAME=${SERVER_NAME}
+      - NGINX_SSL_CERTIFICATE
+      - NGINX_SSL_CERTIFICATE_KEY
+    depends_on:
+      - django
+    restart: "on-failure"
+
+  # Frontend
+    # networks:
+    #   - frontend
+    #   - backend
+
+  # Frontend+Backend
+  django:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile
+    networks:
+      - frontend
+      # - backend
+      - database
+    volumes:
+      - ./src/backend/:/usr/src/app/
+      - ./docker/logs/django/:/usr/src/app/logs/
+      - static_volume:/usr/src/app/staticfiles
+    environment:
+      - DJANGO_SUPERUSER_USERNAME
+      - DJANGO_SUPERUSER_PASSWORD
+      - DJANGO_PORT
+      - DJANGO_SECRET_KEY
+      - DJANGO_DEBUG
+      - DJANGO_ALLOWED_HOSTS
+      - DJANGO_CSRF_TRUSTED_ORIGINS
+      - DJANGO_LDAP
+      - DJANGO_LDAP_SERVER_URI
+      - DJANGO_LDAP_PROXY_USER
+      - DJANGO_AUTH_LDAP_BIND_PASSWORD
+      - DJANGO_AUTH_LDAP_BIND_DN
+      - DJANGO_AUTH_LDAP_USER_SEARCH_BASE_DN
+      - DJANGO_AUTH_LDAP_USER_SEARCH_FILTER
+    expose:
+      - ${DJANGO_PORT}
+    command:
+      - /bin/sh
+      - -c
+      - |
+        python manage.py migrate
+        python manage.py createsuperuser --noinput --email "no@need.email"
+        gunicorn config.wsgi:application -c gunicorn.conf.py
+    restart: "on-failure"
+
+  # Backend
+    # networks:
+    #   - backend
+    #   - database
+
+  # Database
+    # networks:
+    #   - database
+
+networks:
+  frontend:
+    driver: bridge
+  # backend:
+  #   driver: bridge
+  database:
+    driver: bridge
+
+volumes:
+  static_volume:

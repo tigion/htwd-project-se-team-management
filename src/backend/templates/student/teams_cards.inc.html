@@ -1,0 +1,33 @@
+  {% if teams %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4">
+    {% for team in teams %}
+    <div class="col">
+      <div class="card overflow-hidden">
+        <div class="card-header text-break" style="min-height: 6.75em">
+          <div>
+            <span class="float-start"><i class="bi bi-people-fill me-1"></i> <strong>{{ team.project.pid }}</strong></span>
+            <span class="float-end text-muted small opacity-50"><i class="bi bi-person-fill me-1"></i>{{ team.students|length }}</span><br>
+          </div>
+          <div class="clearfix mt-1 lh-sm">
+            <small>{{ team.project.name }}</small>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush">
+          {% for student in team.students %}
+            <li class="list-group-item text-break{% if student.is_project_leader %} fw-semibold{% endif %}">
+              <span class="text-truncate">{{ student.student.name }}</span>
+              {% if student.is_wing %}<span class="badge rounded-pill text-bg-secondary ms-1 float-end">WI</span>{% endif %}
+              {% if student.is_project_leader %}<span class="badge rounded-pill text-bg-primary ms-1 float-end">PL</span>{% endif %}
+            </li>
+          {% endfor %}
+          </ul>
+        </div>
+        <!-- <div class="card-footer text-center"></div> -->
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div>Keine Teams vorhanden!</div>
+  {% endif %}

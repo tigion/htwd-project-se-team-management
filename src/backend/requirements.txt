@@ -1,0 +1,15 @@
+django
+django-auth-ldap
+django-bootstrap5
+python-dotenv
+
+# ortools 9.7 issue:
+# - https://github.com/google/or-tools/issues/3889
+# - solution in comming 9.8
+ortools==9.6.2534
+gunicorn
+
+# development
+# prevent linter warnings (pyright)
+django-stubs
+django-types

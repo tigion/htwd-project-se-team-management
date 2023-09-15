@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% load django_bootstrap5 %}
+
+{% block content %}
+
+<div class="container my-5">
+  <h2>Studenten</h2>
+
+  <ul class="list-group">
+    {% for student in students %}
+    <li class="list-group-item d-flex align-items-center">
+      <div>
+        <i class="bi bi-person-fill me-1"></i>
+        <span class="badge bg-light text-dark fs-6 me-3">{{ student.s_number }}</span>
+      </div>
+      <div class="flex-grow-1">
+        {{ student.name }} ({{ student.study_program }})
+      </div>
+      <div class="d-grid gap-2 d-md-flex justify-content-md-end ms-3">
+        <a href="{% url 'student-update' student.id %}" class="btn btn-primary btn-sm me-md-1" type="button"><i class="bi bi-pencil-square"></i></a>
+        <form action="{% url 'student-delete' student.id %}" method="POST">
+          {% csrf_token %}
+          <button class="btn btn-danger btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal-student-{{ student.id }}"><i class="bi bi-trash3"></i></button>
+          <!-- Modal: for delete confirmation dialog-->
+          <div class="modal fade" id="deleteConfirmationModal-student-{{ student.id }}" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel-student-{{ student.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="deleteConfirmationModalLabel-student-{{ student.id }}">Löschbestätigung</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  Soll der Student "<strong>{{ student.name2 }}</strong>" wirklich gelöscht werden?
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                  <button class="btn btn-danger" type="submit"><i class="bi bi-trash3 me-2"></i>Löschen</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </li>
+    {% endfor %}
+    <li class="list-group-item d-flex align-items-center">
+      <div class="flex-grow-1 text-black-50">
+        {% if not students %}Keine Studenten vorhanden!{% endif %}
+      </div>
+      <div class="d-grid gap-2 d-md-flex justify-content-md-end ms-3">
+        <a href="{% url 'student-add' %}" class="btn btn-success btn-sm" type="button"><i class="bi bi-plus"></i></a>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<div class="container my-5">
+<h3>Importieren</h3>
+<form method="post" class="form" enctype="multipart/form-data">
+  {% csrf_token %}
+  {% bootstrap_form UploadStudentsForm %}
+  <button id="buttonImportStudents" class="btn {% if students %}btn-warning{% else %}btn-success{% endif %}" type="submit"><i class="bi bi-file-earmark-arrow-up me-2"></i>Importieren</button>
+</form>
+</div>
+
+<script>
+// if the import button is clicked:
+// - disable the button and replace the icon with a spinner (bootstrap)
+document.querySelector('#buttonImportStudents').addEventListener('click', (e) => {
+  // only if a file is selected
+  if (document.querySelector('#id_file').value) {
+    e.target.disabled = true
+    const span1 = document.createElement("span")
+    span1.setAttribute('class', 'spinner-border spinner-border-sm me-2')
+    span1.setAttribute('aria-hidden', 'true')
+    const span2 = document.createElement("span")
+    span2.setAttribute('class', 'visually-hidden')
+    span2.setAttribute('role', 'status')
+    span2.textContent = 'Importing...'
+    e.target.getElementsByTagName('i')[0].replaceWith(span1, span2)
+  }
+})
+</script>
+
+{% endblock content %}

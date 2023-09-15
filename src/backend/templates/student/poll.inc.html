@@ -1,0 +1,165 @@
+{% load django_bootstrap5 %}
+
+
+<div id="poll" class="container my-5" style="scroll-margin-top: 120px;">
+  <h2>Fragebogen</h2>
+
+  <form method="post" class="form">
+    {% csrf_token %}
+
+    <div class="accordion" id="accordion-poll">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="accordion-header-poll-1">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-poll-1" aria-expanded="false" aria-controls="accordion-collapse-poll-1">
+            Projektpräferenzen
+          </button>
+        </h2>
+        <div id="accordion-collapse-poll-1" class="accordion-collapse collapse" aria-labelledby="accordion-header-poll-1">
+          <div class="accordion-body">
+            Bitte geben Sie an, wie gern Sie welche Projekte im Beleg bearbeiten würden:
+
+            <fieldset class="list-group list-group-flush hmt-3 mt-3"{% if not settings.poll_is_writable %} disabled{% endif %}>
+            {% if not projects %}Keine Projekte vorhanden!{% endif %}
+            {% for project in projects %}
+            <input type="hidden" id="id_project_{{ project.id }}_id" name="project_{{ project.id }}_id" value="{{ project.id }}">
+              <div class="list-group-item">
+
+                <div class="d-flex flex-row justify-content-between my-1">
+                  <div class="">
+                    <i class="bi bi-box"></i>
+                  </div>
+                  <div class="flex-grow-1 ms-3">
+                    <label class="form-label fw-bold m-0">{{ project.pid_name }}</label>
+                  </div>
+                  <div class="ms-2 flex-shrink-0" required="" id="id_project_{{ project.id }}_score">
+                  {% for score in poll_scores.choices %}
+                    <div class="form-check form-check-inline">
+
+                      <input class="form-check-input"
+                             type="radio"
+                             name="project_{{ project.id }}_score"
+                             id="id_project_{{ project.id }}_score_{{ score.id }}"
+                             value="{{ score.value }}"
+                             title="{{ score.name }}"
+                             {% for fp in form_poll_data.projects %}
+                               {% if fp.project.id == project.id and fp.score == score.value %}checked="checked"{% endif %}
+                             {% endfor %}
+                             >
+                      <label class="form-check-label" for="id_project_{{ project.id }}_score_{{ score.id }}" title="{{ score.name }}"><i class="bu bi-{{ score.icon }}-fill" style="color:{{ score.color }}"></i></label>
+                    </div>
+                  {% endfor %}
+                  </div>
+                </div>
+
+              </div>
+            {% endfor %}
+            </fieldset>
+          
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="accordion-header-poll-2">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-poll-2" aria-expanded="false" aria-controls="accordion-collapse-poll-2">
+            Tätigkeitsschwerpunkte
+          </button>
+        </h2>
+        <div id="accordion-collapse-poll-2" class="accordion-collapse collapse" aria-labelledby="accordion-header-poll-2">
+          <div class="accordion-body">
+            Bitte geben Sie an, wie gern Sie welche Tätigkeiten (Rollen) im Belegprojekt übernehmen würden:
+
+            <fieldset class="list-group list-group-flush hmt-3 mt-3"{% if not settings.poll_is_writable %} disabled{% endif %}>
+            {% if not roles %}Keine Rollen vorhanden!{% endif %}
+            {% for role in roles %}
+              <input type="hidden" id="id_role_{{ role.id }}_id" name="role_{{ role.id }}_id" value="{{ role.id }}">
+              <div class="list-group-item">
+
+                <div class="d-flex flex-row justify-content-between my-1">
+                  <div class="">
+                    <i class="bi bi-person"></i>
+                  </div>
+                  <div class="flex-grow-1 ms-3">
+                    <label class="form-label fw-bold m-0">{{ role.name }}</label>
+                  </div>
+                  <div class="ms-2 flex-shrink-0" required="" id="id_role_{{ role.id }}_score">
+                  {% for score in poll_scores.choices %}
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input"
+                             type="radio"
+                             name="role_{{ role.id }}_score"
+                             id="id_role_{{ role.id }}_score_{{ score.id }}"
+                             value="{{ score.value }}" title="{{ score.name }}"
+                             {% for fp in form_poll_data.roles %}
+                               {% if fp.role.id == role.id and fp.score == score.value %}checked="checked"{% endif %}
+                             {% endfor %}
+                             >
+                      <label class="form-check-label" for="id_role_{{ role.id }}_score_{{ score.id }}" title="{{ score.name }}"><i class="bu bi-{{ score.icon }}-fill" style="color:{{ score.color }}"></i></label>
+                    </div>
+                  {% endfor %}
+                  </div>
+                </div>
+
+              </div>
+            {% endfor %}
+            </fieldset>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="accordion-header-poll-3">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-poll-3" aria-expanded="false" aria-controls="accordion-collapse-poll-4">
+            Qualifikationen (deaktiviert)
+          </button>
+        </h2>
+        <div id="accordion-collapse-poll-3" class="accordion-collapse collapse" aria-labelledby="accordion-header-poll-3">
+          <div class="accordion-body">
+            Bitte geben Sie an, welche Qualifikationen (oder gleichwertig) Sie bereits erworben haben:
+            
+            <fieldset class="list-group list-group-flush hmt-3 mt-3"{% if not settings.poll_is_writable %} disabled{% endif %}>
+              <div class="list-group-item">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="qualification_1_check" id="id_qualification_1_check" value="" disabled>
+                  <label class="form-check-label" for="id_qualification_1_check">
+                    Aus- oder Weiterbildung in Richtung Fachinformatik
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="qualification_2_check" id="id_qualification_2_check" value="" disabled>
+                  <label class="form-check-label" for="id_qualification_2_check">
+                    Implementierung an Softwareprojekten in Nebentätigkeiten oder Freizeit
+                  </label>
+                </div>
+              </div>
+            </fieldset>
+
+          </div>
+        </div>
+      </div>
+
+      {% comment %}
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="accordion-header-poll-4">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-poll-4" aria-expanded="false" aria-controls="accordion-collapse-poll-4">
+            Einschätzung eigener Fähigkeiten (Optional)
+          </button>
+        </h2>
+        <div id="accordion-collapse-poll-4" class="accordion-collapse collapse" aria-labelledby="accordion-header-poll-4">
+          <div class="accordion-body">
+            Optional: Bitte geben Sie nachfolgend eine grobe Einschätzung ihrer eigenen Fähigkeiten und Kenntnisse an. <br><br> <b>Hinweis:</b> Hierbei geht es nicht primär um ihre Studienergebnisse, sondern um ihren generellen Kenntnisstand und ihre Erfahrungen. Möglicherweise haben Sie durch eine Berufsausbildung, Werkstudententätigkeit, Praktika, Mitarbeit in Vereinen oder Opensourcen-Projekten us. besondere Kenntnisse erlangt, die für die Teambildung interessant sind.
+          </div>
+        </div>
+      </div>
+      {% endcomment %}
+    </div>
+
+    <div class="mt-3">
+    {% if settings.poll_is_writable %}
+      <button class="btn btn-primary" type="submit"{% if not is_student %} disabled{% endif %}>Antworten absenden</button>
+    {% endif %}
+    </div>
+  </form>
+
+</div>

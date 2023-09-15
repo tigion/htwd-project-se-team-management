@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+{% comment %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+{% endcomment %}
+<html lang="de">
+
+<head>
+  <title></title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  {#<link href="css/style.css" rel="stylesheet" />#}
+
+  {# Load the tag library #}
+  {% load django_bootstrap5 %}
+
+  {# Load CSS and JavaScript #}
+  {% bootstrap_css %}
+  {% bootstrap_javascript %}
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+  {# Display django.contrib.messages as Bootstrap alerts #}
+  {#% bootstrap_messages %#}
+
+</head>
+
+<body>
+  <header class="sticky-top d-flex flex-wrap align-items-center justify-content-center justify-content-md-between p-3 mb-4 bg-white border-bottom">
+    <div class="col-md-3 mb-2 mb-md-0">
+      <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none text-body">
+        <!-- <svg class="bi" width="40" height="32" role="img" aria-label="Bootstrap">
+          <use xlink:href="#bootstrap"></use>
+        </svg> -->
+        
+        <span class="fs-4"><i class="bi bi-people-fill me-1"></i> Teamverwaltung</span>
+      </a>
+    </div>
+
+    {% if user.is_authenticated %}
+    <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+      {% if settings.projects_is_visible %}
+      <li><a href="/#projects" class="nav-link px-2">Projekte</a></li>
+      {% endif %}
+      {% if settings.poll_is_visible %}
+      <li><a href="/#poll" class="nav-link px-2">Fragebogen</a></li>
+      {% endif %}
+      {% if settings.teams_is_visible %}
+      <li><a href="/#teams" class="nav-link px-2">Teams</a></li>
+      {% endif %}
+      {% if user.is_superuser %}
+      <div class="dropdown">
+        <a class="nav-link link-danger dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+          Verwaltung
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+          <li><a class="dropdown-item" href="/settings"><i class="bi bi-sliders"></i> Einstellungen</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="/projects"><i class="bi bi-box me-1"></i> Projekte</a></li>
+          <li><a class="dropdown-item" href="/students"><i class="bi bi-person-fill me-1"></i> Studenten</a></li>
+          <li><a class="dropdown-item" href="/roles"><i class="bi bi-person me-1"></i> Rollen</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="/teams"><i class="bi bi-people-fill me-1"></i> Teams</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="/admin"><i class="bi bi-database-exclamation me-1"></i> Django Admin</a></li>
+        </ul>
+      </div>
+      {% endif %}
+    </ul>
+    {% endif %}
+
+    <div class="col-md-3 text-end">
+      {% if user.is_authenticated %}
+      <!-- <a class="nav-link" href="/logout">Logout</a> -->
+      <!-- <button type="button" class="btn btn-outline-primary">Logout</button> -->
+      <a href="{% url 'logout' %}" type="button" class="btn btn-outline-primary">Logout ({{ user.get_username }})</a>
+      {% else %}
+      <!-- <a class="nav-link" href="/login">Login</a> -->
+      <!-- <button type="button" class="btn btn-outline-primary">Login</button> -->
+      <a href="{% url 'login' %}" type="button" class="btn btn-outline-primary">Login</a>
+      {% endif %}
+    </div>
+  </header>
+
+  {% if user.is_superuser %}
+    {#% include "notes-development.inc.html" %#}
+  {% endif %}
+
+  <div class="container my-5">
+  {% bootstrap_messages %}
+  </div>
+
+  {% block content %}
+  {% endblock content %}
+
+</body>
+
+</html>

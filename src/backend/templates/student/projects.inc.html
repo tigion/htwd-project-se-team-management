@@ -1,0 +1,37 @@
+<div id="projects" class="container my-5" style="scroll-margin-top: 120px;">
+  <h2>Projekte</h2>
+
+  {% if projects %}
+  <div class="accordion" id="accordion-projects">
+    {% for project in projects %}
+
+    <div class="accordion-item">
+    <h2 class="accordion-header" id="accordion-header-project-{{ project.id }}">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-project-{{ project.id }}" aria-expanded="false" aria-controls="accordion-collapse-project-{{ project.id }}">
+        <i class="bi bi-box me-3"></i>
+        <span class="badge bg-light text-dark fs-6 me-3 flex-shrink-0" style="display:inline-block; width:45px">{{ project.pid }}</span>
+        <span class="me-3">{{ project.name }}</span>
+      </button>
+    </h2>
+    <div id="accordion-collapse-project-{{ project.id }}" class="accordion-collapse collapse" aria-labelledby="accordion-header-project-{{ project.id }}">
+      <div class="accordion-body">
+        {% if project.description %} {{ project.description }} {% else %} Keine Beschreibung vorhanden. {% endif %}
+        {% if project.technologies or project.company or project.contact or project.url %}
+        <ul class="mt-2 mb-0">
+          {% if project.technologies %}<li>Technologien: {{ project.technologies}}</li>{% endif %}
+          {% if project.company %}<li>Organisation: {{ project.company}}</li>{% endif %}
+          {% if project.contact %}<li>Kontakt: {{ project.contact}}</li>{% endif %}
+          {% if project.url %}<li>Link: <a href="{{ project.url}}">Weitere Informationen</a></li>{% endif %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+    {% endfor %}
+  </div>
+  {% else %}
+  <div>Keine Projekte vorhanden!</div>
+  {% endif %}
+
+</div>

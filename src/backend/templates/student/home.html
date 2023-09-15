@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% load django_bootstrap5 %}
+
+{% block content %}
+
+<div class="container my-5">
+  <div class="alert alert-info" role="alert">
+    Im Rahmen des Moduls <strong>Software Engineering</strong> können Studenten auf dieser Website die verfügbaren <strong>Projekte</strong> einsehen,
+    ihre Präferenzen und Wünsche dazu im <strong>Fragebogen</strong> abgeben und
+    nach Veröffentlichung die <strong>Teams</strong> mit ihren Mitgliedern einsehen.
+  </div>
+
+  {% if not settings.projects_is_visible and not settings.poll_is_visible and not settings.teams_is_visible %}
+  Aktuell sind noch keine Inhalte freigegeben!
+  {% endif %}
+</div>
+
+{% if settings.projects_is_visible %}
+  {% include "student/projects.inc.html" %}
+{% endif %}
+
+{% if settings.poll_is_visible %}
+  {% include "student/poll.inc.html" %}
+{% endif %}
+
+{% if settings.teams_is_visible %}
+  {% include "student/teams.inc.html" %}
+{% endif %}
+
+{% endblock content %}

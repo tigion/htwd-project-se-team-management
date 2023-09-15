@@ -1,0 +1,29 @@
+# backup, swap
+*.swp
+*~
+*.bak
+
+# environment
+.env
+.env.*
+!.env.example
+!.env.template
+
+# macOS
+.DS_Store
+Icon[]
+
+# keep
+!.keep
+
+# logfiles
+docker/logs/*
+
+# certificates
+docker/ssl/*
+!docker/ssl/localhost.crt
+!docker/ssl/localhost.key
+
+# Python
+.venv/
+__pycache__/
