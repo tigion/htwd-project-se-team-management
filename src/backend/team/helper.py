@@ -4,6 +4,7 @@ from random import shuffle
 
 from app.models import Project, Student, Role, Settings
 from poll.models import Poll, ProjectAnswer, RoleAnswer
+from poll.helper import get_poll_stats_for_student
 
 from .models import Team
 from .algorithm import AssignmentAlgo
@@ -177,10 +178,17 @@ def prepare_data(project_ids):
 
 
 def generate_teams_with_algorithm(data):
+    max_scores = {
+        # TODO: get max scores from POLL_SCORES
+        "project": 5,
+        "role": 5,
+    }
+
     algo = AssignmentAlgo(
         data.get("project_answers"),
         data.get("role_answers"),
         data.get("wing_answers"),
+        max_scores,
     )
     algo.run()
     result = algo.get_result()
@@ -194,13 +202,15 @@ def save_teams(algo_result):
         project_id = key_mapper["project"]["algo2db"].get(a[0])
         student_id = key_mapper["student"]["algo2db"].get(a[1])
         role_id = key_mapper["role"]["algo2db"].get(a[2])
+        score = a[3]
 
-        # print(f"-> key map {a}: {project_id} {student_id} {role_id}")
+        # print(f"-> key map {a}: {project_id} {student_id} {role_id} - {score}")
 
         team = Team(
             project_id=project_id,
             student_id=student_id,
             role_id=role_id,
+            score=score,
         )
         teams.append(team)
 
@@ -244,7 +254,9 @@ def get_prepared_teams_for_view():
                 "student": team.student,
                 "role": team.role,
                 "is_project_leader": True if team.role.id == Role.objects.first().id else False,
-                "is_wing": team.student.is_wing
+                "is_wing": team.student.is_wing,
+                "score": team.score,  # score from algorithm
+                "stats": get_poll_stats_for_student(team),
             }
             data_set["students"].append(student)
 

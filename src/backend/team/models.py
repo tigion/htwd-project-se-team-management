@@ -9,6 +9,7 @@ class Team(models.Model):
     project = models.ForeignKey(Project, on_delete=models.PROTECT)
     student = models.OneToOneField(Student, on_delete=models.PROTECT, unique=True)
     role = models.ForeignKey(Role, on_delete=models.PROTECT)
+    score = models.FloatField(null=True)
 
     # class Meta:
     #     unique_together = ["project", "student"]

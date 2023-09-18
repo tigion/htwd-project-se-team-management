@@ -314,6 +314,7 @@ def teams(request):
     settings = Settings.load()
 
     context = {}
+    context["is_management_view"] = True
     context["settings"] = settings
     context["teams"] = get_prepared_teams_for_view()
 

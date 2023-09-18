@@ -1,3 +1,5 @@
+from django.db.models import Sum, Avg, Min, Max
+
 from app.models import Student, Project, Role
 from .models import POLL_SCORES, Poll, ProjectAnswer, RoleAnswer
 
@@ -73,16 +75,12 @@ def load_poll_data_for_form(student, projects, roles):
         role_answers = RoleAnswer.objects.filter(poll=poll)
 
         for answer in project_answers:
-            poll_data["projects"].append(
-                {"project": answer.project, "score": answer.score}
-            )
+            poll_data["projects"].append({"project": answer.project, "score": answer.score})
         for answer in role_answers:
             poll_data["roles"].append({"role": answer.role, "score": answer.score})
     else:
         for project in projects:
-            poll_data["projects"].append(
-                {"project": project, "score": POLL_SCORES["default"]}
-            )
+            poll_data["projects"].append({"project": project, "score": POLL_SCORES["default"]})
         for role in roles:
             poll_data["roles"].append({"role": role, "score": POLL_SCORES["default"]})
 
@@ -114,3 +112,118 @@ def generate_poll_data_for_students_without_poll():
     for role in roles_without_answers:
         for poll in polls:
             RoleAnswer.objects.create(poll=poll, role=role, score=default)
+
+
+def get_poll_stats_for_student(team):
+    student_id = team.student.id
+    project_id = team.project.id
+    role_id = team.role.id
+
+    # TODO:
+    # - check if poll or answers exist
+    poll = Poll.objects.get(student=student_id)
+
+    # extract stats
+    project_score = ProjectAnswer.objects.get(poll=poll, project=project_id).score
+    project_score_sum = ProjectAnswer.objects.filter(poll=poll).aggregate(Sum("score"))["score__sum"]
+    project_score_avg = ProjectAnswer.objects.filter(poll=poll).aggregate(Avg("score"))["score__avg"]
+    project_score_min = ProjectAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
+    project_score_max = ProjectAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
+
+    role_score = RoleAnswer.objects.get(poll=poll, role=role_id).score
+    role_score_sum = RoleAnswer.objects.filter(poll=poll).aggregate(Sum("score"))["score__sum"]
+    role_score_avg = RoleAnswer.objects.filter(poll=poll).aggregate(Avg("score"))["score__avg"]
+    role_score_min = RoleAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
+    role_score_max = RoleAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
+
+    # prepare result
+    poll_stats = {
+        "project": {
+            "score": project_score,
+            "sum": project_score_sum,
+            "avg": round(project_score_avg, 2),
+            "min": project_score_min,
+            "max": project_score_max,
+        },
+        "role": {
+            "score": role_score,
+            "sum": role_score_sum,
+            "avg": round(role_score_avg, 2),
+            "min": role_score_min,
+            "max": role_score_max,
+        },
+        "happiness": {},
+        "happiness_icon": "",
+        "summary": "",
+    }
+
+    # Set happiness scores
+    poll_stats["happiness"] = calc_happiness_score(poll_stats)
+
+    # Set happiness icon
+    score = poll_stats["happiness"]["total"]
+    poll_score = POLL_SCORES["choices"][0]
+    if score > 0.8:
+        poll_score = POLL_SCORES["choices"][4]
+    elif score > 0.6:
+        poll_score = POLL_SCORES["choices"][3]
+    elif score > 0.4:
+        poll_score = POLL_SCORES["choices"][2]
+    elif score > 0.2:
+        poll_score = POLL_SCORES["choices"][1]
+    poll_stats["happiness_icon"] = (
+        '<i class="bu bi-' + poll_score["icon"] + '-fill" style="color:' + poll_score["color"] + '"></i>'
+    )
+
+    # Set summary text
+    text_total = (
+        f"Total: <strong>{poll_stats['happiness']['total']}</strong> ({poll_stats['happiness']['poll']['total']})"
+    )
+    text_project = (
+        f"Project: <strong>{poll_stats['happiness']['project']}</strong> ({poll_stats['happiness']['poll']['project']})"
+    )
+    text_role = f"Role: <strong>{poll_stats['happiness']['role']}</strong> ({poll_stats['happiness']['poll']['role']})"
+    poll_stats["summary"] = f"{poll_stats['happiness_icon']} {text_total}, {text_project}, {text_role}"
+
+    return poll_stats
+
+
+def calc_happiness_score(scores):
+    # gains are from algorithm
+    # TODO: seaparte it and use it here and in the algorithm
+    project_gain = 0.8
+    role_gain = 0.2
+
+    # TODO: get from POLL_SCORES
+    max_score = 5
+
+    # calc each happiness
+    # - normalize score (1-5 -> 0-4) to (0-1) like algorithm
+
+    # Happiness with max possible poll scores
+    # - use max score 5 from POLL_SCORES
+    project_hs = (scores["project"]["score"] - 1) / (max_score - 1)
+    role_hs = (scores["role"]["score"] - 1) / (max_score - 1)
+
+    # Happiness with own poll scores
+    # - use individual max score
+    project_poll_hs = (scores["project"]["score"] - 1) / (scores["project"]["max"] - 1)
+    role_poll_hs = (scores["role"]["score"] - 1) / (scores["role"]["max"] - 1)
+
+    # calc total happiness
+    total_hs = project_gain * project_hs + role_gain * role_hs
+    total_poll_hs = project_gain * project_poll_hs + role_gain * role_poll_hs
+
+    # prepare result
+    happiness = {
+        "total": round(total_hs, 2),
+        "project": round(project_hs, 2),
+        "role": round(role_hs, 2),
+        "poll": {
+            "total": round(total_poll_hs, 2),
+            "project": round(project_poll_hs, 2),
+            "role": round(role_poll_hs, 2),
+        },
+    }
+
+    return happiness
