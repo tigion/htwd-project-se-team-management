@@ -38,8 +38,12 @@ def save_poll_data_to_db(student, POST, projects, roles):
     poll_data = prepare_poll_data_from_post(student, POST, projects, roles)
 
     # save poll
+    values = {
+        "is_generated": False,
+    }
     poll, created = Poll.objects.update_or_create(
         student=poll_data["student"],
+        defaults=values,
     )
 
     # save project answers
@@ -99,6 +103,7 @@ def generate_poll_data_for_students_without_poll():
     for student in students_without_answers:
         poll = Poll.objects.create(
             student=student,
+            is_generated=True,
         )
         for project in projects:
             ProjectAnswer.objects.create(poll=poll, project=project, score=default)
@@ -112,6 +117,10 @@ def generate_poll_data_for_students_without_poll():
     for role in roles_without_answers:
         for poll in polls:
             RoleAnswer.objects.create(poll=poll, role=role, score=default)
+
+
+def get_project_ids_with_score_ordered():
+    return ProjectAnswer.objects.values("project").annotate(total_score=Sum("score"), avg_score=Avg("score")).order_by("-total_score")
 
 
 def get_poll_stats_for_student(team):

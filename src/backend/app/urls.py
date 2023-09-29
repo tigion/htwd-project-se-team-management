@@ -26,6 +26,8 @@ urlpatterns = [
     path("teams/", views.teams, name="teams"),
     path("teams/generate", views.teams_generate, name="teams-generate"),
     path("teams/delete", views.teams_delete, name="teams-delete"),
+    # stats
+    path("stats/", views.stats, name="stats"),
     # settings
     path("settings/", views.settings, name="settings"),
     path("settings/reset", views.settings_reset, name="reset"),

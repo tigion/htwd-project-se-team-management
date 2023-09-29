@@ -4,7 +4,10 @@ from random import shuffle
 
 from app.models import Project, Student, Role, Settings
 from poll.models import Poll, ProjectAnswer, RoleAnswer
-from poll.helper import get_poll_stats_for_student
+from poll.helper import (
+    get_poll_stats_for_student,
+    get_project_ids_with_score_ordered,
+)
 
 from .models import Team
 from .algorithm import AssignmentAlgo
@@ -32,11 +35,7 @@ def prepare_projects():
 
     # shuffle projects with same score
     # 1. create list with projects and total scores
-    project_total_scores = (
-        ProjectAnswer.objects.values("project")
-        .annotate(total_score=Sum("score"))
-        .order_by("-total_score")
-    )
+    project_total_scores = get_project_ids_with_score_ordered()
     # 2. group projects with same score
     projects_per_score = {}
     for project in project_total_scores:
@@ -165,11 +164,7 @@ def prepare_data(project_ids):
     )
 
     # role_answers: poll_id, role_id, score
-    role_answers = list(
-        RoleAnswer.objects.order_by("poll").values_list(
-            "poll__student", "role", "score"
-        )
-    )
+    role_answers = list(RoleAnswer.objects.order_by("poll").values_list("poll__student", "role", "score"))
 
     # prepare data for algorithm
     data = map_keys_and_prepare_data(projects, students, roles, project_answers, role_answers)
@@ -221,11 +216,7 @@ def generate_teams():
     # TODO: check needed data and tables
     # - min count for algorithm?
     Team.objects.all().delete()
-    if (
-        not Poll.objects.exists()
-        or not ProjectAnswer.objects.exists()
-        or not RoleAnswer.objects.exists()
-    ):
+    if not Poll.objects.exists() or not ProjectAnswer.objects.exists() or not RoleAnswer.objects.exists():
         return
 
     project_ids = prepare_projects()
@@ -237,11 +228,7 @@ def generate_teams():
 def get_prepared_teams_for_view():
     data = []
 
-    projects = (
-        Project.objects.filter(team__isnull=False)
-        .values_list("id", flat=True)
-        .distinct()
-    )
+    projects = Project.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
 
     for project in projects:
         teams = Team.objects.filter(project=project)

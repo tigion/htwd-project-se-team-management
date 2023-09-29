@@ -50,6 +50,7 @@ POLL_SCORES = {
 
 class Poll(models.Model):
     student = models.OneToOneField(Student, on_delete=models.CASCADE)
+    is_generated = models.BooleanField(default=False)
     # timestamp = models.DateTimeField(auto_now_add=True)
 
     @property
