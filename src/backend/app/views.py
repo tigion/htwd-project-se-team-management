@@ -27,7 +27,11 @@ from .forms import (
     SettingsForm,
     SettingsResetForm,
 )
-from .helper import load_students_from_file, reset_data
+from .helper import (
+    load_students_from_file,
+    reset_data,
+    get_prepared_stats_for_view,
+)
 
 import logging
 
@@ -176,9 +180,7 @@ def students(request):
 
     context = {}
     context["settings"] = settings
-    context["students"] = Student.objects.all().order_by(
-        "last_name", "first_name", "s_number"
-    )
+    context["students"] = Student.objects.all().order_by("last_name", "first_name", "s_number")
 
     form = UploadStudentsForm(request.POST or None, request.FILES or None)
     if request.method == "POST":
@@ -188,9 +190,7 @@ def students(request):
         #     return ...
         if form.is_valid():
             try:
-                load_students_from_file(
-                    request.FILES.get("file"), request.POST.get("mode", 1)
-                )
+                load_students_from_file(request.FILES.get("file"), request.POST.get("mode", 1))
             except ProtectedError:
                 messages.error(
                     request,
@@ -327,11 +327,7 @@ def teams(request):
 @permission_required("team.delete_team")
 def teams_generate(request):
     if request.method == "POST":
-        if (
-            not Project.objects.exists()
-            or not Student.objects.exists()
-            or Role.objects.count() < 2
-        ):
+        if not Project.objects.exists() or not Student.objects.exists() or Role.objects.count() < 2:
             messages.error(
                 request,
                 # f"Achtung: Für die Teamgenerierung müssen mindestens ein Projekte ({ Project.objects.count() }), ein Student ({ Student.objects.count() }) und midestens zwei Rollen ({ Role.objects.count() }) vorhanden sein!",
@@ -357,6 +353,18 @@ def teams_delete(request):
         Team.objects.all().delete()
 
     return redirect("teams")
+
+
+@login_required()
+@permission_required("app.view_stats")
+def stats(request):
+    settings = Settings.load()
+
+    context = {}
+    context["settings"] = settings
+    context["stats"] = get_prepared_stats_for_view()
+
+    return render(request, "lecturer/stats.html", context)
 
 
 @login_required()

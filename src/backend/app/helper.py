@@ -1,9 +1,14 @@
 import csv
 import io
 
-from .models import Project, Settings, Student, Role
+from django.db.models import Count
+
+
 from poll.models import Poll, ProjectAnswer, RoleAnswer
+from poll.helper import get_project_ids_with_score_ordered
 from team.models import Team
+
+from .models import Project, Settings, Student, Role
 
 
 # Opal export:
@@ -64,3 +69,76 @@ def reset_data():
         Role(name="Test"),
     ]
     Role.objects.bulk_create(roles)
+
+
+def get_prepared_stats_for_view():
+    stats = {}
+
+    project_count = Project.objects.count()
+    student_count = Student.objects.count()
+    student_counts = Student.objects.values("study_program").annotate(total=Count("id"))
+    role_count = Role.objects.count()
+    team_count = Team.objects.values_list("project").distinct().count()
+
+    stats["count"] = {
+        "project": project_count,
+        "student": student_count,
+        "study_programs": student_counts,
+        "role": role_count,
+        "team": team_count,
+    }
+
+    poll_count = Poll.objects.count()
+    poll_empty_count = student_count - poll_count
+    poll_filled_count = Poll.objects.filter(is_generated=False).count()
+    poll_generated_count = Poll.objects.filter(is_generated=True).count()
+
+    poll_percent = 100 * poll_count / student_count
+    poll_empty_percent = 100 - poll_percent
+    poll_filled_percent = 100 * poll_filled_count / student_count
+    poll_generated_percent = 100 * poll_generated_count / student_count
+
+    stats["poll"] = {
+        "all": {
+            "count": poll_count,
+            "percent": poll_percent,
+        },
+        "filled": {
+            "count": poll_filled_count,
+            "percent": poll_filled_percent,
+        },
+        "generated": {
+            "count": poll_generated_count,
+            "percent": poll_generated_percent,
+        },
+        "empty": {
+            "count": poll_empty_count,
+            "percent": poll_empty_percent,
+        },
+    }
+
+    project_ids = get_project_ids_with_score_ordered()
+    projects = []
+    for project_id in project_ids:
+        score = project_id["total_score"]
+        score_avg = project_id["avg_score"]
+        project = Project.objects.get(id=project_id["project"])
+        color = "text-primary"
+        if Team.objects.exists():
+            if Team.objects.filter(project=project).exists():
+                color = "text-success"
+            else:
+                color = "text-danger"
+        projects.append(
+            {
+                "pid": project.pid,
+                "name": project.name,
+                "score": score,
+                "score_avg": score_avg,
+                "color": color,
+            }
+        )
+
+    stats["projects"] = projects
+
+    return stats
