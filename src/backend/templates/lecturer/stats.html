@@ -11,6 +11,8 @@
     <i class="bi bi-person-fill me-1"></i> Studenten: <strong>{{ stats.count.student }}</strong>, <small class="text-secondary">pro Studiengang
     {% for study_program in stats.count.study_programs %}
       {{ study_program.study_program }}: <strong>{{ study_program.total }}</strong>{% if not forloop.last %}, {% endif %}
+    {% empty %}
+      0
     {% endfor %}</small><br />
     <i class="bi bi-person me-1"></i> Rollen: <strong>{{ stats.count.role }}</strong><br />
     <i class="bi bi-people-fill me-1"></i> Teams: <strong>{{ stats.count.team }}</strong><br />

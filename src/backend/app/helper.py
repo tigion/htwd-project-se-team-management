@@ -93,10 +93,15 @@ def get_prepared_stats_for_view():
     poll_filled_count = Poll.objects.filter(is_generated=False).count()
     poll_generated_count = Poll.objects.filter(is_generated=True).count()
 
-    poll_percent = 100 * poll_count / student_count
-    poll_empty_percent = 100 - poll_percent
-    poll_filled_percent = 100 * poll_filled_count / student_count
-    poll_generated_percent = 100 * poll_generated_count / student_count
+    poll_percent = 0
+    poll_empty_percent = 0
+    poll_filled_percent = 0
+    poll_generated_percent = 0
+    if student_count > 0:
+        poll_percent = 100 * poll_count / student_count
+        poll_empty_percent = 100 - poll_percent
+        poll_filled_percent = 100 * poll_filled_count / student_count
+        poll_generated_percent = 100 * poll_generated_count / student_count
 
     stats["poll"] = {
         "all": {
