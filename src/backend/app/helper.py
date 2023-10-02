@@ -72,6 +72,7 @@ def reset_data():
 
 
 def get_prepared_stats_for_view():
+    settings = Settings.load()
     stats = {}
 
     project_count = Project.objects.count()
@@ -80,8 +81,13 @@ def get_prepared_stats_for_view():
     role_count = Role.objects.count()
     team_count = Team.objects.values_list("project").distinct().count()
 
+    project_used_count = int(student_count / settings.team_min_member)
+    if project_used_count < 1:
+        project_used_count = 1
+
     stats["count"] = {
         "project": project_count,
+        "project_used": project_used_count,
         "student": student_count,
         "study_programs": student_counts,
         "role": role_count,
