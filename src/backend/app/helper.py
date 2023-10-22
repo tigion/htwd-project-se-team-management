@@ -16,8 +16,8 @@ from .models import Project, Settings, Student, Role
 # 2. Gruppe "Teilnehmer Projektarbeit"
 # 3. Symbol Einträge auswählen: Vorname, Nachname, E-Mail-Adresse, Studiengruppe
 # 4. Symbol Tabelle herunterladen -> table.xls
-# 5. LibreOffice/Excell: als CSV-Datei speichern (Komma-Separator)
-# 6. (Separator auf ',' ändern) (:%s/;/,/g)
+# 5. LibreOffice/Excell: als CSV-Datei speichern (Komma-Separator, Erste Zeile sind die Spaltennamen welche beim Import ignoriert werden)
+# 6. (Falls notwending: Separator auf ',' ändern) (:%s/;/,/g)
 def load_students_from_file(file, mode):
     if mode == "new":
         Student.objects.all().delete()
