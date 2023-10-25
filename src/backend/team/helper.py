@@ -7,6 +7,7 @@ from poll.models import Poll, ProjectAnswer, RoleAnswer
 from poll.helper import (
     get_poll_stats_for_student,
     get_project_ids_with_score_ordered,
+    get_happiness_icon,
 )
 
 from .models import Team
@@ -235,7 +236,10 @@ def get_prepared_teams_for_view():
         data_set = {
             "project": Project.objects.get(id=project),
             "students": [],
+            "happiness": {},
         }
+        happiness_total_score = 0
+        happiness_poll_total_score = 0
         for team in teams:
             student = {
                 "student": team.student,
@@ -246,6 +250,19 @@ def get_prepared_teams_for_view():
                 "stats": get_poll_stats_for_student(team),
             }
             data_set["students"].append(student)
+            happiness_total_score = happiness_total_score + student["stats"]["happiness"]["total"]
+            happiness_poll_total_score = happiness_poll_total_score + student["stats"]["happiness"]["poll"]["total"]
+
+        student_count = len(data_set["students"])
+        happiness_total_score = round(happiness_total_score / student_count, 2)
+        happiness_poll_total_score = round(happiness_poll_total_score / student_count, 2)
+
+        # Set happiness icon
+        happiness_total_icon = get_happiness_icon(happiness_total_score)
+
+        data_set["happiness"] = {
+            "summary": f"{happiness_total_icon} <strong>{happiness_total_score}</strong> ({happiness_poll_total_score})"
+        }
 
         data.append(data_set)
 

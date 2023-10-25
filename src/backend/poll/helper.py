@@ -120,7 +120,11 @@ def generate_poll_data_for_students_without_poll():
 
 
 def get_project_ids_with_score_ordered():
-    return ProjectAnswer.objects.values("project").annotate(total_score=Sum("score"), avg_score=Avg("score")).order_by("-total_score")
+    return (
+        ProjectAnswer.objects.values("project")
+        .annotate(total_score=Sum("score"), avg_score=Avg("score"))
+        .order_by("-total_score")
+    )
 
 
 def get_poll_stats_for_student(team):
@@ -171,18 +175,7 @@ def get_poll_stats_for_student(team):
 
     # Set happiness icon
     score = poll_stats["happiness"]["total"]
-    poll_score = POLL_SCORES["choices"][0]
-    if score > 0.8:
-        poll_score = POLL_SCORES["choices"][4]
-    elif score > 0.6:
-        poll_score = POLL_SCORES["choices"][3]
-    elif score > 0.4:
-        poll_score = POLL_SCORES["choices"][2]
-    elif score > 0.2:
-        poll_score = POLL_SCORES["choices"][1]
-    poll_stats["happiness_icon"] = (
-        '<i class="bu bi-' + poll_score["icon"] + '-fill" style="color:' + poll_score["color"] + '"></i>'
-    )
+    poll_stats["happiness_icon"] = get_happiness_icon(score)
 
     # Set summary text
     text_total = (
@@ -236,3 +229,21 @@ def calc_happiness_score(scores):
     }
 
     return happiness
+
+
+def get_happiness_icon(score):
+    # get poll score
+    poll_score = POLL_SCORES["choices"][0]  # very bad
+    if score > 0.8:
+        poll_score = POLL_SCORES["choices"][4]  # very good
+    elif score > 0.6:
+        poll_score = POLL_SCORES["choices"][3]  # good
+    elif score > 0.4:
+        poll_score = POLL_SCORES["choices"][2]  # neutral
+    elif score > 0.2:
+        poll_score = POLL_SCORES["choices"][1]  # bad
+
+    # set icon with color
+    icon = '<i class="bu bi-' + poll_score["icon"] + '-fill" style="color:' + poll_score["color"] + '"></i>'
+
+    return icon
