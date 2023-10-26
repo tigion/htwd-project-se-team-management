@@ -326,19 +326,24 @@ def teams(request):
 @permission_required("team.update_team")
 @permission_required("team.delete_team")
 def teams_generate(request):
+    settings = Settings.load()
+
     if request.method == "POST":
-        if not Project.objects.exists() or not Student.objects.exists() or Role.objects.count() < 2:
-            messages.error(
-                request,
-                # f"Achtung: Für die Teamgenerierung müssen mindestens ein Projekte ({ Project.objects.count() }), ein Student ({ Student.objects.count() }) und midestens zwei Rollen ({ Role.objects.count() }) vorhanden sein!",
-                format_html(
-                    'Achtung: Teamgenerierung fehlgeschlagen!<br /><ul class="mb-0"><li>es müssen mindestens ein Projekte ({}), ein Student ({}) und zwei Rollen ({}) vorhanden sein</li></ul>',
-                    Project.objects.count(),
-                    Student.objects.count(),
-                    Role.objects.count(),
-                ),
-            )
-            return redirect("teams")
+        # Check: Do not allow generation, if teams are visible
+        if not settings.teams_is_visible:
+            # Check: Needed data
+            if not Project.objects.exists() or not Student.objects.exists() or Role.objects.count() < 2:
+                messages.error(
+                    request,
+                    # f"Achtung: Für die Teamgenerierung müssen mindestens ein Projekte ({ Project.objects.count() }), ein Student ({ Student.objects.count() }) und midestens zwei Rollen ({ Role.objects.count() }) vorhanden sein!",
+                    format_html(
+                        'Achtung: Teamgenerierung fehlgeschlagen!<br /><ul class="mb-0"><li>es müssen mindestens ein Projekte ({}), ein Student ({}) und zwei Rollen ({}) vorhanden sein</li></ul>',
+                        Project.objects.count(),
+                        Student.objects.count(),
+                        Role.objects.count(),
+                    ),
+                )
+                return redirect("teams")
 
         generate_poll_data_for_students_without_poll()
         generate_teams()
