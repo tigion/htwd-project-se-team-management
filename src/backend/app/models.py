@@ -113,11 +113,20 @@ class Singleton(models.Model):
 
 
 class Settings(Singleton):
-    projects_is_visible = models.BooleanField(default=False)
-    poll_is_visible = models.BooleanField(default=False)
-    poll_is_writable = models.BooleanField(default=False)
-    teams_is_visible = models.BooleanField(default=False)
+    projects_is_visible = models.BooleanField(default=False, verbose_name="Projekte anzeigen")
+    poll_is_visible = models.BooleanField(default=False, verbose_name="Fragebogen anzeigen")
+    poll_is_writable = models.BooleanField(
+        default=False,
+        verbose_name="Fragebogen is ausfüllbar (schreibbar)",
+        help_text="Wenn aktiv, kann der Fragebogen beantwortet bzw. geändert und abgesendet werden."
+    )
+    teams_is_visible = models.BooleanField(
+        default=False,
+        verbose_name="Teams anzeigen",
+        help_text="Wenn aktiv, können keine Teams mehr generiert oder verändert werden!",
+    )
     team_min_member = models.IntegerField(
         default=6,
+        verbose_name="Mindestanzahl der Studenten je Team",
         validators=[MinValueValidator(1), MaxValueValidator(20)],
     )
