@@ -94,9 +94,11 @@ def student_home(request):
     context["teams"] = get_prepared_teams_for_view()
 
     if request.method == "POST" and is_student:
-        # save poll data
-        save_poll_data_to_db(student, request.POST, projects, roles)
-        return redirect("home")
+        # Check: Do only allow saving, if polls are writable
+        if settings.poll_is_writable:
+            # save poll data
+            save_poll_data_to_db(student, request.POST, projects, roles)
+            return redirect("home")
 
     # load poll data to context for prefilled form
     form_poll_data = load_poll_data_for_form(student, projects, roles)
