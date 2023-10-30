@@ -1,7 +1,7 @@
 from itertools import groupby
 from django.db.models import Sum
 from random import shuffle
-import datetime
+from django.utils import timezone
 
 from app.models import Project, Student, Role, Settings, Info
 from poll.models import Poll, ProjectAnswer, RoleAnswer
@@ -215,7 +215,7 @@ def save_teams(algo_result):
 
     # save update time
     values = {
-        "teams_last_update": datetime.datetime.now()
+        "teams_last_update": timezone.now()
     }
     Info.objects.update_or_create(defaults=values)
 

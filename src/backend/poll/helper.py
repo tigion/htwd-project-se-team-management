@@ -1,4 +1,4 @@
-import datetime
+from django.utils import timezone
 
 from django.db.models import Sum, Avg, Min, Max
 
@@ -72,7 +72,7 @@ def save_poll_data_to_db(student, POST, projects, roles):
 
     # save update time (TODO)DateTimeField
     values = {
-        "polls_last_update": datetime.datetime.now()
+        "polls_last_update": timezone.now()
     }
     Info.objects.update_or_create(defaults=values)
 
