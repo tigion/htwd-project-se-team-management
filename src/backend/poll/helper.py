@@ -1,6 +1,8 @@
+import datetime
+
 from django.db.models import Sum, Avg, Min, Max
 
-from app.models import Student, Project, Role
+from app.models import Student, Project, Role, Info
 from .models import POLL_SCORES, Poll, ProjectAnswer, RoleAnswer
 
 
@@ -67,6 +69,12 @@ def save_poll_data_to_db(student, POST, projects, roles):
             role=poll_data["role"][id]["role"],
             defaults=values,
         )
+
+    # save update time (TODO)DateTimeField
+    values = {
+        "polls_last_update": datetime.datetime.now()
+    }
+    Info.objects.update_or_create(defaults=values)
 
 
 def load_poll_data_for_form(student, projects, roles):

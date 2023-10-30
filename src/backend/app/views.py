@@ -18,7 +18,7 @@ from poll.helper import (
 from team.models import Team
 from team.helper import generate_teams, get_prepared_teams_for_view
 
-from .models import Project, Settings, Student, Role
+from .models import Project, Settings, Student, Role, Info
 from .forms import (
     ProjectForm,
     StudentForm,
@@ -312,10 +312,12 @@ def role_delete(request, id=None):
 @permission_required("team.view_team")
 def teams(request):
     settings = Settings.load()
+    info = Info.load()
 
     context = {}
     context["is_management_view"] = True
     context["settings"] = settings
+    context["info"] = info
     context["teams"] = get_prepared_teams_for_view()
 
     return render(request, "lecturer/teams.html", context)

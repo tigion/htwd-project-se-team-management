@@ -1,8 +1,9 @@
 from itertools import groupby
 from django.db.models import Sum
 from random import shuffle
+import datetime
 
-from app.models import Project, Student, Role, Settings
+from app.models import Project, Student, Role, Settings, Info
 from poll.models import Poll, ProjectAnswer, RoleAnswer
 from poll.helper import (
     get_poll_stats_for_student,
@@ -211,6 +212,12 @@ def save_teams(algo_result):
         teams.append(team)
 
     Team.objects.bulk_create(teams)
+
+    # save update time
+    values = {
+        "teams_last_update": datetime.datetime.now()
+    }
+    Info.objects.update_or_create(defaults=values)
 
 
 def generate_teams():

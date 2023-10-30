@@ -130,3 +130,8 @@ class Settings(Singleton):
         verbose_name="Mindestanzahl der Studenten je Team",
         validators=[MinValueValidator(1), MaxValueValidator(20)],
     )
+
+
+class Info(Singleton):
+    teams_last_update = models.DateTimeField(blank=True, null=True)
+    polls_last_update = models.DateTimeField(blank=True, null=True)
