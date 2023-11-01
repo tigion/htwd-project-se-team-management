@@ -243,6 +243,7 @@ def get_prepared_teams_for_view():
         data_set = {
             "project": Project.objects.get(id=project),
             "students": [],
+            "emails": [],
             "happiness": {},
         }
         happiness_total_score = 0
@@ -257,6 +258,7 @@ def get_prepared_teams_for_view():
                 "stats": get_poll_stats_for_student(team),
             }
             data_set["students"].append(student)
+            data_set["emails"].append(team.student.email)
             happiness_total_score = happiness_total_score + student["stats"]["happiness"]["total"]
             happiness_poll_total_score = happiness_poll_total_score + student["stats"]["happiness"]["poll"]["total"]
 

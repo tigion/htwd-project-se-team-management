@@ -77,6 +77,10 @@ class Student(models.Model):
         return f"{self.name} ({self.s_number})"
 
     @property
+    def email(self):
+        return f"{self.s_number}@htw-dresden.de"
+
+    @property
     def is_wing(self):
         return True if self.study_program == "072" else False
 

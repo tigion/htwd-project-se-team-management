@@ -6,7 +6,7 @@
         <div class="card-header text-break" style="min-height: 6.75em">
           <div>
             <span class="float-start"><i class="bi bi-people-fill me-1"></i> <strong>{{ team.project.pid }}</strong></span>
-            <span class="float-end text-muted small">{% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %} <i class="bi bi-person-fill ms-3 me-1"></i>{{ team.students|length }}</span><br>
+            <span class="float-end text-muted small"">{% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %} <i class="bi bi-person-fill ms-3 me-1"></i>{{ team.students|length }} <a href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope ms-3 text-muted"></i></a></span><br>
           </div>
           <div class="clearfix mt-1 lh-sm">
             <small>{{ team.project.name }}</small>
