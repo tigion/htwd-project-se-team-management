@@ -243,6 +243,7 @@ def get_prepared_teams_for_view():
         data_set = {
             "project": Project.objects.get(id=project),
             "students": [],
+            "student_active_count": 0,
             "emails": [],
             "happiness": {},
         }
@@ -250,15 +251,20 @@ def get_prepared_teams_for_view():
         happiness_poll_total_score = 0
         for team in teams:
             student = {
-                "student": team.student,
+                "name": team.student.name,
                 "role": team.role,
                 "is_project_leader": True if team.role.id == Role.objects.first().id else False,
                 "is_wing": team.student.is_wing,
+                "is_active": team.student.is_active,
+                "is_out": team.student.is_out,
                 "score": team.score,  # score from algorithm
                 "stats": get_poll_stats_for_student(team),
             }
             data_set["students"].append(student)
-            data_set["emails"].append(team.student.email)
+            # Use email and increase active count only for active students
+            if team.student.is_active:
+                data_set["emails"].append(team.student.email)
+                data_set["student_active_count"] += 1
             happiness_total_score = happiness_total_score + student["stats"]["happiness"]["total"]
             happiness_poll_total_score = happiness_poll_total_score + student["stats"]["happiness"]["poll"]["total"]
 

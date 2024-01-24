@@ -62,11 +62,12 @@ class Project(models.Model):
 
 
 class Student(models.Model):
-    s_number = models.CharField(max_length=8, unique=True)
+    s_number = models.CharField(max_length=8, unique=True, verbose_name="Matrikelnummer")
     # title = models.CharField(max_length=1, choices=TITLE_CHOICES)
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
-    study_program = models.CharField(max_length=3, choices=STUDY_PROGRAM_CHOICES)
+    first_name = models.CharField(max_length=255, verbose_name="Vorname")
+    last_name = models.CharField(max_length=255, verbose_name="Nachname")
+    study_program = models.CharField(max_length=3, choices=STUDY_PROGRAM_CHOICES, verbose_name="Studiengang")
+    is_active = models.BooleanField(default=True, verbose_name="Nimmt am Projekt teil")
 
     @property
     def name(self):
@@ -83,6 +84,10 @@ class Student(models.Model):
     @property
     def is_wing(self):
         return True if self.study_program == "072" else False
+
+    @property
+    def is_out(self):
+        return not self.is_active
 
     def __str__(self) -> str:
         return f"{self.name2}"
@@ -122,7 +127,7 @@ class Settings(Singleton):
     poll_is_writable = models.BooleanField(
         default=False,
         verbose_name="Fragebogen is ausfüllbar (schreibbar)",
-        help_text="Wenn aktiv, kann der Fragebogen beantwortet bzw. geändert und abgesendet werden."
+        help_text="Wenn aktiv, kann der Fragebogen beantwortet bzw. geändert und abgesendet werden.",
     )
     teams_is_visible = models.BooleanField(
         default=False,

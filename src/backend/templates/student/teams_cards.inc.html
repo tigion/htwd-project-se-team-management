@@ -6,7 +6,7 @@
         <div class="card-header text-break" style="min-height: 6.75em">
           <div>
             <span class="float-start"><i class="bi bi-people-fill me-1"></i> <strong>{{ team.project.pid }}</strong></span>
-            <span class="float-end text-muted small"">{% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %} <i class="bi bi-person-fill ms-3 me-1"></i>{{ team.students|length }} <a href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope ms-3 text-muted"></i></a></span><br>
+            <span class="float-end text-muted small"">{% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %} <i class="bi bi-person-fill ms-3 me-1"></i>{% if team.student_active_count != team.students|length %}{{ team.student_active_count }}/{% endif %}{{ team.students|length }} <a href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope ms-3 text-muted"></i></a></span><br>
           </div>
           <div class="clearfix mt-1 lh-sm">
             <small>{{ team.project.name }}</small>
@@ -14,9 +14,10 @@
         </div>
         <div class="card-body p-0">
           <ul class="list-group list-group-flush">
-          {% for student in team.students %}
+            {% for student in team.students %}
+            {% if student.is_active or is_management_view %}
             <li class="list-group-item text-break{% if student.is_project_leader %} fw-semibold{% endif %}">
-              <span class="text-truncate">{{ student.student.name }}</span>
+              <span class="text-truncate{% if student.is_out %} text-danger text-decoration-line-through{% endif %}">{{ student.name }}</span>
               {% if student.is_wing %}<span class="badge rounded-pill text-bg-secondary ms-1 float-end">WIng</span>{% endif %}
               {% if student.is_project_leader %}<span class="badge rounded-pill text-bg-primary ms-1 float-end">PL</span>{% endif %}
               {% if is_management_view %}
@@ -25,7 +26,8 @@
               </div>
               {% endif %}
             </li>
-          {% endfor %}
+            {% endif %}
+            {% endfor %}
           </ul>
         </div>
         <!-- <div class="card-footer text-center"></div> -->
