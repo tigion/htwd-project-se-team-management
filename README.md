@@ -45,16 +45,5 @@ More detailed instructions can be found at:
 
 ## Known bugs
 
-- **Python package**: ortools 9.7 (18.08.2023)
-  - `ModuleNotFoundError: No module named 'pandas'`
-  - Solution in comming 9.8 ([Source](https://github.com/google/or-tools/issues/3889))
-  - [workaround]:
-    - Use Version 9.6.2534 in requirements.txt: `ortools==9.6.2534`
-
-- **Python package**: django 4.2.5 (14.09.2023)
-  - `CommandError: You must use --email with --noinput.`
-  - The `createsuperuser --noinput` command does not accept an empty email.
-    - `python manage.py createsuperuser --noinput`
-  - It is fixed in the main branch, but not released yet. ([Source](https://code.djangoproject.com/ticket/34542))
-  - [workaround]:
-    - `python manage.py createsuperuser --noinput --email "no@need.email"`
+- [Issue #1](https://github.com/tigion/htwd-project-se-team-management/issues/1): ModuleNotFoundError: No module named 'pandas' (18.08.2023)
+- [Issue #2](https://github.com/tigion/htwd-project-se-team-management/issues/2): CommandError: You must use --email with --noinput (14.09.2023)
