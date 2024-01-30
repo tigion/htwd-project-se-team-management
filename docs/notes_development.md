@@ -105,7 +105,7 @@ python3 manage.py collectstatic
 3. Test the project
 4. Freeze (working) pip package versions:
     ```sh
-    pip freeze -l > requirments.freeze.txt
+    pip freeze -l > requirements.freeze.txt
     ```
 
 > [!WARNING]
