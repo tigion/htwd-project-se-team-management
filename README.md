@@ -45,5 +45,5 @@ More detailed instructions can be found at:
 
 ## Known bugs
 
-- [Issue #2](https://github.com/tigion/htwd-project-se-team-management/issues/2): ModuleNotFoundError: No module named 'pandas' (18.08.2023)
-- [Issue #3](https://github.com/tigion/htwd-project-se-team-management/issues/3): CommandError: You must use --email with --noinput (14.09.2023)
+- ~~[Issue #2](https://github.com/tigion/htwd-project-se-team-management/issues/2): ModuleNotFoundError: No module named 'pandas' (18.08.2023)~~
+- ~~[Issue #3](https://github.com/tigion/htwd-project-se-team-management/issues/3): CommandError: You must use --email with --noinput (14.09.2023)~~
