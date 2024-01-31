@@ -29,18 +29,29 @@ STUDY_PROGRAM_CHOICES = [
 
 
 class Project(models.Model):
-    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=TYPE_CHOICES[0])
+    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=TYPE_CHOICES[0], verbose_name="Art")
     number = models.IntegerField(
         verbose_name="Nummer",
-        help_text="Type und Nummer ergeben eine eindeutige ProjektID (bspw. I4, E2)",
+        help_text="Art und Nummer ergeben eine eindeutige Projekt-ID (bspw. I4, E2)",
     )
     # pid2 = models.CharField(max_length=3, unique=True)
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
-    technologies = models.CharField(max_length=255, blank=True, null=True)
-    company = models.CharField(max_length=255, blank=True, null=True)
-    contact = models.CharField(max_length=255, blank=True, null=True)
-    url = models.URLField(blank=True, null=True)
+    name = models.CharField(max_length=255, verbose_name="Name")
+    description = models.TextField(blank=True, null=True, verbose_name="Beschreibung")
+    technologies = models.CharField(max_length=255, blank=True, null=True, verbose_name="Technologien")
+    company = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Auftraggeber",
+        help_text="Name der Firma, des Verein oder der Hochschule mit Fakultät",
+    )
+    contact = models.CharField(max_length=255, blank=True, null=True, verbose_name="Kontakt")
+    url = models.URLField(
+        blank=True,
+        null=True,
+        verbose_name="Link zu weiteren Informationen",
+        help_text="PDF-Link zu den Projektbescheibungen in Opal",
+    )
 
     class Meta:
         unique_together = ["type", "number"]
@@ -67,7 +78,11 @@ class Student(models.Model):
     first_name = models.CharField(max_length=255, verbose_name="Vorname")
     last_name = models.CharField(max_length=255, verbose_name="Nachname")
     study_program = models.CharField(max_length=3, choices=STUDY_PROGRAM_CHOICES, verbose_name="Studiengang")
-    is_active = models.BooleanField(default=True, verbose_name="Nimmt am Projekt teil")
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Nimmt am Projekt teil",
+        help_text="Für Studenten die nicht mehr am Projekt teilnehmen, ist diese Option zu deaktivieren.",
+    )
 
     @property
     def name(self):
@@ -94,7 +109,7 @@ class Student(models.Model):
 
 
 class Role(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True, verbose_name="Name")
 
     def __str__(self) -> str:
         return f"{self.name}"
@@ -122,17 +137,25 @@ class Singleton(models.Model):
 
 
 class Settings(Singleton):
-    projects_is_visible = models.BooleanField(default=False, verbose_name="Projekte anzeigen")
-    poll_is_visible = models.BooleanField(default=False, verbose_name="Fragebogen anzeigen")
+    projects_is_visible = models.BooleanField(
+        default=False,
+        verbose_name="Projekte anzeigen",
+        help_text="Wenn aktiv, sind die Projekte für die Studenten sichtbar.",
+    )
+    poll_is_visible = models.BooleanField(
+        default=False,
+        verbose_name="Fragebogen anzeigen",
+        help_text="Wenn aktiv, ist der Fragebogen für die Studenten sichtbar.",
+    )
     poll_is_writable = models.BooleanField(
         default=False,
         verbose_name="Fragebogen is ausfüllbar (schreibbar)",
-        help_text="Wenn aktiv, kann der Fragebogen beantwortet bzw. geändert und abgesendet werden.",
+        help_text="Wenn aktiv, kann der Fragebogen von den Studenten beantwortet bzw. geändert und abgesendet werden.",
     )
     teams_is_visible = models.BooleanField(
         default=False,
         verbose_name="Teams anzeigen",
-        help_text="Wenn aktiv, können keine Teams mehr generiert oder verändert werden!",
+        help_text="Wenn aktiv, sind die Teams für die Studenten sichtbar. Solange die Teams sichtbar sind, können keine Teams generiert oder verändert werden!",
     )
     team_min_member = models.IntegerField(
         default=6,
@@ -142,5 +165,13 @@ class Settings(Singleton):
 
 
 class Info(Singleton):
-    teams_last_update = models.DateTimeField(blank=True, null=True)
-    polls_last_update = models.DateTimeField(blank=True, null=True)
+    teams_last_update = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="Zeitpunkt der letzten Teamänderung",
+    )
+    polls_last_update = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="Zeitpunkt der letzten Umfrageänderung",
+    )
