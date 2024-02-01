@@ -57,7 +57,7 @@
 
 <div class="container my-5">
 <h3>Importieren</h3>
-<form method="post" class="form" enctype="multipart/form-data">
+<form id="formImportStudents" method="post" class="form" enctype="multipart/form-data">
   {% csrf_token %}
   {% bootstrap_form UploadStudentsForm %}
   <button id="buttonImportStudents" class="btn {% if students %}btn-warning{% else %}btn-success{% endif %}" type="submit"><i class="bi bi-file-earmark-arrow-up me-2"></i>Importieren</button>
@@ -79,6 +79,12 @@ document.querySelector('#buttonImportStudents').addEventListener('click', (e) =>
     span2.setAttribute('role', 'status')
     span2.textContent = 'Importing...'
     e.target.getElementsByTagName('i')[0].replaceWith(span1, span2)
+
+    // Workaround to trigger submit
+    window.setTimeout(() => {
+      var form = document.getElementById('formImportStudents');
+      form.submit();
+    }, 500);
   }
 })
 </script>

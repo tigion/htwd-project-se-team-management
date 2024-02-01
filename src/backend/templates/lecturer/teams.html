@@ -62,7 +62,7 @@ document.querySelector('#buttonGenerateTeams').addEventListener('click', async (
   e.target.disabled = true  // buttonGenerateTeams
   document.querySelector('#buttonDeleteTeams').disabled = true // buttonDeleteTeams
 
-  // Workaround for safari browser
+  // Workaround to trigger submit in some browsers
   window.setTimeout(() => {
     var form = document.getElementById('formGenerateTeams');
     form.submit();
