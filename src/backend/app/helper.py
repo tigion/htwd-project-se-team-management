@@ -1,5 +1,6 @@
 import csv
 import io
+import re
 
 from django.db.models import Count
 
@@ -25,17 +26,43 @@ def load_students_from_file(file, mode):
     data_set = file.read().decode("UTF-8")
     io_string = io.StringIO(data_set)
     next(io_string)
-    for col in csv.reader(io_string, delimiter=",", quotechar="|"):
-        # TODO: check/regex
-        # - s_number s + 5 digits (perhaps longer for guest students)
-        s_number = col[2][0:6]
-        first_name = col[0]
-        last_name = col[1]
-        study_program = col[3][3:6]
 
+    # parse data and ignore invalid students
+    for col in csv.reader(io_string, delimiter=",", quotechar="|"):
+        # s-number
+        # - format: type + number
+        #   - type: 's' (student) or 'gs' (guest student)
+        #   - number: 1-9 digits
+        # - source: 's00000@domain.com' -> 's00000'
+        p = re.compile("^g?s[0-9]{1,9}@")
+        if not p.match(col[2]):
+            continue
+        s_number = col[2].partition("@")[0].strip()  # part befor mail domain
+
+        # firstname
+        first_name = col[0].strip()
+        if not first_name:
+            continue
+
+        # lastname
+        last_name = col[1].strip()
+        if not last_name:
+            continue
+
+        # study program
+        # - format: 3 digits '000'
+        # - source: '21-041-01' -> '041'
+        # TODO: limit to 041, 042, 048, 072 from STUDY_PROGRAM_CHOICES (app/models.py)
+        p = re.compile("^[0-9]{2}-[0-9]{3}-[0-9]{2}$")
+        if not p.match(col[3]):
+            continue
+        study_program = col[3].split("-")[1].strip()  # middle part between '-'
+
+        # ignore existing students
         if Student.objects.filter(s_number=s_number).exists():
             continue
 
+        # save new student
         values = {
             "first_name": first_name,
             "last_name": last_name,
