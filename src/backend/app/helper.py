@@ -4,7 +4,7 @@ import re
 
 from django.db.models import Count
 
-
+from app.models import STUDY_PROGRAM_CHOICES
 from poll.models import Poll, ProjectAnswer, RoleAnswer
 from poll.helper import get_project_ids_with_score_ordered
 from team.models import Team
@@ -23,6 +23,10 @@ def load_students_from_file(file, mode):
     if mode == "new":
         Student.objects.all().delete()
 
+    # get study program ids
+    study_program_ids = [sp[0] for sp in STUDY_PROGRAM_CHOICES]
+
+    # read file data
     data_set = file.read().decode("UTF-8")
     io_string = io.StringIO(data_set)
     next(io_string)
@@ -52,11 +56,13 @@ def load_students_from_file(file, mode):
         # study program
         # - format: 3 digits '000'
         # - source: '21-041-01' -> '041'
-        # TODO: limit to 041, 042, 048, 072 from STUDY_PROGRAM_CHOICES (app/models.py)
         p = re.compile("^[0-9]{2}-[0-9]{3}-[0-9]{2}$")
         if not p.match(col[3]):
             continue
         study_program = col[3].split("-")[1].strip()  # middle part between '-'
+        # limit to ids from STUDY_PROGRAM_CHOICES (app/models.py)
+        if study_program not in study_program_ids:
+            continue
 
         # ignore existing students
         if Student.objects.filter(s_number=s_number).exists():
