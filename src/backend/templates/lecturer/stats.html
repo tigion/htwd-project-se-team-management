@@ -77,4 +77,28 @@
   </table>
 </div>
 
+<div class="container my-5">
+  <h3>Beliebtheit Rollen</h3>
+  <table class="table align-middle">
+    <thead>
+      <tr class="">
+        <th class="text-center" scope="col">Score</th>
+        <th class="text-center" scope="col">⌀</th>
+        <th class="" scope="col">Name</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for role in stats.roles %}
+      <tr class="">
+        <td class="text-center {{ role.color }}"><strong>{{ role.score }}</strong></td>
+        <td class="text-center text-secondary"><small>{{ role.score_avg|stringformat:".2f" }}</small></td>
+        <td class="">
+          {{ role.name }}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
 {% endblock content %}

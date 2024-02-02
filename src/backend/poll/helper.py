@@ -135,6 +135,14 @@ def get_project_ids_with_score_ordered():
     )
 
 
+def get_role_ids_with_score_ordered():
+    return (
+        RoleAnswer.objects.values("role")
+        .annotate(total_score=Sum("score"), avg_score=Avg("score"))
+        .order_by("-total_score")
+    )
+
+
 def get_poll_stats_for_student(team):
     student_id = team.student.id
     project_id = team.project.id

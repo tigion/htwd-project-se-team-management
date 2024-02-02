@@ -5,7 +5,7 @@ import re
 from django.db.models import Count
 
 from poll.models import Poll, ProjectAnswer, RoleAnswer
-from poll.helper import get_project_ids_with_score_ordered
+from poll.helper import get_project_ids_with_score_ordered, get_role_ids_with_score_ordered
 from team.models import Team
 
 from .models import STUDY_PROGRAM_CHOICES, Project, Settings, Student, Role
@@ -183,5 +183,23 @@ def get_prepared_stats_for_view():
         )
 
     stats["projects"] = projects
+
+    role_ids = get_role_ids_with_score_ordered()
+    roles = []
+    for role_id in role_ids:
+        score = role_id["total_score"]
+        score_avg = role_id["avg_score"]
+        role = Role.objects.get(id=role_id["role"])
+        color = "text-primary"
+        roles.append(
+            {
+                "name": role.name,
+                "score": score,
+                "score_avg": score_avg,
+                "color": color,
+            }
+        )
+
+    stats["roles"] = roles
 
     return stats
