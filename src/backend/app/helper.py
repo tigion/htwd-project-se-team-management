@@ -109,6 +109,7 @@ def get_prepared_stats_for_view():
 
     project_count = Project.objects.count()
     student_count = Student.objects.count()
+    student_out_count = Student.objects.filter(is_active=False).count()
     student_counts = Student.objects.values("study_program").annotate(total=Count("id"))
     role_count = Role.objects.count()
     team_count = Team.objects.values_list("project").distinct().count()
@@ -121,6 +122,7 @@ def get_prepared_stats_for_view():
         "project": project_count,
         "project_used": project_used_count,
         "student": student_count,
+        "student_out": student_out_count,
         "study_programs": student_counts,
         "role": role_count,
         "team": team_count,
