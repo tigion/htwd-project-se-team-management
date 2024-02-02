@@ -4,12 +4,11 @@ import re
 
 from django.db.models import Count
 
-from app.models import STUDY_PROGRAM_CHOICES
 from poll.models import Poll, ProjectAnswer, RoleAnswer
 from poll.helper import get_project_ids_with_score_ordered
 from team.models import Team
 
-from .models import Project, Settings, Student, Role
+from .models import STUDY_PROGRAM_CHOICES, Project, Settings, Student, Role
 
 
 # Opal export:
