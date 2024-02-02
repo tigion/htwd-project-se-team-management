@@ -81,10 +81,10 @@
   <h3>Beliebtheit Rollen</h3>
   <table class="table w-auto align-middle">
     <thead>
-      <tr class="">
+      <tr>
         <th class="text-center" scope="col">Score</th>
         <th class="text-center" scope="col">⌀</th>
-        <th class="" scope="col">Name</th>
+        <th scope="col">Name</th>
       </tr>
     </thead>
     <tbody>
@@ -92,7 +92,7 @@
       <tr class="">
         <td class="text-center {{ role.color }}"><strong>{{ role.score }}</strong></td>
         <td class="text-center text-secondary"><small>{{ role.score_avg|stringformat:".2f" }}</small></td>
-        <td class="">
+        <td>
           {{ role.name }}
         </td>
       </tr>
