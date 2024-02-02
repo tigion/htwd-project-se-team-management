@@ -80,7 +80,7 @@ document.querySelector('#buttonImportStudents').addEventListener('click', (e) =>
     span2.textContent = 'Importing...'
     e.target.getElementsByTagName('i')[0].replaceWith(span1, span2)
 
-    // Workaround to trigger submit
+    // Workaround to trigger submit in some browsers
     window.setTimeout(() => {
       var form = document.getElementById('formImportStudents');
       form.submit();
