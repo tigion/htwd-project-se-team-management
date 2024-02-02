@@ -1,6 +1,7 @@
 import csv
-import io
 import re
+
+from io import StringIO
 
 from django.db.models import Count
 
@@ -27,7 +28,7 @@ def load_students_from_file(file, mode):
 
     # read file data
     data_set = file.read().decode("UTF-8")
-    io_string = io.StringIO(data_set)
+    io_string = StringIO(data_set)
     next(io_string)
 
     # parse data and ignore invalid students

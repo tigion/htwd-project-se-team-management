@@ -42,6 +42,12 @@
         </div>
       </form>
     </div>
+    <div class="ms-3 bd-highlight">
+      <form action="{% url 'teams-print' %}" method="POST">
+        {% csrf_token %}
+        <button id="buttonPrintTeams" class="btn btn-light" type="submit" {% if not teams %} disabled{% endif %}><i class="bi bi-filetype-pdf me-2"></i>Teams herunterladen</button>
+      </form>
+    </div>
   </div>
   <div class="text-muted small">Letzte Teamgenerierung: <strong>{{ info.teams_last_update }}</strong><br />Letzte Fragebogenänderung: <strong>{{ info.polls_last_update }}</strong></div>
 </div>

@@ -4,6 +4,7 @@ django-bootstrap5
 python-dotenv
 ortools
 gunicorn
+reportlab
 
 # development
 # prevent linter warnings (pyright)

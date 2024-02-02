@@ -1,7 +1,10 @@
+from datetime import datetime
+
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.db.models import ProtectedError
 from django.utils.html import format_html
+from django.http import FileResponse
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -32,6 +35,7 @@ from .helper import (
     reset_data,
     get_prepared_stats_for_view,
 )
+from .pdf import generate_teams_pdf
 
 import logging
 
@@ -360,6 +364,19 @@ def teams_generate(request):
 def teams_delete(request):
     if request.method == "POST":
         Team.objects.all().delete()
+
+    return redirect("teams")
+
+
+@login_required()
+@permission_required("team.view_team")
+def teams_print(request):
+    if request.method == "POST":
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        filename = f"teams_{timestamp}.pdf"
+        response = FileResponse(generate_teams_pdf(), as_attachment=True, filename=filename)
+
+        return response
 
     return redirect("teams")
 
