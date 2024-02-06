@@ -1,15 +1,16 @@
 from datetime import datetime
 
-from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
+from django.core.files import File
 from django.db.models import ProtectedError
-from django.utils.html import format_html
 from django.http import FileResponse
+from django.shortcuts import get_object_or_404, render, redirect
+from django.utils.html import format_html
 
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User
 
 from poll.models import POLL_SCORES
 from poll.helper import (
@@ -432,3 +433,36 @@ def settings_reset(request):
         return redirect("home")
 
     return redirect("settings")
+
+
+@login_required()
+@permission_required("app.view_settings")
+def settings_backup(request):
+    if request.method != "POST":
+        return redirect("settings")
+
+    from django.conf import settings
+
+    # check if database is SQLite
+    db_engine = settings.DATABASES["default"]["ENGINE"]
+    if db_engine != "django.db.backends.sqlite3":
+        messages.error(request, "Download des Datenbank-Backups ist aktuell nur für SQLite möglich!")
+        return redirect("settings")
+
+    # set backup file name
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    filename = f"db_backup_{timestamp}.sqlite3"
+
+    # open database file
+    db_file = File(open(settings.DATABASES["default"]["NAME"], "rb"))
+
+    # variant 1: FileResponse
+    # content type (application/vnd.sqlite3) and length are set automatically
+    response = FileResponse(db_file, as_attachment=True, filename=filename)
+
+    # variant 2: HttpResponse
+    # response = HttpResponse(db_file, content_type="application/x-sqlite3")
+    # response["Content-Disposition"] = f"attachment; filename={filename}"
+    # response["Content-Length"] = db_file.size
+
+    return response

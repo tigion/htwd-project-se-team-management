@@ -45,7 +45,11 @@
 
 <div class="container my-5">
   <h2>Backup</h2>
-  ...
+  <p>Ein Backup der SQLite-Datenbank kann als Datei heruntergeladen werden.</p>
+  <form action="{% url 'backup' %}" method="POST">
+    {% csrf_token %}
+    <button class="btn btn-light" type="submit"><i class="bi bi-database-down me-2"></i>Datenbank herunterladen</button>
+  </form>
 </div>
 
 {% endblock content %}
