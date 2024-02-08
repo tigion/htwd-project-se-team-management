@@ -6,7 +6,7 @@
         <div class="card-header text-break" style="min-height: 6.75em">
           <div>
             <span class="float-start"><i class="bi bi-people-fill me-1"></i> <strong>{{ team.project.pid }}</strong></span>
-            <span class="float-end text-muted small"">{% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %} <i class="bi bi-person-fill ms-3 me-1"></i>{% if team.student_active_count != team.students|length %}{{ team.student_active_count }}/{% endif %}{{ team.students|length }} <a href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope ms-3 text-muted"></i></a></span><br>
+            <span class="float-end text-muted small">{% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %} <i class="bi bi-person-fill ms-3 me-1"></i>{% if team.student_active_count != team.students|length %}{{ team.student_active_count }}/{% endif %}{{ team.students|length }} <a href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope ms-3 text-muted"></i></a></span><br>
           </div>
           <div class="clearfix mt-1 lh-sm">
             <small>{{ team.project.name }}</small>
@@ -16,12 +16,18 @@
           <ul class="list-group list-group-flush">
             {% for student in team.students %}
             {% if student.is_active or is_management_view %}
-            <li class="list-group-item text-break{% if student.is_project_leader %} fw-semibold{% endif %}">
-              <span class="text-truncate{% if student.is_out %} text-danger text-decoration-line-through{% endif %}">{{ student.name }}</span>
-              {% if student.is_wing %}<span class="badge rounded-pill text-bg-secondary ms-1 float-end">WIng</span>{% endif %}
-              {% if student.is_project_leader %}<span class="badge rounded-pill text-bg-primary ms-1 float-end">PL</span>{% endif %}
+            <li class="list-group-item text-break">
+              <div class="d-flex">
+                <div class="{% if student.is_project_leader %} fw-semibold{% endif %}{% if student.is_out %} text-danger text-decoration-line-through{% endif %}">
+                  {{ student.name }}
+                </div>
+                <div class="ms-auto flex-shrink-0">
+                  {% if student.is_project_leader %}<span class="badge rounded-pill text-bg-primary ms-1">PL</span>{% endif %}
+                  {% if student.is_wing %}<span class="badge rounded-pill text-bg-secondary ms-0">WIng</span>{% endif %}
+                </div>
               {% if is_management_view %}
-              <div class="fw-normal text-muted" style="font-size: .6em;">
+              </div>
+              <div class="fw-normal text-muted mt-1" style="font-size: .6em;">
                 <span title="Happiness Score">{{ student.stats.summary | safe }}</span>
               </div>
               {% endif %}
