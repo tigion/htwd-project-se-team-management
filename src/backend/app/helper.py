@@ -206,3 +206,14 @@ def get_prepared_stats_for_view():
     stats["roles"] = roles
 
     return stats
+
+
+def get_object_counts():
+    counts = {
+        "project": Project.objects.count(),
+        "student": Student.objects.count(),
+        "role": Role.objects.count(),
+        "team": Team.objects.values_list("project").distinct().count(),
+    }
+
+    return counts

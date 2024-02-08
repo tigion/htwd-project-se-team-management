@@ -57,17 +57,43 @@
           Verwaltung
         </a>
         <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-          <li><a class="dropdown-item" href="/settings"><i class="bi bi-sliders"></i> Einstellungen</a></li>
+          <li>
+            <a class="dropdown-item" href="/settings"><i class="bi bi-sliders"></i> Einstellungen</a>
+          </li>
           <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" href="/projects"><i class="bi bi-box me-1"></i> Projekte</a></li>
-          <li><a class="dropdown-item" href="/students"><i class="bi bi-person-fill me-1"></i> Studenten</a></li>
-          <li><a class="dropdown-item" href="/roles"><i class="bi bi-person me-1"></i> Rollen</a></li>
+          <li>
+            <a class="dropdown-item d-flex" href="/projects">
+              <div class="me-auto"><i class="bi bi-box me-1"></i> Projekte</div>
+              <div><span class="badge text-bg-light rounded-pill ms-3">{{ COUNTS.project }}</span></div>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item d-flex" href="/students">
+              <div class="me-auto"><i class="bi bi-person-fill me-1"></i> Studenten</div>
+              <div><span class="badge text-bg-light rounded-pill ms-3">{{ COUNTS.student }}</span></div>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item d-flex" href="/roles">
+              <div class="me-auto"><i class="bi bi-person me-1"></i> Rollen</div>
+              <div><span class="badge text-bg-light rounded-pill ms-3">{{ COUNTS.role }}</span></div>
+            </a>
+          </li>
           <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" href="/teams"><i class="bi bi-people-fill me-1"></i> Teams</a></li>
+          <li>
+            <a class="dropdown-item d-flex" href="/teams">
+              <div class="me-auto"><i class="bi bi-people-fill me-1"></i> Teams</div>
+              <div><span class="badge text-bg-light rounded-pill ms-3">{{ COUNTS.team }}</span></div>
+            </a>
+          </li>
           <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" href="/stats"><i class="bi bi-bar-chart me-1"></i> Statistiken</a></li>
+          <li>
+            <a class="dropdown-item" href="/stats"><i class="bi bi-bar-chart me-1"></i> Statistiken</a>
+          </li>
           <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" href="/admin"><i class="bi bi-database-exclamation me-1"></i> Django Admin</a></li>
+          <li>
+            <a class="dropdown-item" href="/admin"><i class="bi bi-database-exclamation me-1"></i> Django Admin</a>
+          </li>
         </ul>
       </div>
       {% endif %}
