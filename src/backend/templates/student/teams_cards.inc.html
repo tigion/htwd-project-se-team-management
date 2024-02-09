@@ -15,10 +15,10 @@
         <div class="card-body p-0">
           <ul class="list-group list-group-flush">
             {% for student in team.students %}
-            {% if student.is_active or is_management_view %}
+            {% if student.is_visible or is_management_view %}
             <li class="list-group-item text-break">
               <div class="d-flex">
-                <div class="{% if student.is_project_leader %} fw-semibold{% endif %}{% if student.is_out %} text-danger text-decoration-line-through{% endif %}">
+                <div class="{{ student.css_classes|join:' ' }}">
                   {{ student.name }}
                 </div>
                 <div class="ms-auto flex-shrink-0">

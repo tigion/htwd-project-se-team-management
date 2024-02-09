@@ -214,9 +214,7 @@ def save_teams(algo_result):
     Team.objects.bulk_create(teams)
 
     # save update time
-    values = {
-        "teams_last_update": timezone.now()
-    }
+    values = {"teams_last_update": timezone.now()}
     Info.objects.update_or_create(defaults=values)
 
 
@@ -234,12 +232,11 @@ def generate_teams():
 
 
 def get_prepared_teams_for_view():
+    settings = Settings.load()
     data = []
 
     projects = Project.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
-
     for project in projects:
-        teams = Team.objects.filter(project=project)
         data_set = {
             "project": Project.objects.get(id=project),
             "students": [],
@@ -249,6 +246,8 @@ def get_prepared_teams_for_view():
         }
         happiness_total_score = 0
         happiness_poll_total_score = 0
+
+        teams = Team.objects.filter(project=project)
         for team in teams:
             student = {
                 "name": team.student.name,
@@ -259,26 +258,48 @@ def get_prepared_teams_for_view():
                 "is_out": team.student.is_out,
                 "score": team.score,  # score from algorithm
                 "stats": get_poll_stats_for_student(team),
+                "is_visible": False if team.student.is_out or team.student.is_wing and settings.wings_are_out else True,
+                "css_classes": [],
             }
-            data_set["students"].append(student)
-            # Use email and increase active count only for active students
-            if team.student.is_active:
+
+            # set css classes
+            if student["is_project_leader"]:
+                student["css_classes"].append("fw-semibold")
+            if not student["is_visible"]:
+                student["css_classes"].append("text-decoration-line-through")
+            if student["is_out"]:
+                student["css_classes"].append("text-danger")
+            elif not student["is_visible"]:
+                student["css_classes"].append("text-secondary")
+
+            # add email and increase active count only for active (visible) students
+            if student["is_visible"]:
                 data_set["emails"].append(team.student.email)
                 data_set["student_active_count"] += 1
+
+            # add student
+            data_set["students"].append(student)
+
+            # summarize student happiness scores
             happiness_total_score = happiness_total_score + student["stats"]["happiness"]["total"]
             happiness_poll_total_score = happiness_poll_total_score + student["stats"]["happiness"]["poll"]["total"]
 
+        # set student count in team
         student_count = len(data_set["students"])
+
+        # average team happiness scores
         happiness_total_score = round(happiness_total_score / student_count, 2)
         happiness_poll_total_score = round(happiness_poll_total_score / student_count, 2)
 
         # Set happiness icon
         happiness_total_icon = get_happiness_icon(happiness_total_score)
 
+        # add happiness summary
         data_set["happiness"] = {
             "summary": f"{happiness_total_icon} <strong>{happiness_total_score}</strong> ({happiness_poll_total_score})"
         }
 
+        # add data per team
         data.append(data_set)
 
     return data

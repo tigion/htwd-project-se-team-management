@@ -162,6 +162,11 @@ class Settings(Singleton):
         verbose_name="Mindestanzahl der Studenten je Team",
         validators=[MinValueValidator(1), MaxValueValidator(20)],
     )
+    wings_are_out = models.BooleanField(
+        default=False,
+        verbose_name="Wings für SE II in den Teams ausblenden",
+        help_text="Wenn aktiv, werden die Wirtschaftsingenieure (Wings) für Software Engineering II in den Teams nicht mehr angezeigt. Sie nehmen nur an SE I teil.",
+    )
 
 
 class Info(Singleton):
