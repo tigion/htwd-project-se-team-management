@@ -71,9 +71,7 @@ def save_poll_data_to_db(student, POST, projects, roles):
         )
 
     # save update time (TODO)DateTimeField
-    values = {
-        "polls_last_update": timezone.now()
-    }
+    values = {"polls_last_update": timezone.now()}
     Info.objects.update_or_create(defaults=values)
 
 
@@ -148,22 +146,36 @@ def get_poll_stats_for_student(team):
     project_id = team.project.id
     role_id = team.role.id
 
-    # TODO:
-    # - check if poll or answers exist
-    poll = Poll.objects.get(student=student_id)
+    # check if poll exisist
+    if Poll.objects.filter(student=student_id).exists():
+        poll = Poll.objects.get(student=student_id)
 
-    # extract stats
-    project_score = ProjectAnswer.objects.get(poll=poll, project=project_id).score
-    project_score_sum = ProjectAnswer.objects.filter(poll=poll).aggregate(Sum("score"))["score__sum"]
-    project_score_avg = ProjectAnswer.objects.filter(poll=poll).aggregate(Avg("score"))["score__avg"]
-    project_score_min = ProjectAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
-    project_score_max = ProjectAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
+        # extract stats
+        project_score = ProjectAnswer.objects.get(poll=poll, project=project_id).score
+        project_score_sum = ProjectAnswer.objects.filter(poll=poll).aggregate(Sum("score"))["score__sum"]
+        project_score_avg = ProjectAnswer.objects.filter(poll=poll).aggregate(Avg("score"))["score__avg"]
+        project_score_min = ProjectAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
+        project_score_max = ProjectAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
 
-    role_score = RoleAnswer.objects.get(poll=poll, role=role_id).score
-    role_score_sum = RoleAnswer.objects.filter(poll=poll).aggregate(Sum("score"))["score__sum"]
-    role_score_avg = RoleAnswer.objects.filter(poll=poll).aggregate(Avg("score"))["score__avg"]
-    role_score_min = RoleAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
-    role_score_max = RoleAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
+        role_score = RoleAnswer.objects.get(poll=poll, role=role_id).score
+        role_score_sum = RoleAnswer.objects.filter(poll=poll).aggregate(Sum("score"))["score__sum"]
+        role_score_avg = RoleAnswer.objects.filter(poll=poll).aggregate(Avg("score"))["score__avg"]
+        role_score_min = RoleAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
+        role_score_max = RoleAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
+    else:
+        default_score = POLL_SCORES["default"]
+
+        project_score = default_score
+        project_score_sum = default_score
+        project_score_avg = default_score
+        project_score_min = default_score
+        project_score_max = default_score
+
+        role_score = default_score
+        role_score_sum = default_score
+        role_score_avg = default_score
+        role_score_min = default_score
+        role_score_max = default_score
 
     # prepare result
     poll_stats = {
