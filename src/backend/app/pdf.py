@@ -23,13 +23,11 @@ def generate_teams_pdf():
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name="project_name", fontSize=8))
     styles.add(ParagraphStyle(name="student_name", fontSize=9))
-    team_table_style = TableStyle(
-        [
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-            ("ROUNDEDCORNERS", [3, 3, 3, 3]),
-            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgoldenrodyellow),
-        ]
-    )
+    team_table_style = TableStyle([
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("ROUNDEDCORNERS", [3, 3, 3, 3]),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgoldenrodyellow),
+    ])
 
     # create and draw header
     title = "Teams"
@@ -58,12 +56,14 @@ def generate_teams_pdf():
         # add students as next rows
         for student in team["students"]:
             student_name = student["name"]
+            styles["student_name"].textColor = "#000000"
             if student["is_project_leader"]:
                 student_name = f"<b>{student_name}</b> <i>(PL)</i>"
             if student["is_wing"]:
                 student_name = f"{student_name} <i>(Wing)</i>"
-            if student["is_out"]:
+            if student["is_out"] or not student["is_visible"]:
                 student_name = f"<strike>{student_name}</strike>"
+                styles["student_name"].textColor = "#dc3545" if student["is_out"] else "#6c757d"
             data.append([Paragraph(student_name, styles["student_name"])])
 
         # create table
