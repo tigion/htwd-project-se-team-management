@@ -2,8 +2,10 @@ from django.utils import timezone
 
 from django.db.models import Sum, Avg, Min, Max
 
-from app.models import Student, Project, Role, Info
-from .models import POLL_SCORES, Poll, ProjectAnswer, RoleAnswer
+# from app.models import Student, Project, Role, Info
+from app.models import Student, Project, Info
+from .models import POLL_SCORES, Poll, ProjectAnswer
+# from .models import POLL_SCORES, Poll, ProjectAnswer, RoleAnswer
 
 
 def prepare_poll_data_from_post(student, POST, projects, roles):
@@ -59,40 +61,42 @@ def save_poll_data_to_db(student, POST, projects, roles):
             defaults=values,
         )
 
-    # save role answers
-    for id in poll_data["role"]:
-        values = {
-            "score": poll_data["role"][id]["score"],
-        }
-        RoleAnswer.objects.update_or_create(
-            poll=poll,
-            role=poll_data["role"][id]["role"],
-            defaults=values,
-        )
+    # # save role answers
+    # for id in poll_data["role"]:
+    #     values = {
+    #         "score": poll_data["role"][id]["score"],
+    #     }
+    #     RoleAnswer.objects.update_or_create(
+    #         poll=poll,
+    #         role=poll_data["role"][id]["role"],
+    #         defaults=values,
+    #     )
 
     # save update time (TODO)DateTimeField
     values = {"polls_last_update": timezone.now()}
     Info.objects.update_or_create(defaults=values)
 
 
-def load_poll_data_for_form(student, projects, roles):
-    poll_data = {"projects": [], "roles": []}
+# def load_poll_data_for_form(student, projects, roles):
+def load_poll_data_for_form(student, projects):
+    poll_data = {"projects": []}
+    # poll_data = {"projects": [], "roles": []}
 
     poll = Poll.objects.filter(student=student).first()
 
     if poll:
         project_answers = ProjectAnswer.objects.filter(poll=poll)
-        role_answers = RoleAnswer.objects.filter(poll=poll)
+        # role_answers = RoleAnswer.objects.filter(poll=poll)
 
         for answer in project_answers:
             poll_data["projects"].append({"project": answer.project, "score": answer.score})
-        for answer in role_answers:
-            poll_data["roles"].append({"role": answer.role, "score": answer.score})
+        # for answer in role_answers:
+        #     poll_data["roles"].append({"role": answer.role, "score": answer.score})
     else:
         for project in projects:
             poll_data["projects"].append({"project": project, "score": POLL_SCORES["default"]})
-        for role in roles:
-            poll_data["roles"].append({"role": role, "score": POLL_SCORES["default"]})
+        # for role in roles:
+        #     poll_data["roles"].append({"role": role, "score": POLL_SCORES["default"]})
 
     return poll_data
 
@@ -100,11 +104,11 @@ def load_poll_data_for_form(student, projects, roles):
 def generate_poll_data_for_students_without_poll():
     polls = Poll.objects.all()
     projects = Project.objects.all()
-    roles = Role.objects.all()
+    # roles = Role.objects.all()
     default = POLL_SCORES["default"]
     students_without_answers = Student.objects.filter(poll__isnull=True)
     projects_without_answers = Project.objects.filter(projectanswer__isnull=True)
-    roles_without_answers = Role.objects.filter(roleanswer__isnull=True)
+    # roles_without_answers = Role.objects.filter(roleanswer__isnull=True)
 
     for student in students_without_answers:
         poll = Poll.objects.create(
@@ -113,16 +117,16 @@ def generate_poll_data_for_students_without_poll():
         )
         for project in projects:
             ProjectAnswer.objects.create(poll=poll, project=project, score=default)
-        for role in roles:
-            RoleAnswer.objects.create(poll=poll, role=role, score=default)
+        # for role in roles:
+        #     RoleAnswer.objects.create(poll=poll, role=role, score=default)
 
     for project in projects_without_answers:
         for poll in polls:
             ProjectAnswer.objects.create(poll=poll, project=project, score=default)
 
-    for role in roles_without_answers:
-        for poll in polls:
-            RoleAnswer.objects.create(poll=poll, role=role, score=default)
+    # for role in roles_without_answers:
+    #     for poll in polls:
+    #         RoleAnswer.objects.create(poll=poll, role=role, score=default)
 
 
 def get_project_ids_with_score_ordered():
@@ -133,18 +137,18 @@ def get_project_ids_with_score_ordered():
     )
 
 
-def get_role_ids_with_score_ordered():
-    return (
-        RoleAnswer.objects.values("role")
-        .annotate(total_score=Sum("score"), avg_score=Avg("score"))
-        .order_by("-total_score")
-    )
+# def get_role_ids_with_score_ordered():
+#     return (
+#         RoleAnswer.objects.values("role")
+#         .annotate(total_score=Sum("score"), avg_score=Avg("score"))
+#         .order_by("-total_score")
+#     )
 
 
 def get_poll_stats_for_student(team):
     student_id = team.student.id
     project_id = team.project.id
-    role_id = team.role.id
+    # role_id = team.role.id
 
     # check if poll exisist
     if Poll.objects.filter(student=student_id).exists():
@@ -157,11 +161,11 @@ def get_poll_stats_for_student(team):
         project_score_min = ProjectAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
         project_score_max = ProjectAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
 
-        role_score = RoleAnswer.objects.get(poll=poll, role=role_id).score
-        role_score_sum = RoleAnswer.objects.filter(poll=poll).aggregate(Sum("score"))["score__sum"]
-        role_score_avg = RoleAnswer.objects.filter(poll=poll).aggregate(Avg("score"))["score__avg"]
-        role_score_min = RoleAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
-        role_score_max = RoleAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
+        # role_score = RoleAnswer.objects.get(poll=poll, role=role_id).score
+        # role_score_sum = RoleAnswer.objects.filter(poll=poll).aggregate(Sum("score"))["score__sum"]
+        # role_score_avg = RoleAnswer.objects.filter(poll=poll).aggregate(Avg("score"))["score__avg"]
+        # role_score_min = RoleAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
+        # role_score_max = RoleAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
     else:
         default_score = POLL_SCORES["default"]
 
@@ -171,11 +175,11 @@ def get_poll_stats_for_student(team):
         project_score_min = default_score
         project_score_max = default_score
 
-        role_score = default_score
-        role_score_sum = default_score
-        role_score_avg = default_score
-        role_score_min = default_score
-        role_score_max = default_score
+        # role_score = default_score
+        # role_score_sum = default_score
+        # role_score_avg = default_score
+        # role_score_min = default_score
+        # role_score_max = default_score
 
     # prepare result
     poll_stats = {
@@ -186,13 +190,13 @@ def get_poll_stats_for_student(team):
             "min": project_score_min,
             "max": project_score_max,
         },
-        "role": {
-            "score": role_score,
-            "sum": role_score_sum,
-            "avg": round(role_score_avg, 2),
-            "min": role_score_min,
-            "max": role_score_max,
-        },
+        # "role": {
+        #     "score": role_score,
+        #     "sum": role_score_sum,
+        #     "avg": round(role_score_avg, 2),
+        #     "min": role_score_min,
+        #     "max": role_score_max,
+        # },
         "happiness": {},
         "happiness_icon": "",
         "summary": "",
@@ -212,8 +216,9 @@ def get_poll_stats_for_student(team):
     text_project = (
         f"Project: <strong>{poll_stats['happiness']['project']}</strong> ({poll_stats['happiness']['poll']['project']})"
     )
-    text_role = f"Role: <strong>{poll_stats['happiness']['role']}</strong> ({poll_stats['happiness']['poll']['role']})"
-    poll_stats["summary"] = f"{poll_stats['happiness_icon']} {text_total}, {text_project}, {text_role}"
+    # text_role = f"Role: <strong>{poll_stats['happiness']['role']}</strong> ({poll_stats['happiness']['poll']['role']})"
+    # poll_stats["summary"] = f"{poll_stats['happiness_icon']} {text_total}, {text_project}, {text_role}"
+    poll_stats["summary"] = f"{poll_stats['happiness_icon']} {text_total}, {text_project}"
 
     return poll_stats
 
@@ -221,8 +226,9 @@ def get_poll_stats_for_student(team):
 def calc_happiness_score(scores):
     # gains are from algorithm
     # TODO: seaparte it and use it here and in the algorithm
-    project_gain = 0.8
-    role_gain = 0.2
+    project_gain = 1.0
+    # project_gain = 0.8
+    # role_gain = 0.2
 
     # TODO: get from POLL_SCORES
     max_score = 5
@@ -233,26 +239,28 @@ def calc_happiness_score(scores):
     # Happiness with max possible poll scores
     # - use max score 5 from POLL_SCORES
     project_hs = (scores["project"]["score"] - 1) / (max_score - 1)
-    role_hs = (scores["role"]["score"] - 1) / (max_score - 1)
+    # role_hs = (scores["role"]["score"] - 1) / (max_score - 1)
 
     # Happiness with own poll scores
     # - use individual max score
     project_poll_hs = (scores["project"]["score"] - 1) / (scores["project"]["max"] - 1)
-    role_poll_hs = (scores["role"]["score"] - 1) / (scores["role"]["max"] - 1)
+    # role_poll_hs = (scores["role"]["score"] - 1) / (scores["role"]["max"] - 1)
 
     # calc total happiness
-    total_hs = project_gain * project_hs + role_gain * role_hs
-    total_poll_hs = project_gain * project_poll_hs + role_gain * role_poll_hs
+    # total_hs = project_gain * project_hs + role_gain * role_hs
+    total_hs = project_gain * project_hs
+    # total_poll_hs = project_gain * project_poll_hs + role_gain * role_poll_hs
+    total_poll_hs = project_gain * project_poll_hs
 
     # prepare result
     happiness = {
         "total": round(total_hs, 2),
         "project": round(project_hs, 2),
-        "role": round(role_hs, 2),
+        # "role": round(role_hs, 2),
         "poll": {
             "total": round(total_poll_hs, 2),
             "project": round(project_poll_hs, 2),
-            "role": round(role_poll_hs, 2),
+            # "role": round(role_poll_hs, 2),
         },
     }
 

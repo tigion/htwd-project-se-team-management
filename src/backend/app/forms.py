@@ -3,7 +3,7 @@ from django.forms import ModelForm
 from .models import (
     Project,
     Student,
-    Role,
+    # Role,
     Settings,
 )
 
@@ -20,10 +20,10 @@ class StudentForm(ModelForm):
         fields = "__all__"
 
 
-class RoleForm(ModelForm):
-    class Meta:
-        model = Role
-        fields = "__all__"
+# class RoleForm(ModelForm):
+#     class Meta:
+#         model = Role
+#         fields = "__all__"
 
 
 class UploadStudentsForm(forms.Form):
@@ -49,6 +49,4 @@ class SettingsForm(ModelForm):
 
 
 class SettingsResetForm(forms.Form):
-    confirmed = forms.BooleanField(
-        required=True, initial=False, label="Ich bin mir sicher"
-    )
+    confirmed = forms.BooleanField(required=True, initial=False, label="Ich bin mir sicher")

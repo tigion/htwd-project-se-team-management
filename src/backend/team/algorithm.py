@@ -61,7 +61,7 @@ class AssignmentAlgo:
           sind gleichmäßig auf die Teammitglieder verteilt.
     """
 
-    __management_role_id = 0
+    # __management_role_id = 0
     """Die ID der Rolle Projektleitung, welche in jedem Team
     einmal vorhandensein muss.
 
@@ -86,7 +86,8 @@ class AssignmentAlgo:
     #   on the decision-making process
     # * all gain factors must add up to 1.0
     # weight of the project score
-    __project_gain = 0.8
+    __project_gain = 1.0
+    # __project_gain = 0.8
     """Wichtungsfaktor der Projekte bei der Erstellung der Zuordnungen.
     Muss zwischen 0.0 und 1.0 liegen. Je höher der Wert desto höher
     der Einfluss. Bsp.: ``__project_gain = 0.0`` würde bedeuten, dass
@@ -96,7 +97,7 @@ class AssignmentAlgo:
     :type: float
     """
     # weight of the project score
-    __role_gain = 0.2
+    # __role_gain = 0.2
     """Wichtungsfaktor der Rollen bei der Erstellung der Zuordnungen.
     Muss zwischen 0.0 und 1.0 liegen. Je höher der Wert desto höher
     der Einfluss. Bsp.: ``__role_gain = 0.0`` würde bedeuten, dass
@@ -106,24 +107,25 @@ class AssignmentAlgo:
     :type: float
     """
 
-    def __init__(self, project_answers, role_answers, wing_answers, max_scores):
+    # def __init__(self, project_answers, role_answers, wing_answers, max_scores):
+    def __init__(self, project_answers, wing_answers, max_scores):
         # init model
         self.__model_vars = {}
         self.__model = cpm.CpModel()
 
         # set answere data
         self.__project_answers = project_answers
-        self.__role_answers = role_answers
+        # self.__role_answers = role_answers
         self.__wing_answers = wing_answers
 
         # set answer scores
         self.__max_project_score = max_scores["project"]
-        self.__max_role_score = max_scores["role"]
+        # self.__max_role_score = max_scores["role"]
 
         # set number of elements
         self.__n_projects = len(project_answers.get(0))
         self.__n_students = len(wing_answers)
-        self.__n_roles = len(role_answers.get(0))
+        # self.__n_roles = len(role_answers.get(0))
 
         def filter_is_wing(pair):
             return True if pair[1] else False
@@ -155,7 +157,7 @@ class AssignmentAlgo:
         self.__init_bounds()
         self.__add_hc_one_project_per_student()
         self.__add_hc_students_assigned_equally()
-        self.__add_hc_roles_assigned_equally()
+        # self.__add_hc_roles_assigned_equally()
         self.__add_sc()
 
         solver = cpm.CpSolver()
@@ -184,18 +186,21 @@ class AssignmentAlgo:
         # student with id 2 is manager of project with id 0
         for p_id in range(self.__n_projects):
             for s_id in range(self.__n_students):
-                for r_id in range(self.__n_roles):
-                    self.__model_vars[(p_id, s_id, r_id)] = self.__model.NewBoolVar(
-                        "(%d,%d,%d)" % (p_id, s_id, r_id)
-                    )  # create bool var with name "(p_id,s_id,r_id)"
+                # for r_id in range(self.__n_roles):
+                #     self.__model_vars[(p_id, s_id, r_id)] = self.__model.NewBoolVar(
+                #         "(%d,%d,%d)" % (p_id, s_id, r_id)
+                #     )  # create bool var with name "(p_id,s_id,r_id)"
+                self.__model_vars[(p_id, s_id)] = self.__model.NewBoolVar(
+                    "(%d,%d)" % (p_id, s_id)
+                )  # create bool var with name "(p_id,s_id)"
 
     def __init_bounds(self):
         # number of students per role lower bound =
         # (lower bound of students per project - manager)//(number of roles - manager)
-        self.n_students_per_role_lb = (self.__n_students // self.__n_projects - 1) // (self.__n_roles - 1)
+        # self.n_students_per_role_lb = (self.__n_students // self.__n_projects - 1) // (self.__n_roles - 1)
         # number of students per role upper bound =
         # ceil((upper bound of students per project - manager)/(number of roles - manager))
-        self.n_students_per_role_ub = math.ceil((self.__n_project_slots - 1) / (self.__n_roles - 1))
+        # self.n_students_per_role_ub = math.ceil((self.__n_project_slots - 1) / (self.__n_roles - 1))
 
         # minimum number of students per project
         self.lb_students_per_project = self.__n_students // self.__n_projects
@@ -226,8 +231,9 @@ class AssignmentAlgo:
         for s_id in range(self.__n_students):
             inner_sum = []
             for p_id in range(self.__n_projects):
-                for r_id in range(self.__n_roles):
-                    inner_sum.append(self.__model_vars[(p_id, s_id, r_id)])
+                # for r_id in range(self.__n_roles):
+                #     inner_sum.append(self.__model_vars[(p_id, s_id, r_id)])
+                inner_sum.append(self.__model_vars[(p_id, s_id)])
             self.__model.Add(sum(inner_sum) == 1)
 
     def __add_hc_students_assigned_equally(self):
@@ -246,48 +252,51 @@ class AssignmentAlgo:
             inner_students = []
             inner_wings = []
             for s_id in range(self.__n_students):
-                for r_id in range(self.__n_roles):
-                    inner_students.append(self.__model_vars[((p_id, s_id, r_id))])
-                    if self.__wing_answers[s_id] == 1:
-                        inner_wings.append(self.__model_vars[(p_id, s_id, r_id)])
+                # for r_id in range(self.__n_roles):
+                #     inner_students.append(self.__model_vars[(p_id, s_id, r_id)])
+                #     if self.__wing_answers[s_id] == 1:
+                #         inner_wings.append(self.__model_vars[(p_id, s_id, r_id)])
+                inner_students.append(self.__model_vars[(p_id, s_id)])
+                if self.__wing_answers[s_id] == 1:
+                    inner_wings.append(self.__model_vars[(p_id, s_id)])
             self.__model.Add(sum(inner_students) >= self.lb_students_per_project)
             self.__model.Add(sum(inner_students) <= self.hb_students_per_project)
             self.__model.Add(sum(inner_wings) >= self.lb_wings_per_project)
             self.__model.Add(sum(inner_wings) <= self.hb_wings_per_project)
 
-    def __add_hc_roles_assigned_equally(self):
-        """Fügt die harte Restriktion "Rollen sind gleichmäßig im Team
-        aufgeteilt" dem model hinzu.
-        Das bedeutet:
-
-            * genau ein Teamleiter pro Team
-            * die restlichen Rollen (Analyse, Entwurf, Implementierug,
-              Test) sind gleichmäßig verteilt.
-
-        Bsp.: Ein Team, bestehend aus 9 Studenten, würde in folgender Aufteilung
-        resultieren: 1x Teamleiter, 2x Analyse, 2x Entwurf,
-        2x Implementierung, 2x Test. Geht die Zuteilung bspw. bei 10
-        Studenten nicht exakt auf, entscheidet der Algorithmus selbst
-        in welche Rolle der 10. Student am besten passt und ordnet ihm
-        diese zu.
-
-        :return: Nonenu
-        """
-        # add hard constraint "roles assigned equally" to model
-        for p_id in range(self.__n_projects):
-            for r_id in range(self.__n_roles):
-                inner_manager = []  # inner sum for r_id == manager
-                inner_roles = []  # inner sum for every role except manager
-                for s_id in range(self.__n_students):
-                    if r_id == self.__management_role_id:  # if role == manager
-                        inner_manager.append(self.__model_vars[(p_id, s_id, r_id)])
-                    else:  # if role != manager
-                        inner_roles.append(self.__model_vars[(p_id, s_id, r_id)])
-                if r_id == self.__management_role_id:
-                    self.__model.Add(sum(inner_manager) == 1)
-                else:
-                    self.__model.Add(sum(inner_roles) >= self.n_students_per_role_lb)
-                    self.__model.Add(sum(inner_roles) <= self.n_students_per_role_ub)
+    # def __add_hc_roles_assigned_equally(self):
+    #     """Fügt die harte Restriktion "Rollen sind gleichmäßig im Team
+    #     aufgeteilt" dem model hinzu.
+    #     Das bedeutet:
+    #
+    #         * genau ein Teamleiter pro Team
+    #         * die restlichen Rollen (Analyse, Entwurf, Implementierug,
+    #           Test) sind gleichmäßig verteilt.
+    #
+    #     Bsp.: Ein Team, bestehend aus 9 Studenten, würde in folgender Aufteilung
+    #     resultieren: 1x Teamleiter, 2x Analyse, 2x Entwurf,
+    #     2x Implementierung, 2x Test. Geht die Zuteilung bspw. bei 10
+    #     Studenten nicht exakt auf, entscheidet der Algorithmus selbst
+    #     in welche Rolle der 10. Student am besten passt und ordnet ihm
+    #     diese zu.
+    #
+    #     :return: Nonenu
+    #     """
+    #     # add hard constraint "roles assigned equally" to model
+    #     for p_id in range(self.__n_projects):
+    #         for r_id in range(self.__n_roles):
+    #             inner_manager = []  # inner sum for r_id == manager
+    #             inner_roles = []  # inner sum for every role except manager
+    #             for s_id in range(self.__n_students):
+    #                 if r_id == self.__management_role_id:  # if role == manager
+    #                     inner_manager.append(self.__model_vars[(p_id, s_id, r_id)])
+    #                 else:  # if role != manager
+    #                     inner_roles.append(self.__model_vars[(p_id, s_id, r_id)])
+    #             if r_id == self.__management_role_id:
+    #                 self.__model.Add(sum(inner_manager) == 1)
+    #             else:
+    #                 self.__model.Add(sum(inner_roles) >= self.n_students_per_role_lb)
+    #                 self.__model.Add(sum(inner_roles) <= self.n_students_per_role_ub)
 
     def __add_sc(self):
         """Fügt dem model die weichen Restriktionen hinzu. Diese
@@ -314,9 +323,11 @@ class AssignmentAlgo:
         soft_constraints = []
         for p_id in range(self.__n_projects):
             for s_id in range(self.__n_students):
-                for r_id in range(self.__n_roles):
-                    score = self.total_score(p_id, s_id, r_id)
-                    soft_constraints.append(score * self.__model_vars[(p_id, s_id, r_id)])
+                # for r_id in range(self.__n_roles):
+                #     score = self.total_score(p_id, s_id, r_id)
+                #     soft_constraints.append(score * self.__model_vars[(p_id, s_id, r_id)])
+                score = self.total_score(p_id, s_id)
+                soft_constraints.append(score * self.__model_vars[(p_id, s_id)])
 
         self.__model.Maximize(sum(soft_constraints))
 
@@ -335,11 +346,15 @@ class AssignmentAlgo:
         self.__result = []
         for p_id in range(self.__n_projects):
             for s_id in range(self.__n_students):
-                for r_id in range(self.__n_roles):
-                    if solver.Value(self.__model_vars[(p_id, s_id, r_id)]) == 1:
-                        # Also return the score of the result
-                        score = self.total_score(p_id, s_id, r_id)
-                        self.__result.append((p_id, s_id, r_id, score))
+                # for r_id in range(self.__n_roles):
+                #     if solver.Value(self.__model_vars[(p_id, s_id, r_id)]) == 1:
+                #         # Also return the score of the result
+                #         score = self.total_score(p_id, s_id, r_id)
+                #         self.__result.append((p_id, s_id, r_id, score))
+                if solver.Value(self.__model_vars[(p_id, s_id)]) == 1:
+                    # Also return the score of the result
+                    score = self.total_score(p_id, s_id)
+                    self.__result.append((p_id, s_id, score))
 
     def project_score(self, project, answers):
         """Bewertungsfunktion/ weiche Restriktion für die Projekte.
@@ -381,13 +396,15 @@ class AssignmentAlgo:
 
         return score
 
-    def total_score(self, project, student, role):
+    # def total_score(self, project, student, role):
+    def total_score(self, project, student):
         # Weights the normalized project score (project gain .8)
         p_score = self.__project_gain * self.project_score(project, self.__project_answers.get(student))
         # Weights the normalized role score (role gain .2)
-        r_score = self.__role_gain * self.role_score(role, self.__role_answers.get(student))
+        # r_score = self.__role_gain * self.role_score(role, self.__role_answers.get(student))
         # Total project and role score between 0 and 100
-        score = p_score + r_score
+        # score = p_score + r_score
+        score = p_score
 
         return score
 
@@ -410,24 +427,24 @@ class AssignmentAlgo:
         """
         return self.__project_gain
 
-    def set_role_gain(self, role_gain: float):
-        """Setzt den Gain/ die Wichtung für die weiche Restriktion der
-        Rollenzuteilung.
+    # def set_role_gain(self, role_gain: float):
+    #     """Setzt den Gain/ die Wichtung für die weiche Restriktion der
+    #     Rollenzuteilung.
+    #
+    #     :param role_gain: Wichtungswert zwischen 0.0 - 1.0
+    #     :type role_gain: float
+    #     :raises: AssertionError wenn ``type(role_gain) != float``
+    #     :return: None"""
+    #     assert type(role_gain) == float
+    #     self.__role_gain = role_gain
 
-        :param role_gain: Wichtungswert zwischen 0.0 - 1.0
-        :type role_gain: float
-        :raises: AssertionError wenn ``type(role_gain) != float``
-        :return: None"""
-        assert type(role_gain) == float
-        self.__role_gain = role_gain
-
-    def get_role_gain(self):
-        """
-        :return: Gibt den Gain/ die Wichtung für die weiche Restriktion
-                 der Rollenzuteilung zurück.
-        :rtype: float
-        """
-        return self.__role_gain
+    # def get_role_gain(self):
+    #     """
+    #     :return: Gibt den Gain/ die Wichtung für die weiche Restriktion
+    #              der Rollenzuteilung zurück.
+    #     :rtype: float
+    #     """
+    #     return self.__role_gain
 
     def set_max_runtime(self, max_runtime: int):
         """Setzt die Laufzeitgrenze für den Algorithmus.

@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
-from app.models import Student, Project, Role
+from app.models import Student, Project
+# from app.models import Student, Project, Role
 
 
 POLL_SCORES = {
@@ -79,19 +80,19 @@ class ProjectAnswer(models.Model):
         return f"{self.poll.student.name2} - {self.project.pid}"
 
 
-class RoleAnswer(models.Model):
-    poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
-    role = models.ForeignKey(Role, on_delete=models.CASCADE)
-
-    # TODO: use POLL_SCORES for default, choices, validation
-    score = models.PositiveIntegerField(
-        default=POLL_SCORES["default"],
-        # choices=SCORE_CHOICES,
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-    )
-
-    class Meta:
-        unique_together = ["poll", "role"]
-
-    def __str__(self) -> str:
-        return f"{self.poll.student.name2} - {self.role.name}"
+# class RoleAnswer(models.Model):
+#     poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
+#     role = models.ForeignKey(Role, on_delete=models.CASCADE)
+#
+#     # TODO: use POLL_SCORES for default, choices, validation
+#     score = models.PositiveIntegerField(
+#         default=POLL_SCORES["default"],
+#         # choices=SCORE_CHOICES,
+#         validators=[MinValueValidator(1), MaxValueValidator(5)],
+#     )
+#
+#     class Meta:
+#         unique_together = ["poll", "role"]
+#
+#     def __str__(self) -> str:
+#         return f"{self.poll.student.name2} - {self.role.name}"

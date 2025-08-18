@@ -54,59 +54,59 @@
               </div>
             {% endfor %}
             </fieldset>
-          
-          </div>
-        </div>
-      </div>
-
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="accordion-header-poll-2">
-          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-poll-2" aria-expanded="false" aria-controls="accordion-collapse-poll-2">
-            Tätigkeitsschwerpunkte
-          </button>
-        </h2>
-        <div id="accordion-collapse-poll-2" class="accordion-collapse collapse" aria-labelledby="accordion-header-poll-2">
-          <div class="accordion-body">
-            Bitte geben Sie an, wie gern Sie welche Tätigkeiten (Rollen) im Belegprojekt übernehmen würden:
-
-            <fieldset class="list-group list-group-flush hmt-3 mt-3"{% if not settings.poll_is_writable %} disabled{% endif %}>
-            {% if not roles %}Keine Rollen vorhanden!{% endif %}
-            {% for role in roles %}
-              <input type="hidden" id="id_role_{{ role.id }}_id" name="role_{{ role.id }}_id" value="{{ role.id }}">
-              <div class="list-group-item">
-
-                <div class="d-flex flex-row justify-content-between my-1">
-                  <div class="">
-                    <i class="bi bi-person"></i>
-                  </div>
-                  <div class="flex-grow-1 ms-3">
-                    <label class="form-label fw-bold m-0">{{ role.name }}</label>
-                  </div>
-                  <div class="ms-2 flex-shrink-0" required="" id="id_role_{{ role.id }}_score">
-                  {% for score in poll_scores.choices %}
-                    <div class="form-check form-check-inline">
-                      <input class="form-check-input"
-                             type="radio"
-                             name="role_{{ role.id }}_score"
-                             id="id_role_{{ role.id }}_score_{{ score.id }}"
-                             value="{{ score.value }}" title="{{ score.name }}"
-                             {% for fp in form_poll_data.roles %}
-                               {% if fp.role.id == role.id and fp.score == score.value %}checked="checked"{% endif %}
-                             {% endfor %}
-                             >
-                      <label class="form-check-label" for="id_role_{{ role.id }}_score_{{ score.id }}" title="{{ score.name }}"><i class="bu bi-{{ score.icon }}-fill" style="color:{{ score.color }}"></i></label>
-                    </div>
-                  {% endfor %}
-                  </div>
-                </div>
-
-              </div>
-            {% endfor %}
-            </fieldset>
 
           </div>
         </div>
       </div>
+
+      <!-- <div class="accordion-item"> -->
+      <!--   <h2 class="accordion-header" id="accordion-header-poll-2"> -->
+      <!--     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-poll-2" aria-expanded="false" aria-controls="accordion-collapse-poll-2"> -->
+      <!--       Tätigkeitsschwerpunkte -->
+      <!--     </button> -->
+      <!--   </h2> -->
+      <!--   <div id="accordion-collapse-poll-2" class="accordion-collapse collapse" aria-labelledby="accordion-header-poll-2"> -->
+      <!--     <div class="accordion-body"> -->
+      <!--       Bitte geben Sie an, wie gern Sie welche Tätigkeiten (Rollen) im Belegprojekt übernehmen würden: -->
+      <!---->
+      <!--       <fieldset class="list-group list-group-flush hmt-3 mt-3"{% if not settings.poll_is_writable %} disabled{% endif %}> -->
+      <!--       {% if not roles %}Keine Rollen vorhanden!{% endif %} -->
+      <!--       {% for role in roles %} -->
+      <!--         <input type="hidden" id="id_role_{{ role.id }}_id" name="role_{{ role.id }}_id" value="{{ role.id }}"> -->
+      <!--         <div class="list-group-item"> -->
+      <!---->
+      <!--           <div class="d-flex flex-row justify-content-between my-1"> -->
+      <!--             <div class=""> -->
+      <!--               <i class="bi bi-person"></i> -->
+      <!--             </div> -->
+      <!--             <div class="flex-grow-1 ms-3"> -->
+      <!--               <label class="form-label fw-bold m-0">{{ role.name }}</label> -->
+      <!--             </div> -->
+      <!--             <div class="ms-2 flex-shrink-0" required="" id="id_role_{{ role.id }}_score"> -->
+      <!--             {% for score in poll_scores.choices %} -->
+      <!--               <div class="form-check form-check-inline"> -->
+      <!--                 <input class="form-check-input" -->
+      <!--                        type="radio" -->
+      <!--                        name="role_{{ role.id }}_score" -->
+      <!--                        id="id_role_{{ role.id }}_score_{{ score.id }}" -->
+      <!--                        value="{{ score.value }}" title="{{ score.name }}" -->
+      <!--                        {% for fp in form_poll_data.roles %} -->
+      <!--                          {% if fp.role.id == role.id and fp.score == score.value %}checked="checked"{% endif %} -->
+      <!--                        {% endfor %} -->
+      <!--                        > -->
+      <!--                 <label class="form-check-label" for="id_role_{{ role.id }}_score_{{ score.id }}" title="{{ score.name }}"><i class="bu bi-{{ score.icon }}-fill" style="color:{{ score.color }}"></i></label> -->
+      <!--               </div> -->
+      <!--             {% endfor %} -->
+      <!--             </div> -->
+      <!--           </div> -->
+      <!---->
+      <!--         </div> -->
+      <!--       {% endfor %} -->
+      <!--       </fieldset> -->
+      <!---->
+      <!--     </div> -->
+      <!--   </div> -->
+      <!-- </div> -->
 
       <div class="accordion-item">
         <h2 class="accordion-header" id="accordion-header-poll-3">
@@ -117,7 +117,7 @@
         <div id="accordion-collapse-poll-3" class="accordion-collapse collapse" aria-labelledby="accordion-header-poll-3">
           <div class="accordion-body">
             Bitte geben Sie an, welche Qualifikationen (oder gleichwertig) Sie bereits erworben haben:
-            
+
             <fieldset class="list-group list-group-flush hmt-3 mt-3"{% if not settings.poll_is_writable %} disabled{% endif %}>
               <div class="list-group-item">
                 <div class="form-check">

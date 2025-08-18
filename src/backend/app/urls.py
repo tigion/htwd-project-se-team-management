@@ -18,10 +18,10 @@ urlpatterns = [
     path("students/<int:id>", views.student_edit, name="student-update"),
     path("students/<int:id>/delete", views.student_delete, name="student-delete"),
     # roles
-    path("roles/", views.roles, name="roles"),
-    path("roles/add", views.role_edit, name="role-add"),
-    path("roles/<int:id>", views.role_edit, name="role-update"),
-    path("roles/<int:id>/delete", views.role_delete, name="role-delete"),
+    # path("roles/", views.roles, name="roles"),
+    # path("roles/add", views.role_edit, name="role-add"),
+    # path("roles/<int:id>", views.role_edit, name="role-update"),
+    # path("roles/<int:id>/delete", views.role_delete, name="role-delete"),
     # teams
     path("teams/", views.teams, name="teams"),
     path("teams/generate", views.teams_generate, name="teams-generate"),
@@ -34,3 +34,4 @@ urlpatterns = [
     path("settings/reset", views.settings_reset, name="reset"),
     path("settings/backup", views.settings_backup, name="backup"),
 ]
+

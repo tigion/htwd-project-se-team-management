@@ -14,7 +14,7 @@
     {% empty %}
       0
     {% endfor %}</small><br />
-    <i class="bi bi-person me-1"></i> Rollen: <strong>{{ stats.count.role }}</strong><br />
+    <!-- <i class="bi bi-person me-1"></i> Rollen: <strong>{{ stats.count.role }}</strong><br /> -->
     <i class="bi bi-people-fill me-1"></i> Teams: <strong>{{ stats.count.team }}</strong><br />
   </p>
 </div>
@@ -77,28 +77,28 @@
   </table>
 </div>
 
-<div class="container my-5">
-  <h3>Beliebtheit Rollen</h3>
-  <table class="table w-auto align-middle">
-    <thead>
-      <tr>
-        <th class="text-center" scope="col">Score</th>
-        <th class="text-center" scope="col">⌀</th>
-        <th scope="col">Name</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for role in stats.roles %}
-      <tr class="">
-        <td class="text-center {{ role.color }}"><strong>{{ role.score }}</strong></td>
-        <td class="text-center text-secondary"><small>{{ role.score_avg|stringformat:".2f" }}</small></td>
-        <td>
-          {{ role.name }}
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
+<!-- <div class="container my-5"> -->
+<!--   <h3>Beliebtheit Rollen</h3> -->
+<!--   <table class="table w-auto align-middle"> -->
+<!--     <thead> -->
+<!--       <tr> -->
+<!--         <th class="text-center" scope="col">Score</th> -->
+<!--         <th class="text-center" scope="col">⌀</th> -->
+<!--         <th scope="col">Name</th> -->
+<!--       </tr> -->
+<!--     </thead> -->
+<!--     <tbody> -->
+<!--     {% for role in stats.roles %} -->
+<!--       <tr class=""> -->
+<!--         <td class="text-center {{ role.color }}"><strong>{{ role.score }}</strong></td> -->
+<!--         <td class="text-center text-secondary"><small>{{ role.score_avg|stringformat:".2f" }}</small></td> -->
+<!--         <td> -->
+<!--           {{ role.name }} -->
+<!--         </td> -->
+<!--       </tr> -->
+<!--     {% endfor %} -->
+<!--     </tbody> -->
+<!--   </table> -->
+<!-- </div> -->
 
 {% endblock content %}
