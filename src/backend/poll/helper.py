@@ -7,6 +7,8 @@ from app.models import Student, Project, Info
 from .models import POLL_SCORES, Poll, ProjectAnswer
 # from .models import POLL_SCORES, Poll, ProjectAnswer, RoleAnswer
 
+import random
+
 
 def prepare_poll_data_from_post(student, POST, projects, roles):
     poll_data = {"student": student, "project": {}, "role": {}}
@@ -116,12 +118,14 @@ def generate_poll_data_for_students_without_poll():
             is_generated=True,
         )
         for project in projects:
+            default = random.randint(1, 5)
             ProjectAnswer.objects.create(poll=poll, project=project, score=default)
         # for role in roles:
         #     RoleAnswer.objects.create(poll=poll, role=role, score=default)
 
     for project in projects_without_answers:
         for poll in polls:
+            default = random.randint(1, 5)
             ProjectAnswer.objects.create(poll=poll, project=project, score=default)
 
     # for role in roles_without_answers:

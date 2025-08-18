@@ -14,7 +14,7 @@ from poll.helper import (
     get_happiness_icon,
 )
 
-from .models import Team
+from .models import ProjectInstance, Team
 from .algorithm import AssignmentAlgo
 
 
@@ -35,7 +35,7 @@ key_mapper = {
 }
 
 
-def prepare_projects():
+def prepare_project_instances():
     settings = Settings.load()
 
     # shuffle projects with same score
@@ -61,32 +61,46 @@ def prepare_projects():
     # for x in project_total_scores:
     #     print(f"> {x}")
 
+    # create project instances
+    ProjectInstance.objects.all().delete()
+    # TODO: WIP
+    project_instance_total_scores = []
+    for project in project_total_scores:
+        project_object = Project.objects.get(id=project["project"])
+        for i in range(1, 4):
+            project_instance = ProjectInstance.objects.create(number=i, project=project_object)
+            project_instance_total_scores.append({"project": project_instance.id, "score": project["score"]})
+
+    # for x in project_instance_total_scores:
+    #     project = ProjectInstance.objects.get(id=x["project"])
+    #     print(f"> {x} {project.piid}")
+
     # limit needed projects
     # 1. calc needed project count
     project_count = int(Student.objects.count() / settings.team_min_member)
     if project_count < 1:
         project_count = 1
     # 2. cut unneeded projects
-    project_total_scores = project_total_scores[:project_count]
+    project_instance_total_scores = project_instance_total_scores[:project_count]
 
-    # for x in project_total_scores:
+    # for x in project_instance_total_scores:
     #     print(f"> {x}")
 
-    # create project_id list
-    ids = []
-    for project in project_total_scores:
-        ids.append(project["project"])
+    # create project instances id list
+    pi_ids = []
+    for project_instance in project_instance_total_scores:
+        pi_ids.append(project_instance["project"])
 
     # print(f"> Project IDs: {ids}")
 
-    return ids
+    return pi_ids
 
 
 def map_keys_and_prepare_data(
-    projects: list,
     students: list,
-    # roles: list,
+    project_instances: list,
     project_answers: list,
+    # roles: list,
     # role_answers: list,
 ):
     def student_key(x):
@@ -99,10 +113,12 @@ def map_keys_and_prepare_data(
     # update project_keys keymap
     key_mapper["project"]["db2algo"].clear()
     key_mapper["project"]["algo2db"].clear()
-    for i in range(len(projects)):
-        key_mapper["project"]["db2algo"][projects[i][0]] = i
-        key_mapper["project"]["algo2db"][i] = projects[i][0]
+    for i in range(len(project_instances)):
+        key_mapper["project"]["db2algo"][project_instances[i][0]] = i
+        key_mapper["project"]["algo2db"][i] = project_instances[i][0]
 
+    # print("-----------------------------------------")
+    # print(f"> {key_mapper['project']}")
     # for temp in key_mapper["project"]:
     #     print(f"> project key mapper - {temp}: {key_mapper['project'][temp]}")
 
@@ -113,6 +129,9 @@ def map_keys_and_prepare_data(
         key_mapper["student"]["db2algo"][students[i][0]] = i
         key_mapper["student"]["algo2db"][i] = students[i][0]
 
+    # print("-----------------------------------------")
+    # print(f"> {key_mapper['student']}")
+
     # # update role_keys keymap
     # key_mapper["role"]["db2algo"].clear()
     # key_mapper["role"]["algo2db"].clear()
@@ -120,13 +139,22 @@ def map_keys_and_prepare_data(
     #     key_mapper["role"]["db2algo"][roles[i][0]] = i
     #     key_mapper["role"]["algo2db"][i] = roles[i][0]
 
+    # print("-----------------------------------------")
+    # print(f"> {project_instances}")
+    # print("-----------------------------------------")
+    # print(f"> {project_answers}")
     # create project_answers with grouped db2algo keys
     for key, g in groupby(project_answers, student_key):
         group = list(g)
+        # print("-----------------------------------------")
+        # print(f"> group: {group}")
         d = {}
         for i in range(len(group)):
-            d[key_mapper["project"]["db2algo"].get(group[i][1])] = group[i][2]
-        result_project_answers[key_mapper["student"]["db2algo"].get(key)] = d
+            pis = list(filter(lambda x: x[1] == group[i][1], project_instances))
+            for pi in pis:
+                d[key_mapper["project"]["db2algo"].get(pi[0])] = group[i][2]
+        if len(d) > 0:
+            result_project_answers[key_mapper["student"]["db2algo"].get(key)] = d
 
     # # create role_answers with grouped db2algo keys
     # for key, g in groupby(role_answers, student_key):
@@ -145,35 +173,37 @@ def map_keys_and_prepare_data(
         # "role_answers": result_role_answers,
         "wing_answers": result_wing_answers,
     }
+    # print("-----------------------------------------")
+    # print(f"> {result}")
     return result
 
 
-def prepare_data(project_ids):
+def prepare_data(project_instance_ids):
     # students: student_id, is_wing
     students = []
     temp_students = Student.objects.all()
     for ts in temp_students:
         students.append((ts.id, ts.is_wing))
 
-    # projects: project_id
-    projects = list(Project.objects.filter(id__in=project_ids).values_list("id"))
+    # projects: project_instance_id, project_id
+    # projects = list(Project.objects.filter(id__in=project_instance_ids).values_list("id"))
+    project_instances = list(ProjectInstance.objects.filter(id__in=project_instance_ids).values_list("id", "project"))
 
     # projects: project_id
     # roles = list(Role.objects.values_list("id"))
 
-    # project_answers: poll_id, project_id, score
+    # project_answers: student_id, project_id, score
     project_answers = list(
-        ProjectAnswer.objects.filter(project__in=project_ids)
-        .order_by("poll")
-        .values_list("poll__student", "project", "score")
+        # ProjectAnswer.objects.filter(project__in=project_instance_ids)
+        ProjectAnswer.objects.order_by("poll").values_list("poll__student", "project", "score")
     )
 
     # role_answers: poll_id, role_id, score
     # role_answers = list(RoleAnswer.objects.order_by("poll").values_list("poll__student", "role", "score"))
 
     # prepare data for algorithm
-    data = map_keys_and_prepare_data(projects, students, project_answers)
-    # data = map_keys_and_prepare_data(projects, students, roles, project_answers, role_answers)
+    data = map_keys_and_prepare_data(students, project_instances, project_answers)
+    # data = map_keys_and_prepare_data(students, projects, project_answers, roles, role_answers)
 
     return data
 
@@ -199,8 +229,9 @@ def generate_teams_with_algorithm(data):
 
 def save_teams(algo_result):
     teams = []
+
     for a in algo_result:
-        project_id = key_mapper["project"]["algo2db"].get(a[0])
+        project_instance_id = key_mapper["project"]["algo2db"].get(a[0])
         student_id = key_mapper["student"]["algo2db"].get(a[1])
         # role_id = key_mapper["role"]["algo2db"].get(a[2])
         score = a[2]
@@ -208,10 +239,13 @@ def save_teams(algo_result):
 
         # print(f"-> key map {a}: {project_id} {student_id} {role_id} - {score}")
 
+        project_id = ProjectInstance.objects.get(id=project_instance_id).project.id
         team = Team(
             project_id=project_id,
+            project_instance_id=project_instance_id,
             student_id=student_id,
             # role_id=role_id,
+            student_is_initial_contact=False,
             score=score,
         )
         teams.append(team)
@@ -223,6 +257,17 @@ def save_teams(algo_result):
     Info.objects.update_or_create(defaults=values)
 
 
+def set_initial_project_leaders():
+    """Sets a random project leader for each project."""
+
+    project_instances = ProjectInstance.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
+    for project_instance in project_instances:
+        teams = Team.objects.filter(project_instance=project_instance).order_by("?")
+        if len(teams) > 0:
+            teams[0].student_is_initial_contact = True
+            teams[0].save()
+
+
 def generate_teams():
     # TODO: check needed data and tables
     # - min count for algorithm?
@@ -232,20 +277,25 @@ def generate_teams():
     # if not Poll.objects.exists() or not ProjectAnswer.objects.exists() or not RoleAnswer.objects.exists():
     #     return
 
-    project_ids = prepare_projects()
-    data = prepare_data(project_ids)
+    # TODO: Needs refactoring
+    #       - projects with answers -> project instances -> data
+    project_instance_ids = prepare_project_instances()
+    data = prepare_data(project_instance_ids)
+
     result = generate_teams_with_algorithm(data)
     save_teams(result)
+    set_initial_project_leaders()
 
 
 def get_prepared_teams_for_view():
     settings = Settings.load()
     data = []
 
-    projects = Project.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
-    for project in projects:
+    # projects = Project.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
+    project_instances = ProjectInstance.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
+    for project_instance in project_instances:
         data_set = {
-            "project": Project.objects.get(id=project),
+            "project_instance": ProjectInstance.objects.get(id=project_instance),
             "students": [],
             "student_active_count": 0,
             "emails": [],
@@ -254,12 +304,12 @@ def get_prepared_teams_for_view():
         happiness_total_score = 0
         happiness_poll_total_score = 0
 
-        teams = Team.objects.filter(project=project)
+        teams = Team.objects.filter(project_instance=project_instance)
         for team in teams:
             student = {
                 "name": team.student.name,
                 # "role": team.role,
-                "is_project_leader": False,
+                "is_initial_contact": team.student_is_initial_contact,
                 "is_wing": team.student.is_wing,
                 "is_active": team.student.is_active,
                 "is_out": team.student.is_out,
@@ -270,7 +320,7 @@ def get_prepared_teams_for_view():
             }
 
             # set css classes
-            if student["is_project_leader"]:
+            if student["is_initial_contact"]:
                 student["css_classes"].append("fw-semibold")
             if not student["is_visible"]:
                 student["css_classes"].append("text-decoration-line-through")

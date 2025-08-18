@@ -5,11 +5,11 @@
       <div class="card overflow-hidden">
         <div class="card-header text-break" style="min-height: 6.75em">
           <div>
-            <span class="float-start"><i class="bi bi-people-fill me-1"></i> <strong>{{ team.project.pid }}</strong></span>
+            <span class="float-start"><i class="bi bi-people-fill me-1"></i> <strong>{{ team.project_instance.piid }}</strong></span>
             <span class="float-end text-muted small">{% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %} <i class="bi bi-person-fill ms-3 me-1"></i>{% if team.student_active_count != team.students|length %}{{ team.student_active_count }}/{% endif %}{{ team.students|length }} <a href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope ms-3 text-muted"></i></a></span><br>
           </div>
           <div class="clearfix mt-1 lh-sm">
-            <small>{{ team.project.name }}</small>
+            <small>{{ team.project_instance.project.name }}</small>
           </div>
         </div>
         <div class="card-body p-0">
@@ -22,7 +22,7 @@
                   {{ student.name }}
                 </div>
                 <div class="ms-auto flex-shrink-0">
-                  {% if student.is_project_leader %}<span class="badge rounded-pill text-bg-primary ms-1">PL</span>{% endif %}
+                  {% if student.is_initial_contact %}<span class="badge rounded-pill text-bg-primary ms-1">AP</span>{% endif %}
                   {% if student.is_wing %}<span class="badge rounded-pill text-bg-secondary ms-0">WIng</span>{% endif %}
                 </div>
               {% if is_management_view %}

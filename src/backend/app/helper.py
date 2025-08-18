@@ -10,7 +10,7 @@ from poll.models import Poll, ProjectAnswer
 
 # from poll.helper import get_project_ids_with_score_ordered, get_role_ids_with_score_ordered
 from poll.helper import get_project_ids_with_score_ordered
-from team.models import Team
+from team.models import Team, ProjectInstance
 
 # from .models import STUDY_PROGRAM_CHOICES, Project, Settings, Student, Role
 from .models import STUDY_PROGRAM_CHOICES, Project, Settings, Student
@@ -113,19 +113,23 @@ def get_prepared_stats_for_view():
     stats = {}
 
     project_count = Project.objects.count()
+    project_used_count = Project.objects.filter(projectinstance__team__isnull=False).distinct().count()
+    project_instance_count = ProjectInstance.objects.count()
     student_count = Student.objects.count()
     student_out_count = Student.objects.filter(is_active=False).count()
     student_counts = Student.objects.values("study_program").annotate(total=Count("id"))
     # role_count = Role.objects.count()
-    team_count = Team.objects.values_list("project").distinct().count()
+    team_count = Team.objects.values_list("project_instance").distinct().count()
 
-    project_used_count = int(student_count / settings.team_min_member)
+    project_instance_used_count = int(student_count / settings.team_min_member)
     if project_used_count < 1:
         project_used_count = 1
 
     stats["count"] = {
         "project": project_count,
         "project_used": project_used_count,
+        "project_instance": project_instance_count,
+        "project_instance_used": project_instance_used_count,
         "student": student_count,
         "student_out": student_out_count,
         "study_programs": student_counts,
@@ -167,21 +171,28 @@ def get_prepared_stats_for_view():
         },
     }
 
+    # TODO: Order also by used projects?
     project_ids = get_project_ids_with_score_ordered()
     projects = []
     for project_id in project_ids:
         score = project_id["total_score"]
         score_avg = project_id["avg_score"]
         project = Project.objects.get(id=project_id["project"])
+        project_instances = ProjectInstance.objects.filter(project=project_id["project"])
+        project_instances_used_count = (
+            ProjectInstance.objects.filter(project=project_id["project"], team__isnull=False).distinct().count()
+        )
         color = "text-primary"
         if Team.objects.exists():
-            if Team.objects.filter(project=project).exists():
+            if Team.objects.filter(project_instance__in=project_instances).exists():
                 color = "text-success"
             else:
                 color = "text-danger"
         projects.append({
             "pid": project.pid,
             "name": project.name,
+            "instances": len(project_instances),
+            "instances_used": project_instances_used_count,
             "score": score,
             "score_avg": score_avg,
             "color": color,
@@ -213,7 +224,7 @@ def get_object_counts():
         "project": Project.objects.count(),
         "student": Student.objects.count(),
         # "role": Role.objects.count(),
-        "team": Team.objects.values_list("project").distinct().count(),
+        "team": Team.objects.values_list("project_instance").distinct().count(),
     }
 
     return counts

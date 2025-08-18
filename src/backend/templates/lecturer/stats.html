@@ -7,7 +7,8 @@
 <div class="container my-5">
   <h2>Statistiken</h2>
   <p>
-    <i class="bi bi-box me-1"></i> Projekte: <strong>{{ stats.count.project }}</strong>, <small class="text-secondary">verwendet werden <strong>{{ stats.count.project_used }}</strong> bei mindestens {{ settings.team_min_member }} Studenten</small><br />
+    <i class="bi bi-box me-1"></i> Projekte: <strong>{{ stats.count.project }}</strong>, <small class="text-secondary">verwendet werden <strong>{{ stats.count.project_used }}</strong></small><br />
+    <i class="bi bi-boxes me-1"></i> Projektinstanzen: <strong>{{ stats.count.project_instance }}</strong>, <small class="text-secondary">verwendet werden <strong>{{ stats.count.project_instance_used }}</strong> bei mindestens {{ settings.team_min_member }} Studenten</small><br />
     <i class="bi bi-person-fill me-1"></i> Studenten: <strong>{{ stats.count.student }}</strong>, <small class="text-secondary">davon <strong>{{ stats.count.student_out }}</strong> ausgeschieden, pro Studiengang
     {% for study_program in stats.count.study_programs %}
       {{ study_program.study_program }}: <strong>{{ study_program.total }}</strong>{% if not forloop.last %}, {% endif %}
@@ -59,6 +60,7 @@
         <th class="text-center" scope="col">Score</th>
         <th class="text-center" scope="col">⌀</th>
         <th class="text-center" scope="col">PID</th>
+        <th class="text-center" scope="col">Use</th>
         <th scope="col">Name</th>
       </tr>
     </thead>
@@ -68,6 +70,7 @@
         <td class="text-center {{ project.color }}"><strong>{{ project.score }}</strong></td>
         <td class="text-center text-secondary"><small>{{ project.score_avg|stringformat:".2f" }}</small></td>
         <td class="text-center"><span class="badge bg-light text-dark fs-6 flex-shrink-0" style="display:inline-block; width:45px">{{ project.pid }}</span></td>
+        <td class="text-center text-secondary"><small>{{ project.instances_used }}/{{ project.instances }}</small></td>
         <td>
           {{ project.name }}
         </td>

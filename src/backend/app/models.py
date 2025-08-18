@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 
 
 # choices
@@ -29,12 +29,18 @@ STUDY_PROGRAM_CHOICES = [
 
 
 class Project(models.Model):
+    pid2 = models.CharField(
+        max_length=1,
+        unique=True,
+        verbose_name="ID",
+        help_text="Es sind nur Großbuchstaben von A bis Z erlaubt.",
+        validators=[RegexValidator("[A-Z]")],
+    )
     type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=TYPE_CHOICES[0], verbose_name="Art")
     number = models.IntegerField(
         verbose_name="Nummer",
         help_text="Art und Nummer ergeben eine eindeutige Projekt-ID (bspw. I4, E2)",
     )
-    # pid2 = models.CharField(max_length=3, unique=True)
     name = models.CharField(max_length=255, verbose_name="Name")
     description = models.TextField(blank=True, null=True, verbose_name="Beschreibung")
     technologies = models.CharField(max_length=255, blank=True, null=True, verbose_name="Technologien")
@@ -62,7 +68,8 @@ class Project(models.Model):
 
     @property
     def pid(self):
-        return f"{self.type.upper()}{self.number}"
+        #     return f"{self.type.upper()}{self.number}"
+        return f"{self.pid2}"
 
     @property
     def pid_name(self):
