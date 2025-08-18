@@ -218,7 +218,8 @@ def get_poll_stats_for_student(team):
     )
     # text_role = f"Role: <strong>{poll_stats['happiness']['role']}</strong> ({poll_stats['happiness']['poll']['role']})"
     # poll_stats["summary"] = f"{poll_stats['happiness_icon']} {text_total}, {text_project}, {text_role}"
-    poll_stats["summary"] = f"{poll_stats['happiness_icon']} {text_total}, {text_project}"
+    # poll_stats["summary"] = f"{poll_stats['happiness_icon']} {text_total}, {text_project}"
+    poll_stats["summary"] = f"{poll_stats['happiness_icon']} {text_total}"
 
     return poll_stats
 
