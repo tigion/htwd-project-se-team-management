@@ -1,4 +1,5 @@
 from io import BytesIO
+import datetime
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
@@ -21,17 +22,25 @@ def generate_teams_pdf():
 
     # define styles
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name="project_name", fontSize=8))
+    styles.add(ParagraphStyle(name="project_name", fontSize=10))
     styles.add(ParagraphStyle(name="student_name", fontSize=9))
     team_table_style = TableStyle([
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+        ("BOX", (0, 0), (-1, -1), 1, colors.grey),
+        ("LINEABOVE", (0, 1), (-1, 1), 1, colors.grey),
         ("ROUNDEDCORNERS", [3, 3, 3, 3]),
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgoldenrodyellow),
+        ("TOPPADDING", (0, 0), (-1, 0), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
     ])
 
     # create and draw header
-    title = "Teams"
+    title = "Teamzusammenstellung - Software Engineering"
     c.drawCentredString(width / 2, height - margin - 12, title)
+    now = datetime.datetime.now()
+    timestamp = f"Stand: {now.strftime('%d.%m.%Y %H:%M:%S')}"
+    c.setFontSize(8)
+    c.drawCentredString(width / 2, height - margin - 25, timestamp)
 
     # create and draw team tables
     tables_per_line = 4
@@ -41,7 +50,7 @@ def generate_teams_pdf():
     y_count = 1  # table count per column
     h_max = 0  # max table height per column
     x = margin  # x position of the table
-    y = height - margin - 32  # y position of the table
+    y = height - margin - 45  # y position of the table
 
     # get teams
     teams = get_prepared_teams_for_view()
@@ -50,17 +59,19 @@ def generate_teams_pdf():
         data = []
 
         # add team name as first row
-        team_name = f"<b>{team['project'].pid}</b>: {team['project'].name}"
+        team_name = f"<b>{team['project_instance'].piid}</b> - {team['project_instance'].project.name}"
         data.append([Paragraph(team_name, styles["project_name"])])
 
         # add students as next rows
         for student in team["students"]:
             student_name = student["name"]
             styles["student_name"].textColor = "#000000"
-            if student["is_project_leader"]:
+            if student["is_initial_contact"]:
                 student_name = f"<b>{student_name}</b> <i>(PL)</i>"
-            if student["is_wing"]:
-                student_name = f"{student_name} <i>(Wing)</i>"
+            student_name = f"{student_name} <i>({student['study_program_short']})</i>"
+            # if student["is_wing"]:
+            #     student_name = f"{student_name} <i>(Wing)</i>"
+
             if student["is_out"] or not student["is_visible"]:
                 student_name = f"<strike>{student_name}</strike>"
                 styles["student_name"].textColor = "#dc3545" if student["is_out"] else "#6c757d"
