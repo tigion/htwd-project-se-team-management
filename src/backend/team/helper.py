@@ -36,6 +36,8 @@ key_mapper = {
 
 
 def prepare_project_instances():
+    # TODO: Needs refactoring
+
     settings = Settings.load()
 
     # shuffle projects with same score
@@ -63,11 +65,13 @@ def prepare_project_instances():
 
     # create project instances
     ProjectInstance.objects.all().delete()
-    # TODO: WIP
     project_instance_total_scores = []
     for project in project_total_scores:
         project_object = Project.objects.get(id=project["project"])
-        for i in range(1, 4):
+        max_range = settings.project_instances
+        if project_object.instances is not None:
+            max_range = project_object.instances
+        for i in range(1, max_range + 1):
             project_instance = ProjectInstance.objects.create(number=i, project=project_object)
             project_instance_total_scores.append({"project": project_instance.id, "score": project["score"]})
 
