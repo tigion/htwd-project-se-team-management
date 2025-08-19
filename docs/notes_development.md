@@ -13,14 +13,13 @@
     - [Save (working) pip packages in project venv](#save-working-pip-packages-in-project-venv)
   - [Django](#django)
     - [Reset Migrations](#reset-migrations)
-    - [Generate a new SECRET\_KEY](#generate-a-new-secret_key)
+    - [Generate a new SECRET_KEY](#generate-a-new-secret_key)
   - [Sqlite](#sqlite)
     - [Backup \& Restore](#backup--restore)
   - [nginx](#nginx)
     - [Create self signed certificate](#create-self-signed-certificate)
   - [Docker](#docker)
     - [Inspect running Docker containers](#inspect-running-docker-containers)
-
 
 ## Setup
 
@@ -66,30 +65,33 @@ python3 manage.py collectstatic
 ### Start and stop the server
 
 - **Django development server**:
-    ```sh
-    # - URI: localhost:8000
-    # Start
-    cd htwd-project-se-team-management/src/backend/
-    python3 manage.py runserver 0.0.0.0:8000
-    # Stop: CTRL+C
-    ```
+
+  ```sh
+  # - URI: localhost:8000
+  # Start
+  cd htwd-project-se-team-management/src/backend/
+  python3 manage.py runserver 0.0.0.0:8000
+  # Stop: CTRL+C
+  ```
 
 - **Gunicorn server**:
-    ```sh
-    # - URI: localhost:8000
-    cd htwd-project-se-team-management/src/backend/
-    gunicorn config.wsgi:application -c gunicorn.conf.py
-    # Stop: CTRL+C
-    ```
+
+  ```sh
+  # - URI: localhost:8000
+  cd htwd-project-se-team-management/src/backend/
+  gunicorn config.wsgi:application -c gunicorn.conf.py
+  # Stop: CTRL+C
+  ```
 
 - **Docker**:
-    ```sh
-    # - URI: localhost
-    cd htwd-project-se-team-management/
-    (sudo) docker compose up -d
-    # Stop
-    (sudo) docker compose down
-    ```
+
+  ```sh
+  # - URI: localhost
+  cd htwd-project-se-team-management/
+  (sudo) docker compose up -d
+  # Stop
+  (sudo) docker compose down
+  ```
 
 ## Project
 
@@ -97,16 +99,19 @@ python3 manage.py collectstatic
 
 1. Remove sensitive data or outsource them to the .env file.
 2. Prepare Django project:
-    ```sh
-    python3 manage.py makemigrations
-    python3 manage.py migrate
-    python3 manage.py collectstatic
-    ```
+
+   ```sh
+   python3 manage.py makemigrations
+   python3 manage.py migrate
+   python3 manage.py collectstatic
+   ```
+
 3. Test the project
 4. Freeze (working) pip package versions:
-    ```sh
-    pip freeze -l > requirements.freeze.txt
-    ```
+
+   ```sh
+   pip freeze -l > requirements.freeze.txt
+   ```
 
 > [!WARNING]
 > For final deployment use the [Deployment checklist](https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/):
@@ -116,8 +121,9 @@ python3 manage.py collectstatic
 ### Logging
 
 When the project is running with Docker, log files from Django and nginx are stored under:
-- `docker/logs/django/`: *django.log*
-- `docker/logs/nginx/`: *access.log*, *error.log*
+
+- `docker/logs/django/`: _django.log_
+- `docker/logs/nginx/`: _access.log_, _error.log_
 
 ## Helpful things
 
@@ -149,7 +155,7 @@ rm -rf .venv
 #### Save (working) pip packages in project venv
 
 ```sh
-pip freeze -l > requirments.freeze.txt
+pip freeze -l > requirements.freeze.txt
 ```
 
 ### Django
