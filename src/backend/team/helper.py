@@ -312,6 +312,7 @@ def get_prepared_teams_for_view():
         for team in teams:
             student = {
                 "name": team.student.name,
+                "study_program_short": team.student.study_program_short,
                 # "role": team.role,
                 "is_initial_contact": team.student_is_initial_contact,
                 "is_wing": team.student.is_wing,

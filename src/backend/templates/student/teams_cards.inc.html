@@ -23,7 +23,7 @@
                 </div>
                 <div class="ms-auto flex-shrink-0">
                   {% if student.is_initial_contact %}<span class="badge rounded-pill text-bg-primary ms-1">AP</span>{% endif %}
-                  {% if student.is_wing %}<span class="badge rounded-pill text-bg-secondary ms-0">WIng</span>{% endif %}
+                  <span class="badge rounded-pill text-muted text-bg-light ms-0">{{ student.study_program_short }}</span>
                 </div>
               {% if is_management_view %}
               </div>

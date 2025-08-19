@@ -15,14 +15,21 @@ TYPE_CHOICES = [
 #     ("d", "Divers"),
 # ]
 
-STUDY_PROGRAM_CHOICES = [
+STUDY_PROGRAMS = {
     # Informatik/Mathematik
-    ("041", "Informatik (041)"),
-    ("042", "Wirtschaftsinformatik (042)"),
-    ("048", "Verwaltungsinformatik (048)"),
+    "041": {"short": "AI", "name": "Informatik"},
+    "042": {"short": "WI", "name": "Wirtschaftsinformatik"},
+    "048": {"short": "VI", "name": "Verwaltungsinformatik"},
     # Wirtschaftswissenschaften
-    ("072", "Wirtschaftsingenieurwesen (072)"),
-]
+    "072": {"short": "WIng", "name": "Wirtschaftsingenieurwesen"},
+}
+
+STUDY_PROGRAM_CHOICES = []
+for study_program in STUDY_PROGRAMS:
+    STUDY_PROGRAM_CHOICES.append((
+        study_program,
+        f"{STUDY_PROGRAMS[study_program]['name']} ({study_program}, {STUDY_PROGRAMS[study_program]['short']})",
+    ))
 
 
 # models
@@ -106,6 +113,10 @@ class Student(models.Model):
     @property
     def email(self):
         return f"{self.s_number}@htw-dresden.de"
+
+    @property
+    def study_program_short(self):
+        return STUDY_PROGRAMS[self.study_program]["short"]
 
     @property
     def is_wing(self):
