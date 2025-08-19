@@ -196,6 +196,11 @@ class Settings(Singleton):
         verbose_name="Wings für SE II in den Teams ausblenden",
         help_text="Wenn aktiv, werden die Wirtschaftsingenieure (Wings) für Software Engineering II in den Teams nicht mehr angezeigt. Sie nehmen nur an SE I teil.",
     )
+    use_random_poll_defaults = models.BooleanField(
+        default=False,
+        verbose_name="Zufällige Anworten für leere Fragebögen generieren",
+        help_text="Wenn aktiv, werden leere Fragebögen nicht mit neutralen Antworten (3), sondern mit zufälligen Anworten (1-5) ausgefüllt.",
+    )
 
 
 class Info(Singleton):

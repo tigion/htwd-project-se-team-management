@@ -16,7 +16,7 @@
 <div class="container my-5">
   <h2>Zurücksetzen</h2>
   <div class="alert alert-danger" role="alert">
-    Achtung, hiermit werden alle Projekte, Studenten, Fragebogenantworten und Teams gelöscht und die Rollen und Einstellungen auf die Standardwerte zurückgesetzt!
+    Achtung, hiermit werden alle Projekte, Studenten, Fragebogenantworten und generierten Teams gelöscht und die Einstellungen auf die Standardwerte zurückgesetzt!
   </div>
   <form action="{% url 'reset' %}" method="POST">
     {% csrf_token %}
