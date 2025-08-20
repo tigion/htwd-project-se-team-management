@@ -29,13 +29,14 @@
 
   <!-- TODO: Use Bootstrap 5.2, 5.3 or newer? -->
 
+  {% comment %}
   <!-- Bootstrap 5.2 -->
   <div class="progress mt-3 mb-1">
     <div class="progress-bar bg-success" role="progressbar" aria-label="Segment one" style="width: {{ stats.poll.filled.percent|stringformat:".2f" }}%" aria-valuenow="{{ stats.poll.filled.percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100">{{ stats.poll.filled.count }}</div>
     <div class="progress-bar bg-warning text-dark" role="progressbar" aria-label="Segment two" style="width: {{ stats.poll.generated.percent|stringformat:".2f" }}%" aria-valuenow="{{ stats.poll.generated.percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100">{{ stats.poll.generated.count }}</div>
   </div>
+  {% endcomment %}
 
-  {% comment %}
   <!-- Bootstrap 5.3 -->
   <div class="progress-stacked">
     <div class="progress" role="progressbar" aria-label="Segment one" aria-valuenow="{{ stats.poll.filled.percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ stats.poll.filled.percent|stringformat:".2f" }}%">
@@ -45,7 +46,6 @@
       <div class="progress-bar bg-warning text-dark">{{ stats.poll.generated.count }}</div>
     </div>
   </div>
-  {% endcomment %}
 
   <p>
     Studenten mit ausgefülltem Fragebogen: <strong>{{ stats.poll.filled.count }}</strong> ({{ stats.poll.filled.percent|stringformat:".0f" }}%)<br />

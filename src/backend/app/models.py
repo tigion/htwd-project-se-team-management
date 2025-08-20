@@ -43,7 +43,7 @@ class Project(models.Model):
         help_text="Muss ein Großbuchstaben von A bis Z sein",
         validators=[RegexValidator("[A-Z]")],
     )
-    instances = models.IntegerField(
+    instances = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name="Instanzen",
@@ -161,13 +161,13 @@ class Settings(Singleton):
         verbose_name="Teams anzeigen",
         help_text="Wenn aktiv, sind die Teams für die Studenten sichtbar. Solange die Teams sichtbar sind, können keine Teams generiert oder verändert werden!",
     )
-    team_min_member = models.IntegerField(
+    team_min_member = models.PositiveIntegerField(
         default=6,
         verbose_name="Mindestanzahl der Studenten je Team",
         help_text="Anzahl muss zwischen 1 und 20 liegen.",
         validators=[MinValueValidator(1), MaxValueValidator(20)],
     )
-    project_instances = models.IntegerField(
+    project_instances = models.PositiveIntegerField(
         default=4,
         verbose_name="Standardanzahl der Projektinstanzen",
         help_text="Anzahl muss zwischen 1 und 99 liegen. Kann in den Projekteinstellungen je Projekt überschrieben werden.",

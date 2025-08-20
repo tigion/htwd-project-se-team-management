@@ -5,6 +5,8 @@ from app.models import Student, Project
 
 POLL_SCORES = {
     "default": 3,
+    "min": 1,
+    "max": 5,
     "choices": [
         {
             "id": 1,
@@ -65,11 +67,11 @@ class ProjectAnswer(models.Model):
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
-    # TODO: use POLL_SCORES for default, choices, validation
+    # TODO: use POLL_SCORES choices, validation
     score = models.PositiveIntegerField(
         default=POLL_SCORES["default"],
         # choices=SCORE_CHOICES,
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        validators=[MinValueValidator(POLL_SCORES["min"]), MaxValueValidator(POLL_SCORES["max"])],
     )
 
     class Meta:

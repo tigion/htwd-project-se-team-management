@@ -107,11 +107,13 @@ def generate_poll_data_for_students_without_poll():
 
 
 def get_project_ids_with_score_ordered():
-    return (
+    project_ids = (
         ProjectAnswer.objects.values("project")
         .annotate(total_score=Sum("score"), avg_score=Avg("score"))
         .order_by("-total_score")
     )
+
+    return project_ids
 
 
 def get_poll_stats_for_student(team):
@@ -178,8 +180,7 @@ def calc_happiness_score(scores):
     # project_gain = 0.8
     # role_gain = 0.2
 
-    # TODO: get from POLL_SCORES
-    max_score = 5
+    max_score = POLL_SCORES["max"]
 
     # calc each happiness
     # - normalize score (1-5 -> 0-4) to (0-1) like algorithm

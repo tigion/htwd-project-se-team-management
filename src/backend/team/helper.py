@@ -4,7 +4,7 @@ from random import shuffle
 from django.utils import timezone
 
 from app.models import Project, Student, Settings, Info
-from poll.models import Poll, ProjectAnswer
+from poll.models import POLL_SCORES, Poll, ProjectAnswer
 from poll.helper import (
     get_poll_stats_for_student,
     get_project_ids_with_score_ordered,
@@ -178,9 +178,7 @@ def prepare_data(project_instance_ids):
 
 def generate_teams_with_algorithm(data):
     max_scores = {
-        # TODO: get max scores from POLL_SCORES
-        "project": 5,
-        "role": 5,
+        "project": POLL_SCORES["max"],
     }
 
     algo = AssignmentAlgo(

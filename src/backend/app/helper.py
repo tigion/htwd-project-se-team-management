@@ -162,6 +162,8 @@ def get_prepared_stats_for_view():
 
     # TODO: Order also by used projects?
     project_ids = get_project_ids_with_score_ordered()
+
+    teams_exist = Team.objects.exists()
     projects = []
     for project_id in project_ids:
         score = project_id["total_score"]
@@ -172,8 +174,9 @@ def get_prepared_stats_for_view():
             ProjectInstance.objects.filter(project=project_id["project"], team__isnull=False).distinct().count()
         )
         color = "text-primary"
-        if Team.objects.exists():
-            if Team.objects.filter(project_instance__in=project_instances).exists():
+        if teams_exist:
+            project_is_used = Team.objects.filter(project_instance__in=project_instances).exists()
+            if project_is_used:
                 color = "text-success"
             else:
                 color = "text-danger"
