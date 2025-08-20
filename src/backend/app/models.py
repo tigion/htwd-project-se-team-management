@@ -50,11 +50,6 @@ class Project(models.Model):
         help_text="Leer für Standardanzahl aus den Einstellungen oder Angabe der individuellen Anzahl der maximalen Projektinstanzen (1-99)",
         validators=[MinValueValidator(1), MaxValueValidator(99)],
     )
-    # type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=TYPE_CHOICES[0], verbose_name="Art")
-    # number = models.IntegerField(
-    #     verbose_name="Nummer",
-    #     help_text="Art und Nummer ergeben eine eindeutige Projekt-ID (bspw. I4, E2)",
-    # )
     name = models.CharField(max_length=255, verbose_name="Name")
     description = models.TextField(blank=True, null=True, verbose_name="Beschreibung")
     technologies = models.CharField(max_length=255, blank=True, null=True, verbose_name="Technologien")
@@ -74,13 +69,7 @@ class Project(models.Model):
     )
 
     class Meta:
-        # unique_together = ["type", "number"]
         ordering = ("pid",)
-
-    # @property
-    # def pid(self):
-    #     #     return f"{self.type.upper()}{self.number}"
-    #     return f"{self.pid2}"
 
     @property
     def pid_name(self):
@@ -128,13 +117,6 @@ class Student(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name2}"
-
-
-# class Role(models.Model):
-#     name = models.CharField(max_length=255, unique=True, verbose_name="Name")
-#
-#     def __str__(self) -> str:
-#         return f"{self.name}"
 
 
 # settings

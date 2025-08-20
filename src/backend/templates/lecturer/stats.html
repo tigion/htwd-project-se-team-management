@@ -27,6 +27,8 @@
   </div>
   <p>Beantwortet: <strong>{{ stats.poll.all.percent|stringformat:".0f" }}%</strong></p>
 
+  <!-- TODO: Use Bootstrap 5.2, 5.3 or newer? -->
+
   <!-- Bootstrap 5.2 -->
   <div class="progress mt-3 mb-1">
     <div class="progress-bar bg-success" role="progressbar" aria-label="Segment one" style="width: {{ stats.poll.filled.percent|stringformat:".2f" }}%" aria-valuenow="{{ stats.poll.filled.percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100">{{ stats.poll.filled.count }}</div>
@@ -79,29 +81,5 @@
     </tbody>
   </table>
 </div>
-
-<!-- <div class="container my-5"> -->
-<!--   <h3>Beliebtheit Rollen</h3> -->
-<!--   <table class="table w-auto align-middle"> -->
-<!--     <thead> -->
-<!--       <tr> -->
-<!--         <th class="text-center" scope="col">Score</th> -->
-<!--         <th class="text-center" scope="col">⌀</th> -->
-<!--         <th scope="col">Name</th> -->
-<!--       </tr> -->
-<!--     </thead> -->
-<!--     <tbody> -->
-<!--     {% for role in stats.roles %} -->
-<!--       <tr class=""> -->
-<!--         <td class="text-center {{ role.color }}"><strong>{{ role.score }}</strong></td> -->
-<!--         <td class="text-center text-secondary"><small>{{ role.score_avg|stringformat:".2f" }}</small></td> -->
-<!--         <td> -->
-<!--           {{ role.name }} -->
-<!--         </td> -->
-<!--       </tr> -->
-<!--     {% endfor %} -->
-<!--     </tbody> -->
-<!--   </table> -->
-<!-- </div> -->
 
 {% endblock content %}

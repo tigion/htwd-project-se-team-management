@@ -3,7 +3,6 @@ from django.forms import ModelForm
 from .models import (
     Project,
     Student,
-    # Role,
     Settings,
 )
 
@@ -18,12 +17,6 @@ class StudentForm(ModelForm):
     class Meta:
         model = Student
         fields = "__all__"
-
-
-# class RoleForm(ModelForm):
-#     class Meta:
-#         model = Role
-#         fields = "__all__"
 
 
 class UploadStudentsForm(forms.Form):

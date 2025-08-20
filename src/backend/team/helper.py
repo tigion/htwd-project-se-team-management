@@ -3,11 +3,8 @@ from django.db.models import Sum
 from random import shuffle
 from django.utils import timezone
 
-# from app.models import Project, Student, Role, Settings, Info
 from app.models import Project, Student, Settings, Info
 from poll.models import Poll, ProjectAnswer
-
-# from poll.models import Poll, ProjectAnswer, RoleAnswer
 from poll.helper import (
     get_poll_stats_for_student,
     get_project_ids_with_score_ordered,
@@ -28,10 +25,6 @@ key_mapper = {
         "db2algo": {},  # student id    (database)  : student index (algorithm)
         "algo2db": {},  # student index (algorithm) : student id    (database)
     },
-    # "role": {
-    #     "db2algo": {},  # role id    (database)  : role index (algorithm)
-    #     "algo2db": {},  # role index (algorithm) : role id    (database)
-    # },
 }
 
 
@@ -104,14 +97,11 @@ def map_keys_and_prepare_data(
     students: list,
     project_instances: list,
     project_answers: list,
-    # roles: list,
-    # role_answers: list,
 ):
     def student_key(x):
         return x[0]
 
     result_project_answers = {}
-    # result_role_answers = {}
     result_wing_answers = {}
 
     # update project_keys keymap
@@ -136,13 +126,6 @@ def map_keys_and_prepare_data(
     # print("-----------------------------------------")
     # print(f"> {key_mapper['student']}")
 
-    # # update role_keys keymap
-    # key_mapper["role"]["db2algo"].clear()
-    # key_mapper["role"]["algo2db"].clear()
-    # for i in range(len(roles)):
-    #     key_mapper["role"]["db2algo"][roles[i][0]] = i
-    #     key_mapper["role"]["algo2db"][i] = roles[i][0]
-
     # print("-----------------------------------------")
     # print(f"> {project_instances}")
     # print("-----------------------------------------")
@@ -159,14 +142,6 @@ def map_keys_and_prepare_data(
                 d[key_mapper["project"]["db2algo"].get(pi[0])] = group[i][2]
         if len(d) > 0:
             result_project_answers[key_mapper["student"]["db2algo"].get(key)] = d
-
-    # # create role_answers with grouped db2algo keys
-    # for key, g in groupby(role_answers, student_key):
-    #     group = list(g)
-    #     d = {}
-    #     for i in range(len(group)):
-    #         d[key_mapper["role"]["db2algo"].get(group[i][1])] = group[i][2]
-    #     result_role_answers[key_mapper["student"]["db2algo"].get(key)] = d
 
     # create wing_answers
     for student in students:
@@ -189,25 +164,14 @@ def prepare_data(project_instance_ids):
     for ts in temp_students:
         students.append((ts.id, ts.is_wing))
 
-    # projects: project_instance_id, project_id
-    # projects = list(Project.objects.filter(id__in=project_instance_ids).values_list("id"))
+    # project instances: project_instance_id, project_id
     project_instances = list(ProjectInstance.objects.filter(id__in=project_instance_ids).values_list("id", "project"))
 
-    # projects: project_id
-    # roles = list(Role.objects.values_list("id"))
-
     # project_answers: student_id, project_id, score
-    project_answers = list(
-        # ProjectAnswer.objects.filter(project__in=project_instance_ids)
-        ProjectAnswer.objects.order_by("poll").values_list("poll__student", "project", "score")
-    )
-
-    # role_answers: poll_id, role_id, score
-    # role_answers = list(RoleAnswer.objects.order_by("poll").values_list("poll__student", "role", "score"))
+    project_answers = list(ProjectAnswer.objects.order_by("poll").values_list("poll__student", "project", "score"))
 
     # prepare data for algorithm
     data = map_keys_and_prepare_data(students, project_instances, project_answers)
-    # data = map_keys_and_prepare_data(students, projects, project_answers, roles, role_answers)
 
     return data
 
@@ -221,7 +185,6 @@ def generate_teams_with_algorithm(data):
 
     algo = AssignmentAlgo(
         data.get("project_answers"),
-        # data.get("role_answers"),
         data.get("wing_answers"),
         max_scores,
     )
@@ -237,18 +200,13 @@ def save_teams(algo_result):
     for a in algo_result:
         project_instance_id = key_mapper["project"]["algo2db"].get(a[0])
         student_id = key_mapper["student"]["algo2db"].get(a[1])
-        # role_id = key_mapper["role"]["algo2db"].get(a[2])
         score = a[2]
-        # score = a[3]
-
-        # print(f"-> key map {a}: {project_id} {student_id} {role_id} - {score}")
 
         project_id = ProjectInstance.objects.get(id=project_instance_id).project.id
         team = Team(
             project_id=project_id,
             project_instance_id=project_instance_id,
             student_id=student_id,
-            # role_id=role_id,
             student_is_initial_contact=False,
             score=score,
         )
@@ -278,8 +236,6 @@ def generate_teams():
     Team.objects.all().delete()
     if not Poll.objects.exists() or not ProjectAnswer.objects.exists():
         return
-    # if not Poll.objects.exists() or not ProjectAnswer.objects.exists() or not RoleAnswer.objects.exists():
-    #     return
 
     # TODO: Needs refactoring
     #       - projects with answers -> project instances -> data
@@ -295,7 +251,6 @@ def get_prepared_teams_for_view():
     settings = Settings.load()
     data = []
 
-    # projects = Project.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
     project_instances = ProjectInstance.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
     for project_instance in project_instances:
         data_set = {
@@ -313,7 +268,6 @@ def get_prepared_teams_for_view():
             student = {
                 "name": team.student.name,
                 "study_program_short": team.student.study_program_short,
-                # "role": team.role,
                 "is_initial_contact": team.student_is_initial_contact,
                 "is_wing": team.student.is_wing,
                 "is_active": team.student.is_active,

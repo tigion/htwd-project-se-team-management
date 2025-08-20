@@ -1,6 +1,5 @@
 from django.db import models
 from app.models import Project, Student
-# from app.models import Project, Student, Role
 
 
 # Create your models here.
@@ -31,8 +30,6 @@ class Team(models.Model):
     student_is_initial_contact = models.BooleanField(default=False)
     score = models.FloatField(null=True)
 
-    # class Meta:
-    #     unique_together = ["project", "student"]
     class Meta:
         ordering = ("project", "-student_is_initial_contact", "student")
 

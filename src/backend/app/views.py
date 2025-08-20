@@ -22,12 +22,10 @@ from poll.helper import (
 from team.models import Team
 from team.helper import generate_teams, get_prepared_teams_for_view
 
-# from .models import Project, Settings, Student, Role, Info
 from .models import Project, Settings, Student, Info
 from .forms import (
     ProjectForm,
     StudentForm,
-    # RoleForm,
     UploadStudentsForm,
     SettingsForm,
     SettingsResetForm,
@@ -86,7 +84,6 @@ def signout(request):
 def student_home(request):
     settings = Settings.load()
     projects = Project.objects.all()
-    # roles = Role.objects.all()
 
     student = Student.objects.filter(s_number=request.user.username).first()
     is_student = bool(student)
@@ -95,7 +92,6 @@ def student_home(request):
     context["is_student"] = is_student
     context["settings"] = settings
     context["projects"] = projects
-    # context["roles"] = roles
     context["poll_scores"] = POLL_SCORES
     context["teams"] = get_prepared_teams_for_view()
 
@@ -104,12 +100,10 @@ def student_home(request):
         if settings.poll_is_writable:
             # save poll data
             save_poll_data_to_db(student, request.POST, projects)
-            # save_poll_data_to_db(student, request.POST, projects, roles)
             return redirect("home")
 
     # load poll data to context for prefilled form
     form_poll_data = load_poll_data_for_form(student, projects)
-    # form_poll_data = load_poll_data_for_form(student, projects, roles)
     context["form_poll_data"] = form_poll_data
 
     return render(request, "student/home.html", context)
@@ -123,7 +117,7 @@ def projects(request):
 
     context = {}
     context["settings"] = settings
-    context["projects"] = Project.objects.all()  # .order_by("type", "number")
+    context["projects"] = Project.objects.all()
 
     return render(request, "lecturer/projects.html", context)
 
@@ -159,10 +153,9 @@ def project_edit(request, id=None):
 @permission_required("app.view_project")
 @permission_required("app.delete_project")
 def project_delete(request, id=None):
-    # context = {}
+    # TODO: ?
+    # - https://www.pythontutorial.net/django-tutorial/django-delete-form/
 
-    # TODO:
-    # https://www.pythontutorial.net/django-tutorial/django-delete-form/
     if request.method == "POST":
         project = get_object_or_404(Project, id=id)
         try:
@@ -174,10 +167,6 @@ def project_delete(request, id=None):
             )
 
     return redirect("projects")
-    # context["projects"] = Project.objects.all().order_by("type", "number")
-    # form = ProjectForm(request.POST or None)
-    # context["ProjectForm"] = form
-    # return render(request, "lecturer/projects.html", context)
 
 
 @login_required()
@@ -258,66 +247,6 @@ def student_delete(request, id=None):
     return redirect("students")
 
 
-# @login_required()
-# @permission_required("app.view_role")
-# def roles(request):
-#     settings = Settings.load()
-#
-#     context = {}
-#     context["settings"] = settings
-#     context["roles"] = Role.objects.all()
-#
-#     return render(request, "lecturer/roles.html", context)
-
-
-# @login_required()
-# @permission_required("app.view_role")
-# @permission_required("app.add_role")
-# @permission_required("app.change_role")
-# def role_edit(request, id=None):
-#     settings = Settings.load()
-#
-#     context = {}
-#     context["settings"] = settings
-#
-#     if id is None:
-#         form = RoleForm(request.POST or None)
-#     else:
-#         role = get_object_or_404(Role, id=id)
-#         # roll = Role.objects.get(id=id)
-#         form = RoleForm(request.POST or None, instance=role)
-#         context["role"] = Role.objects.get(id=id)
-#
-#     if request.method == "POST":
-#         if form.is_valid():
-#             form.save()
-#             return redirect("roles")
-#
-#     context["RoleForm"] = form
-#     return render(request, "lecturer/role.html", context)
-
-
-# @login_required()
-# @permission_required("app.view_role")
-# @permission_required("app.delete_role")
-# def role_delete(request, id=None):
-#     if request.method == "POST":
-#         role = get_object_or_404(Role, id=id)
-#         try:
-#             role.delete()
-#             messages.success(
-#                 request,
-#                 f'Rolle "{role.name}" wurde gelöscht!',
-#             )
-#         except ProtectedError:
-#             messages.error(
-#                 request,
-#                 f'Achtung: Rolle "{role.name}" kann nicht gelöscht werden, da sie für Teams verwendet wird!',
-#             )
-#
-#     return redirect("roles")
-
-
 @login_required()
 @permission_required("team.view_team")
 def teams(request):
@@ -344,22 +273,14 @@ def teams_generate(request):
         # Check: Do not allow generation, if teams are visible
         if not settings.teams_is_visible:
             # Check: Needed data
-            # if not Project.objects.exists() or not Student.objects.exists() or Role.objects.count() < 2:
             if not Project.objects.exists() or not Student.objects.exists():
                 messages.error(
                     request,
-                    # f"Achtung: Für die Teamgenerierung müssen mindestens ein Projekte ({ Project.objects.count() }), ein Student ({ Student.objects.count() }) und midestens zwei Rollen ({ Role.objects.count() }) vorhanden sein!",
                     format_html(
-                        'Achtung: Teamgenerierung fehlgeschlagen!<br /><ul class="mb-0"><li>es müssen mindestens ein Projekte ({}) und ein Student ({}) vorhanden sein</li></ul>',
+                        'Achtung: Teamgenerierung fehlgeschlagen!<br /><ul class="mb-0"><li>Es müssen mindestens ein Projekte ({}) und ein Student ({}) vorhanden sein.</li></ul>',
                         Project.objects.count(),
                         Student.objects.count(),
                     ),
-                    # format_html(
-                    #     'Achtung: Teamgenerierung fehlgeschlagen!<br /><ul class="mb-0"><li>es müssen mindestens ein Projekte ({}), ein Student ({}) und zwei Rollen ({}) vorhanden sein</li></ul>',
-                    #     Project.objects.count(),
-                    #     Student.objects.count(),
-                    #     Role.objects.count(),
-                    # ),
                 )
                 return redirect("teams")
 
@@ -429,12 +350,10 @@ def settings(request):
 @login_required()
 @permission_required("app.delete_project")
 @permission_required("app.delete_student")
-# @permission_required("app.delete_role")
 @permission_required("app.delete_settings")
 @permission_required("team.delete_team")
 @permission_required("poll.delete_poll")
 @permission_required("poll.delete_projectanswer")
-# @permission_required("poll.delete_roleanswer")
 def settings_reset(request):
     if request.method == "POST":
         reset_data(request.POST.get("delete_only_polls_and_teams"))

@@ -5,14 +5,10 @@ from io import StringIO
 
 from django.db.models import Count
 
-# from poll.models import Poll, ProjectAnswer, RoleAnswer
 from poll.models import Poll, ProjectAnswer
-
-# from poll.helper import get_project_ids_with_score_ordered, get_role_ids_with_score_ordered
 from poll.helper import get_project_ids_with_score_ordered
 from team.models import Team, ProjectInstance
 
-# from .models import STUDY_PROGRAM_CHOICES, Project, Settings, Student, Role
 from .models import STUDY_PROGRAM_CHOICES, Project, Settings, Student
 
 
@@ -96,23 +92,11 @@ def reset_data(delete_only_polls_and_teams=False):
     Team.objects.all().delete()
     Project.objects.all().delete()
     Student.objects.all().delete()
-    # Role.objects.all().delete()
     Settings.objects.all().delete()
 
     # delete lost table entries
     Poll.objects.all().delete()
     ProjectAnswer.objects.all().delete()
-    # RoleAnswer.objects.all().delete()
-
-    # # add default roles
-    # roles = [
-    #     Role(name="Projektleitung"),
-    #     Role(name="Analyse"),
-    #     Role(name="Entwurf"),
-    #     Role(name="Implementierung"),
-    #     Role(name="Test"),
-    # ]
-    # Role.objects.bulk_create(roles)
 
 
 def get_prepared_stats_for_view():
@@ -125,7 +109,6 @@ def get_prepared_stats_for_view():
     student_count = Student.objects.count()
     student_out_count = Student.objects.filter(is_active=False).count()
     student_counts = Student.objects.values("study_program").annotate(total=Count("id"))
-    # role_count = Role.objects.count()
     team_count = Team.objects.values_list("project_instance").distinct().count()
 
     project_instance_used_count = int(student_count / settings.team_min_member)
@@ -140,7 +123,6 @@ def get_prepared_stats_for_view():
         "student": student_count,
         "student_out": student_out_count,
         "study_programs": student_counts,
-        # "role": role_count,
         "team": team_count,
     }
 
@@ -207,22 +189,6 @@ def get_prepared_stats_for_view():
 
     stats["projects"] = projects
 
-    # role_ids = get_role_ids_with_score_ordered()
-    # roles = []
-    # for role_id in role_ids:
-    #     score = role_id["total_score"]
-    #     score_avg = role_id["avg_score"]
-    #     role = Role.objects.get(id=role_id["role"])
-    #     color = "text-primary"
-    #     roles.append({
-    #         "name": role.name,
-    #         "score": score,
-    #         "score_avg": score_avg,
-    #         "color": color,
-    #     })
-    #
-    # stats["roles"] = roles
-
     return stats
 
 
@@ -230,7 +196,6 @@ def get_object_counts():
     counts = {
         "project": Project.objects.count(),
         "student": Student.objects.count(),
-        # "role": Role.objects.count(),
         "team": Team.objects.values_list("project_instance").distinct().count(),
     }
 
