@@ -27,15 +27,15 @@
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h1 class="modal-title fs-5" id="deleteConfirmationModalLabel-student-{{ student.id }}">Löschbestätigung</h1>
+                  <h1 class="modal-title fs-5" id="deleteConfirmationModalLabel-student-{{ student.id }}">Student löschen</h1>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                  Soll der Student "<strong>{{ student.name2 }}</strong>" wirklich gelöscht werden?
+                  Hiermit wird <strong>{{ student.name2 }}</strong>, inklusive abhängiger Daten, gelöscht.
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
                   <button class="btn btn-danger" type="submit"><i class="bi bi-trash3 me-2"></i>Löschen</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
                 </div>
               </div>
             </div>

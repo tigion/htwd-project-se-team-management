@@ -84,8 +84,15 @@ def load_students_from_file(file, mode):
         )
 
 
-def reset_data():
-    # delete data
+def reset_data(delete_only_polls_and_teams=False):
+    # delete only polls and teams
+    if delete_only_polls_and_teams:
+        Team.objects.all().delete()
+        Poll.objects.all().delete()
+        ProjectAnswer.objects.all().delete()
+        return
+
+    # delete all data
     Team.objects.all().delete()
     Project.objects.all().delete()
     Student.objects.all().delete()

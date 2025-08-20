@@ -437,7 +437,7 @@ def settings(request):
 # @permission_required("poll.delete_roleanswer")
 def settings_reset(request):
     if request.method == "POST":
-        reset_data()
+        reset_data(request.POST.get("delete_only_polls_and_teams"))
         messages.success(request, "Die Daten wurden zurückgesetzt!")
         return redirect("home")
 
