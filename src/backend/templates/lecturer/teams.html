@@ -9,6 +9,10 @@
   <div class="alert alert-danger" role="alert">
     Achtung, solange die Teams für die Studenten sichtbar sind, können keine Änderungen vorgenommen werden!
   </div>
+  {% elif settings.use_random_poll_defaults %}
+  <div class="alert alert-danger" role="alert">
+    Achtung, es ist die <a href="/settings">Einstellung</a> gesetzt, dass leere Fragebögen mit zufälligen Anworten ausgefüllt werden!
+  </div>
   {% endif %}
   <div class="d-flex flex-row bd-highlight mb-3">
     <div class="bd-highlight">

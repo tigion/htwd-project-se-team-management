@@ -2,7 +2,7 @@ from django.utils import timezone
 
 from django.db.models import Sum, Avg, Min, Max
 
-from app.models import Student, Project, Info
+from app.models import Student, Project, Info, Settings
 from .models import POLL_SCORES, Poll, ProjectAnswer
 
 import random
@@ -79,9 +79,9 @@ def load_poll_data_for_form(student, projects):
 
 
 def generate_poll_data_for_students_without_poll():
+    settings = Settings.load()
     polls = Poll.objects.all()
     projects = Project.objects.all()
-    default = POLL_SCORES["default"]
     students_without_answers = Student.objects.filter(poll__isnull=True)
     projects_without_answers = Project.objects.filter(projectanswer__isnull=True)
 
@@ -91,13 +91,19 @@ def generate_poll_data_for_students_without_poll():
             is_generated=True,
         )
         for project in projects:
-            default = random.randint(1, 5)
-            ProjectAnswer.objects.create(poll=poll, project=project, score=default)
+            ProjectAnswer.objects.create(
+                poll=poll,
+                project=project,
+                score=POLL_SCORES["default"] if not settings.use_random_poll_defaults else random.randint(1, 5),
+            )
 
     for project in projects_without_answers:
         for poll in polls:
-            default = random.randint(1, 5)
-            ProjectAnswer.objects.create(poll=poll, project=project, score=default)
+            ProjectAnswer.objects.create(
+                poll=poll,
+                project=project,
+                score=POLL_SCORES["default"] if not settings.use_random_poll_defaults else random.randint(1, 5),
+            )
 
 
 def get_project_ids_with_score_ordered():
