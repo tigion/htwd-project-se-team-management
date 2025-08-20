@@ -120,7 +120,8 @@ python3 manage.py collectstatic
 
 ### Logging
 
-When the project is running with Docker, log files from Django and nginx are stored under:
+When the project is running with Docker, log files from Django and nginx are
+stored under:
 
 - `docker/logs/django/`: _django.log_
 - `docker/logs/nginx/`: _access.log_, _error.log_

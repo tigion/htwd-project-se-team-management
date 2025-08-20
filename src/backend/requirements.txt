@@ -7,6 +7,6 @@ gunicorn
 reportlab
 
 # development
-# prevent linter warnings (pyright)
+# prevent linter warnings (pyright, basedpyright)
 django-stubs
 django-types

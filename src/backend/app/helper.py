@@ -41,7 +41,7 @@ def load_students_from_file(file, mode):
         p = re.compile("^g?s[0-9]{1,9}@")
         if not p.match(col[2]):
             continue
-        s_number = col[2].partition("@")[0].strip()  # part befor mail domain
+        s_number = col[2].partition("@")[0].strip()  # part before mail domain
 
         # firstname
         first_name = col[0].strip()

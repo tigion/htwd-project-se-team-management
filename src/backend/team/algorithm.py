@@ -113,7 +113,7 @@ class AssignmentAlgo:
         self.__model_vars = {}
         self.__model = cpm.CpModel()
 
-        # set answere data
+        # set answer data
         self.__project_answers = project_answers
         # self.__role_answers = role_answers
         self.__wing_answers = wing_answers
@@ -416,7 +416,7 @@ class AssignmentAlgo:
         :type project_gain: float
         :raises: AssertionError wenn ``type(project_gain) != float``
         :return: None"""
-        assert type(project_gain) == float
+        assert type(project_gain) is float
         self.__project_gain = project_gain
 
     def get_project_gain(self):
@@ -453,7 +453,7 @@ class AssignmentAlgo:
         :type max_runtime: int
         :raises: AssertionError wenn type(max_runtime) != int
         :return: None"""
-        assert type(max_runtime) == int
+        assert type(max_runtime) is int
         self.__max_runtime = max_runtime
 
     def get_max_runtime(self):
@@ -469,8 +469,8 @@ class AssignmentAlgo:
                  Ausführen des Algorithmus zugegriffen wird.
         :return: Liste von Tupeln als Zuordnung bestehend aus Student,
                  Projekt und Rolle.
-        :rtype: list((int,int,int))"""
-        if self.__algo_ran == False:
+        :rtype: list((int,int))"""
+        if not self.__algo_ran:
             raise AssignmentAlgoException("tried to access result before running algo")
         else:
             return self.__result

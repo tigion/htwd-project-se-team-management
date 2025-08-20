@@ -131,7 +131,7 @@ class Singleton(models.Model):
         self.pk = 1
         super(Singleton, self).save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
+    def delete(self, *args, **kwargs):  # pyright: ignore[reportIncompatibleMethodOverride]
         pass
 
     @classmethod

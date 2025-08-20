@@ -1,5 +1,4 @@
 from itertools import groupby
-from django.db.models import Sum
 from random import shuffle
 from django.utils import timezone
 
@@ -66,7 +65,7 @@ def prepare_project_instances():
             max_range = project_object.instances
         for i in range(1, max_range + 1):
             project_instance = ProjectInstance.objects.create(number=i, project=project_object)
-            project_instance_total_scores.append({"project": project_instance.id, "score": project["score"]})
+            project_instance_total_scores.append({"project": project_instance.pk, "score": project["score"]})
 
     # for x in project_instance_total_scores:
     #     project = ProjectInstance.objects.get(id=x["project"])
@@ -158,20 +157,22 @@ def map_keys_and_prepare_data(
 
 
 def prepare_data(project_instance_ids):
-    # students: student_id, is_wing
-    students = []
-    temp_students = Student.objects.all()
-    for ts in temp_students:
-        students.append((ts.id, ts.is_wing))
+    # students data: student_id, is_wing
+    students_data = []
+    students = Student.objects.all()
+    for student in students:
+        students_data.append((student.pk, student.is_wing))
 
-    # project instances: project_instance_id, project_id
-    project_instances = list(ProjectInstance.objects.filter(id__in=project_instance_ids).values_list("id", "project"))
+    # project instances data: project_instance_id, project_id
+    project_instances_data = list(
+        ProjectInstance.objects.filter(id__in=project_instance_ids).values_list("id", "project")
+    )
 
-    # project_answers: student_id, project_id, score
-    project_answers = list(ProjectAnswer.objects.order_by("poll").values_list("poll__student", "project", "score"))
+    # project answers data: student_id, project_id, score
+    project_answers_data = list(ProjectAnswer.objects.order_by("poll").values_list("poll__student", "project", "score"))
 
     # prepare data for algorithm
-    data = map_keys_and_prepare_data(students, project_instances, project_answers)
+    data = map_keys_and_prepare_data(students_data, project_instances_data, project_answers_data)
 
     return data
 
@@ -200,7 +201,7 @@ def save_teams(algo_result):
         student_id = key_mapper["student"]["algo2db"].get(a[1])
         score = a[2]
 
-        project_id = ProjectInstance.objects.get(id=project_instance_id).project.id
+        project_id = ProjectInstance.objects.get(id=project_instance_id).project.pk
         team = Team(
             project_id=project_id,
             project_instance_id=project_instance_id,

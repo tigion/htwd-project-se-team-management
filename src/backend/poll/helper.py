@@ -40,7 +40,7 @@ def save_poll_data_to_db(student, POST, projects):
     values = {
         "is_generated": False,
     }
-    poll, created = Poll.objects.update_or_create(
+    poll, _created = Poll.objects.update_or_create(
         student=poll_data["student"],
         defaults=values,
     )
@@ -164,9 +164,9 @@ def get_poll_stats_for_student(team):
     text_total = (
         f"Total: <strong>{poll_stats['happiness']['total']}</strong> ({poll_stats['happiness']['poll']['total']})"
     )
-    text_project = (
-        f"Project: <strong>{poll_stats['happiness']['project']}</strong> ({poll_stats['happiness']['poll']['project']})"
-    )
+    # text_project = (
+    #     f"Project: <strong>{poll_stats['happiness']['project']}</strong> ({poll_stats['happiness']['poll']['project']})"
+    # )
     # poll_stats["summary"] = f"{poll_stats['happiness_icon']} {text_total}, {text_project}"
     poll_stats["summary"] = f"{poll_stats['happiness_icon']} {text_total}"
 

@@ -10,7 +10,7 @@ from django.utils.html import format_html
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 
 from poll.models import POLL_SCORES
 from poll.helper import (
@@ -80,7 +80,7 @@ def signout(request):
     return redirect("home")
 
 
-@login_required(redirect_field_name=None, login_url="login")
+@login_required
 def student_home(request):
     settings = Settings.load()
     projects = Project.objects.all()
@@ -109,7 +109,6 @@ def student_home(request):
     return render(request, "student/home.html", context)
 
 
-# @login_required(redirect_field_name=None, login_url="login")
 @login_required
 @permission_required("app.view_project")
 def projects(request):
@@ -122,7 +121,7 @@ def projects(request):
     return render(request, "lecturer/projects.html", context)
 
 
-@login_required()
+@login_required
 @permission_required("app.view_project")
 @permission_required("app.add_project")
 @permission_required("app.change_project")
@@ -149,7 +148,7 @@ def project_edit(request, id=None):
     return render(request, "lecturer/project.html", context)
 
 
-@login_required()
+@login_required
 @permission_required("app.view_project")
 @permission_required("app.delete_project")
 def project_delete(request, id=None):
@@ -169,7 +168,7 @@ def project_delete(request, id=None):
     return redirect("projects")
 
 
-@login_required()
+@login_required
 @permission_required("app.view_student")
 @permission_required("app.add_student")
 @permission_required("app.change_student")
@@ -203,7 +202,7 @@ def students(request):
     return render(request, "lecturer/students.html", context)
 
 
-@login_required()
+@login_required
 @permission_required("app.view_student")
 @permission_required("app.add_student")
 @permission_required("app.change_student")
@@ -230,7 +229,7 @@ def student_edit(request, id=None):
     return render(request, "lecturer/student.html", context)
 
 
-@login_required()
+@login_required
 @permission_required("app.view_student")
 @permission_required("app.delete_student")
 def student_delete(request, id=None):
@@ -247,7 +246,7 @@ def student_delete(request, id=None):
     return redirect("students")
 
 
-@login_required()
+@login_required
 @permission_required("team.view_team")
 def teams(request):
     settings = Settings.load()
@@ -262,7 +261,7 @@ def teams(request):
     return render(request, "lecturer/teams.html", context)
 
 
-@login_required()
+@login_required
 @permission_required("team.add_team")
 @permission_required("team.update_team")
 @permission_required("team.delete_team")
@@ -290,7 +289,7 @@ def teams_generate(request):
     return redirect("teams")
 
 
-@login_required()
+@login_required
 @permission_required("team.delete_team")
 def teams_delete(request):
     if request.method == "POST":
@@ -299,7 +298,7 @@ def teams_delete(request):
     return redirect("teams")
 
 
-@login_required()
+@login_required
 @permission_required("team.view_team")
 def teams_print(request):
     if request.method == "POST":
@@ -312,7 +311,7 @@ def teams_print(request):
     return redirect("teams")
 
 
-@login_required()
+@login_required
 @permission_required("app.view_stats")
 def stats(request):
     settings = Settings.load()
@@ -324,7 +323,7 @@ def stats(request):
     return render(request, "lecturer/stats.html", context)
 
 
-@login_required()
+@login_required
 @permission_required("app.view_settings")
 @permission_required("app.add_settings")
 @permission_required("app.change_settings")
@@ -347,7 +346,7 @@ def settings(request):
     return render(request, "lecturer/settings.html", context)
 
 
-@login_required()
+@login_required
 @permission_required("app.delete_project")
 @permission_required("app.delete_student")
 @permission_required("app.delete_settings")
@@ -363,7 +362,7 @@ def settings_reset(request):
     return redirect("settings")
 
 
-@login_required()
+@login_required
 @permission_required("app.view_settings")
 def settings_backup(request):
     if request.method != "POST":

@@ -81,7 +81,7 @@ def generate_teams_pdf():
         t = Table(data, colWidths=[table_width], style=team_table_style)
 
         # get table size
-        w, h = t.wrap(0, 0)
+        _w, h = t.wrap(0, 0)
 
         # save max table height for next line of tables
         h_max = max(h, h_max)
