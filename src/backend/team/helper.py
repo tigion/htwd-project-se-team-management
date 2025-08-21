@@ -77,7 +77,7 @@ def prepare_project_instances():
     if project_count < 1:
         project_count = 1
     # 2. cut unneeded projects
-    project_instance_total_scores = project_instance_total_scores[:project_count]
+    # project_instance_total_scores = project_instance_total_scores[:project_count]
 
     # for x in project_instance_total_scores:
     #     print(f"> {x}")
@@ -178,6 +178,7 @@ def prepare_data(project_instance_ids):
 
 
 def generate_teams_with_algorithm(data):
+    settings = Settings.load()
     max_scores = {
         "project": POLL_SCORES["max"],
     }
@@ -186,6 +187,7 @@ def generate_teams_with_algorithm(data):
         data.get("project_answers"),
         data.get("wing_answers"),
         max_scores,
+        settings.team_min_member,
     )
     algo.run()
     result = algo.get_result()
