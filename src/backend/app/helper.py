@@ -84,6 +84,7 @@ def reset_data(delete_only_polls_and_teams=False):
     # delete only polls and teams
     if delete_only_polls_and_teams:
         Team.objects.all().delete()
+        ProjectInstance.objects.all().delete()
         Poll.objects.all().delete()
         ProjectAnswer.objects.all().delete()
         return
@@ -112,8 +113,6 @@ def get_prepared_stats_for_view():
     team_count = Team.objects.values_list("project_instance").distinct().count()
 
     project_instance_used_count = int(student_count / settings.team_min_member)
-    if project_used_count < 1:
-        project_used_count = 1
 
     stats["count"] = {
         "project": project_count,

@@ -8,14 +8,13 @@
   <h2>Statistiken</h2>
   <p>
     <i class="bi bi-box me-1"></i> Projekte: <strong>{{ stats.count.project }}</strong>, <small class="text-secondary">verwendet werden <strong>{{ stats.count.project_used }}</strong></small><br />
-    <i class="bi bi-boxes me-1"></i> Projektinstanzen: <strong>{{ stats.count.project_instance }}</strong>, <small class="text-secondary">verwendet werden <strong>{{ stats.count.project_instance_used }}</strong> bei mindestens {{ settings.team_min_member }} Studenten</small><br />
+    <i class="bi bi-boxes me-1"></i> Projektinstanzen: <strong>{{ stats.count.project_instance }}</strong>, <small class="text-secondary">benötigt werden <strong>{{ stats.count.project_instance_used }}</strong> bei mindestens <strong>{{ settings.team_min_member }}</strong> Studenten pro Team</small><br />
     <i class="bi bi-person-fill me-1"></i> Studenten: <strong>{{ stats.count.student }}</strong>, <small class="text-secondary">davon <strong>{{ stats.count.student_out }}</strong> ausgeschieden, pro Studiengang
     {% for study_program in stats.count.study_programs %}
       {{ study_program.study_program }}: <strong>{{ study_program.total }}</strong>{% if not forloop.last %}, {% endif %}
     {% empty %}
       0
     {% endfor %}</small><br />
-    <!-- <i class="bi bi-person me-1"></i> Rollen: <strong>{{ stats.count.role }}</strong><br /> -->
     <i class="bi bi-people-fill me-1"></i> Teams: <strong>{{ stats.count.team }}</strong><br />
   </p>
 </div>
@@ -26,16 +25,6 @@
     <div class="progress-bar" style="width: {{ stats.poll.all.percent|stringformat:".2f" }}%">{{ stats.poll.all.percent|stringformat:".0f" }}%</div>
   </div>
   <p>Beantwortet: <strong>{{ stats.poll.all.percent|stringformat:".0f" }}%</strong></p>
-
-  <!-- TODO: Use Bootstrap 5.2, 5.3 or newer? -->
-
-  {% comment %}
-  <!-- Bootstrap 5.2 -->
-  <div class="progress mt-3 mb-1">
-    <div class="progress-bar bg-success" role="progressbar" aria-label="Segment one" style="width: {{ stats.poll.filled.percent|stringformat:".2f" }}%" aria-valuenow="{{ stats.poll.filled.percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100">{{ stats.poll.filled.count }}</div>
-    <div class="progress-bar bg-warning text-dark" role="progressbar" aria-label="Segment two" style="width: {{ stats.poll.generated.percent|stringformat:".2f" }}%" aria-valuenow="{{ stats.poll.generated.percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100">{{ stats.poll.generated.count }}</div>
-  </div>
-  {% endcomment %}
 
   <!-- Bootstrap 5.3 -->
   <div class="progress-stacked">
