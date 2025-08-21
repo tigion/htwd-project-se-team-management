@@ -186,12 +186,18 @@ def calc_happiness_score(scores):
     # - normalize score (1-5 -> 0-4) to (0-1) like algorithm
 
     # Happiness with max possible poll scores
-    # - use max score 5 from POLL_SCORES
-    project_hs = (scores["project"]["score"] - 1) / (max_score - 1)
+    # - use max score from POLL_SCORES
+    if max_score == 1:
+        project_hs = 0
+    else:
+        project_hs = (scores["project"]["score"] - 1) / (max_score - 1)
 
     # Happiness with own poll scores
     # - use individual max score
-    project_poll_hs = (scores["project"]["score"] - 1) / (scores["project"]["max"] - 1)
+    if scores["project"]["max"] == 1:
+        project_poll_hs = 0
+    else:
+        project_poll_hs = (scores["project"]["score"] - 1) / (scores["project"]["max"] - 1)
 
     # calc total happiness
     total_hs = project_gain * project_hs
