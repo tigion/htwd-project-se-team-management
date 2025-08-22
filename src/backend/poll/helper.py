@@ -95,6 +95,11 @@ def generate_poll_data_for_students_without_poll():
                 poll=poll,
                 project=project,
                 score=POLL_SCORES["default"] if not settings.use_random_poll_defaults else random.randint(1, 5),
+                # TODO: Remove this later. This is just for testing to push 'A' and lower 'B' scores.
+                #
+                # score=POLL_SCORES["default"]
+                #   if not settings.use_random_poll_defaults
+                #   else random.randint(1 if project.pid != "A" else 3, 5 if project.pid != "B" else 3),
             )
 
     for project in projects_without_answers:
