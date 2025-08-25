@@ -234,7 +234,15 @@ def generate_teams():
 
 def get_prepared_teams_for_view():
     settings = Settings.load()
-    data = []
+    # data = []
+    data = {
+        "teams": [],
+        "happiness": {},
+    }
+
+    student_count_all = 0
+    happiness_total_score_all = 0
+    happiness_poll_total_score_all = 0
 
     project_instances = ProjectInstance.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
     for project_instance in project_instances:
@@ -287,6 +295,11 @@ def get_prepared_teams_for_view():
 
         # set student count in team
         student_count = len(data_set["students"])
+        student_count_all += student_count
+
+        # TODO: wip
+        happiness_total_score_all += happiness_total_score
+        happiness_poll_total_score_all += happiness_poll_total_score
 
         # average team happiness scores
         happiness_total_score = round(happiness_total_score / student_count, 2)
@@ -301,7 +314,16 @@ def get_prepared_teams_for_view():
         }
 
         # add data per team
-        data.append(data_set)
+        data["teams"].append(data_set)
+
+    print(f"> Teams: {len(data['teams'])}")
+    happiness_total_score_all = round(happiness_total_score_all / student_count_all, 2)
+    happiness_poll_total_score_all = round(happiness_poll_total_score_all / student_count_all, 2)
+
+    # add happiness summary all
+    data["happiness"] = {
+        "summary": f"{get_happiness_icon(happiness_total_score_all)} <strong>{happiness_total_score_all}</strong> ({happiness_poll_total_score_all})"
+    }
 
     return data
 

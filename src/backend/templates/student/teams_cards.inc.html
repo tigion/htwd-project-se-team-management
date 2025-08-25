@@ -1,6 +1,8 @@
   {% if teams %}
+  <!-- TODO: wip -->
+  {{ teams.happiness.summary|safe }}
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4">
-    {% for team in teams %}
+    {% for team in teams.teams %}
     <div class="col">
       <div class="card overflow-hidden">
         <div class="card-header text-break" style="min-height: 6.75em">

@@ -69,6 +69,16 @@ class AssignmentAlgo:
         if self.__n_students % self.__min_students_per_project != 0:
             self.__max_students_per_project += 1
 
+        # TODO: wip
+        # FIX: Check if to many students -> more max students per project needed!
+        #      - [ ] check total happiness score changes
+        #
+        # 100 students
+        # 5 mit students per project
+        # 10 projects
+        #
+        # => 100 students / 5 students per project = 20 projects required
+
         # Sets the number of projects required.
         self.__n_projects_required = math.floor(self.__n_students / self.__min_students_per_project)
 
@@ -133,7 +143,8 @@ class AssignmentAlgo:
             b = self.__model.NewBoolVar("b")
             self.__model.Add(sum(project_students) == 0).OnlyEnforceIf(b.Not())
             self.__model.Add(sum(project_students) >= self.__min_students_per_project).OnlyEnforceIf(b)
-            self.__model.Add(sum(project_students) <= self.__max_students_per_project).OnlyEnforceIf(b)
+            # TODO: wip
+            # self.__model.Add(sum(project_students) <= self.__max_students_per_project).OnlyEnforceIf(b)
 
     def __add_hc_wing_students_assigned_equally(self):
         """
