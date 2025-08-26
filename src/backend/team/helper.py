@@ -1,6 +1,8 @@
-from itertools import groupby
 from random import shuffle
+
+from itertools import groupby
 from django.utils import timezone
+from django.db.models import F
 
 from app.models import Project, Student, Settings, Info
 from poll.models import POLL_SCORES, Poll, ProjectAnswer
@@ -14,165 +16,161 @@ from .models import ProjectInstance, Team
 from .algorithm import AssignmentAlgo
 
 
-# stores key mappings between database (model) and algorithm
-key_mapper = {
-    "project": {
-        "db2algo": {},  # project id    (database)  : project index (algorithm)
-        "algo2db": {},  # project index (algorithm) : project id    (database)
-    },
+# Stores the ID mappings between database (model) and algorithm.
+id_mapper = {
     "student": {
         "db2algo": {},  # student id    (database)  : student index (algorithm)
         "algo2db": {},  # student index (algorithm) : student id    (database)
     },
+    "project": {
+        "db2algo": {},  # project id    (database)  : project index (algorithm)
+        "algo2db": {},  # project index (algorithm) : project id    (database)
+    },
 }
 
 
-def prepare_project_instances():
-    # TODO: Needs refactoring
+def get_prepared_project_instance_ids() -> list:
+    """
+    Returns a list of the IDs of the created project instances,
+    sorted by the total score of the projects.
+
+    Projects with the same score are shuffled.
+
+    NOTE: Each call deletes and recreates the project instances.
+          Can only be used if no teams exist.
+    """
 
     settings = Settings.load()
 
-    # shuffle projects with same score
-    # 1. create list with projects and total scores
-    project_total_scores = get_project_ids_with_score_ordered()
-    # 2. group projects with same score
+    # 1. Gets the project IDs with scores ordered by the total score (descending).
+    projects = get_project_ids_with_score_ordered()
+
+    # 2. Groups the projects per total score.
     projects_per_score = {}
-    for project in project_total_scores:
-        if project["total_score"] in projects_per_score:
-            projects_per_score[project["total_score"]].append(project["project"])
-        else:
-            projects_per_score[project["total_score"]] = [project["project"]]
-    # 3. shuffle projects with same score
-    for score in projects_per_score:
-        if len(projects_per_score[score]) > 1:
-            shuffle(projects_per_score[score])
-    # 4. rebuild
-    project_total_scores = []
-    for score in projects_per_score:
-        for project in projects_per_score[score]:
-            project_total_scores.append({"project": project, "score": score})
+    for score, projects_in_score in groupby(projects, lambda x: x["total_score"]):
+        projects_per_score[score] = list(projects_in_score)
 
-    # for x in project_total_scores:
-    #     print(f"> {x}")
+    # 3. Shuffles the projects with the same score.
+    for score in dict(filter(lambda x: len(x[1]) > 1, projects_per_score.items())):
+        shuffle(projects_per_score[score])
 
-    # create project instances
+    # 4. Creates the final list of projects.
+    # - ordered by the total score (descending)
+    # - projects with the same score are shuffled
+    # - use only the project IDs and the total scores
+    projects = []
+    for _, projects_in_score in projects_per_score.items():
+        for project in projects_in_score:
+            projects.append({"project": project["project"], "score": project["total_score"]})
+
+    # 5. Clears existing project instances.
     ProjectInstance.objects.all().delete()
-    project_instance_total_scores = []
-    for project in project_total_scores:
+
+    # 6. Creates the project instances and a list of project instance IDs
+    #    from the list of projects.
+    project_instance_ids = []
+    for project in projects:
         project_object = Project.objects.get(id=project["project"])
-        max_range = settings.project_instances
-        if project_object.instances is not None:
-            max_range = project_object.instances
-        for i in range(1, max_range + 1):
-            project_instance = ProjectInstance.objects.create(number=i, project=project_object)
-            project_instance_total_scores.append({"project": project_instance.pk, "score": project["score"]})
+        # Sets the number of instances to the project or the default setting.
+        n_instances = settings.project_instances if project_object.instances is None else project_object.instances
+        # Creates the project instances and adds the IDs (PKs) to a list.
+        for idx in range(1, n_instances + 1):
+            project_instance = ProjectInstance.objects.create(number=idx, project=project_object)
+            project_instance_ids.append(project_instance.pk)
 
-    # for x in project_instance_total_scores:
-    #     project = ProjectInstance.objects.get(id=x["project"])
-    #     print(f"> {x} {project.piid}")
-
-    # limit needed projects
-    # 1. calc needed project count
-    project_count = int(Student.objects.count() / settings.team_min_member)
-    if project_count < 1:
-        project_count = 1
-    # 2. cut unneeded projects
-    # project_instance_total_scores = project_instance_total_scores[:project_count]
-
-    # for x in project_instance_total_scores:
-    #     print(f"> {x}")
-
-    # create project instances id list
-    pi_ids = []
-    for project_instance in project_instance_total_scores:
-        pi_ids.append(project_instance["project"])
-
-    # print(f"> Project IDs: {ids}")
-
-    return pi_ids
+    return project_instance_ids
 
 
-def map_keys_and_prepare_data(
-    students: list,
-    project_instances: list,
-    project_answers: list,
-):
-    project_instance_answers_per_student = {}
-    student_infos = {}
-    data_per_student = {}
+def set_db_algo_id_mappings(students: list, project_instances: list):
+    """
+    Maps the IDs of the students and projects from the database
+    to the algorithm and vice versa.
+    """
 
-    # Updates the project keys keymap.
-    key_mapper["project"]["db2algo"].clear()
-    key_mapper["project"]["algo2db"].clear()
-    for i in range(len(project_instances)):
-        key_mapper["project"]["db2algo"][project_instances[i][0]] = i
-        key_mapper["project"]["algo2db"][i] = project_instances[i][0]
-
-    # Updates the student keys keymap.
-    key_mapper["student"]["db2algo"].clear()
-    key_mapper["student"]["algo2db"].clear()
+    # Updates the mappings of student IDs.
+    id_mapper["student"]["db2algo"].clear()
+    id_mapper["student"]["algo2db"].clear()
     for i in range(len(students)):
-        key_mapper["student"]["db2algo"][students[i][0]] = i
-        key_mapper["student"]["algo2db"][i] = students[i][0]
+        id_mapper["student"]["db2algo"][students[i]["id"]] = i
+        id_mapper["student"]["algo2db"][i] = students[i]["id"]
 
-    # Creates the project instance answers per student.
+    # Updates the mappings of project IDs.
+    id_mapper["project"]["db2algo"].clear()
+    id_mapper["project"]["algo2db"].clear()
+    for i in range(len(project_instances)):
+        id_mapper["project"]["db2algo"][project_instances[i]["id"]] = i
+        id_mapper["project"]["algo2db"][i] = project_instances[i]["id"]
+
+
+def get_prepared_data_per_student(students: list[dict], project_instances: list[dict], project_answers: list[dict]):
+    project_instance_answers_per_student = {}
+    data_per_student = {}
+    # student_infos = {}
+
+    # Sets the project instance answers per student.
     # Every project instance gets the same answers like the project answers.
-    for key, g in groupby(project_answers, lambda x: x[0]):  # x[0] is student key
-        p_answers_per_s = list(g)
-        p_instance_answers = {}
-        tmp = {
+    for student_id, project_answers_for_student in groupby(project_answers, lambda x: x["student"]):
+        project_answers_per_student = list(project_answers_for_student)
+        project_instance_answers = {}
+        student_data = {
+            # "student_infos": {},
             "is_wing": False,
             "project_answers": {},
         }
-        for i in range(len(p_answers_per_s)):
-            p_instances = list(filter(lambda x: x[1] == p_answers_per_s[i][1], project_instances))
+
+        for project_answer in project_answers_per_student:
+            p_instances = list(filter(lambda x: x["project"] == project_answer["project"], project_instances))
             for p_instance in p_instances:
-                p_instance_answers[key_mapper["project"]["db2algo"].get(p_instance[0])] = p_answers_per_s[i][2]
-        if len(p_instance_answers) > 0:
-            project_instance_answers_per_student[key_mapper["student"]["db2algo"].get(key)] = p_instance_answers
-            tmp["project_answers"] = p_instance_answers
-            data_per_student[key_mapper["student"]["db2algo"].get(key)] = tmp
+                project_instance_answers[id_mapper["project"]["db2algo"].get(p_instance["id"])] = project_answer[
+                    "score"
+                ]
+
+        if len(project_instance_answers) > 0:
+            project_instance_answers_per_student[id_mapper["student"]["db2algo"].get(student_id)] = (
+                project_instance_answers
+            )
+            student_data["project_answers"] = project_instance_answers
+            data_per_student[id_mapper["student"]["db2algo"].get(student_id)] = student_data
 
     # Creates the student infos.
     for student in students:
-        student_infos[key_mapper["student"]["db2algo"].get(student[0])] = int(student[1])
-        data_per_student[key_mapper["student"]["db2algo"].get(student[0])]["is_wing"] = int(student[1])
+        # student_infos[id_mapper["student"]["db2algo"].get(student["id"])] = int(student["is_wing"])
+        data_per_student[id_mapper["student"]["db2algo"].get(student["id"])]["is_wing"] = int(student["is_wing"])
 
     return data_per_student
 
 
-def prepare_data(project_instance_ids):
+def prepare_data_per_student(project_instance_ids):
     # Sets the students data: student_id, is_wing.
     students_data = []
     students = Student.objects.all()
     for student in students:
-        students_data.append((student.pk, student.is_wing))
+        students_data.append({"id": student.pk, "is_wing": student.is_wing})
+    # students_data = list(Student.objects.values("id", "is_wing"))  # keyword 'is_wing' is not a field in Student
 
     # Sets the project instances data: project_instance_id, project_id.
-    project_instances_data = list(
-        ProjectInstance.objects.filter(id__in=project_instance_ids).values_list("id", "project")
-    )
+    project_instances_data = list(ProjectInstance.objects.filter(id__in=project_instance_ids).values("id", "project"))
 
     # Sets the project answers data: student_id, project_id, score.
-    project_answers_data = list(ProjectAnswer.objects.order_by("poll").values_list("poll__student", "project", "score"))
+    project_answers_data = list(
+        ProjectAnswer.objects.order_by("poll").values("project", "score", student=F("poll__student"))
+    )
 
     # Prepares the data for the algorithm.
-    data_per_student = map_keys_and_prepare_data(students_data, project_instances_data, project_answers_data)
+    set_db_algo_id_mappings(students_data, project_instances_data)
+    data_per_student = get_prepared_data_per_student(students_data, project_instances_data, project_answers_data)
 
     return data_per_student
 
 
 def generate_teams_with_algorithm(data_per_student):
     settings = Settings.load()
+
     max_scores = {
         "project": POLL_SCORES["max"],
     }
 
-    algo = AssignmentAlgo(
-        data_per_student,
-        max_scores,
-        settings.team_min_member,
-    )
+    algo = AssignmentAlgo(data_per_student, max_scores, settings.team_min_member)
     algo.run()
     result = algo.get_result()
 
@@ -183,8 +181,8 @@ def save_teams(algo_result):
     teams = []
 
     for a in algo_result:
-        project_instance_id = key_mapper["project"]["algo2db"].get(a[0])
-        student_id = key_mapper["student"]["algo2db"].get(a[1])
+        project_instance_id = id_mapper["project"]["algo2db"].get(a[0])
+        student_id = id_mapper["student"]["algo2db"].get(a[1])
         score = a[2]
 
         project_id = ProjectInstance.objects.get(id=project_instance_id).project.pk
@@ -224,8 +222,8 @@ def generate_teams():
 
     # TODO: Needs refactoring
     #       - projects with answers -> project instances -> data
-    project_instance_ids = prepare_project_instances()
-    data_per_student = prepare_data(project_instance_ids)
+    project_instance_ids = get_prepared_project_instance_ids()
+    data_per_student = prepare_data_per_student(project_instance_ids)
 
     result = generate_teams_with_algorithm(data_per_student)
     save_teams(result)
