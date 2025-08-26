@@ -93,7 +93,7 @@ def student_home(request):
     context["settings"] = settings
     context["projects"] = projects
     context["poll_scores"] = POLL_SCORES
-    context["teams"] = get_prepared_teams_for_view()
+    context["teams"] = get_prepared_teams_for_view().get("teams", [])
 
     if request.method == "POST" and is_student:
         # Check: Do only allow saving, if polls are writable
@@ -256,7 +256,9 @@ def teams(request):
     context["is_management_view"] = True
     context["settings"] = settings
     context["info"] = info
-    context["teams"] = get_prepared_teams_for_view()
+    data = get_prepared_teams_for_view()
+    context["teams"] = data.get("teams", [])
+    context["total_happiness"] = data.get("happiness", {})
 
     return render(request, "lecturer/teams.html", context)
 

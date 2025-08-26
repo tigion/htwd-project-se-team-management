@@ -1,8 +1,6 @@
   {% if teams %}
-  <!-- TODO: wip -->
-  {{ teams.happiness.summary|safe }}
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4">
-    {% for team in teams.teams %}
+    {% for team in teams %}
     <div class="col">
       <div class="card overflow-hidden">
         <div class="card-header text-break" style="min-height: 6.75em">
@@ -30,7 +28,7 @@
               {% if is_management_view %}
               </div>
               <div class="fw-normal text-muted mt-1" style="font-size: .6em;">
-                <span title="Happiness Score">{{ student.stats.summary | safe }}</span>
+                <span title="Happiness Score">{{ student.stats.summary|safe }}</span>
               </div>
               {% endif %}
             </li>

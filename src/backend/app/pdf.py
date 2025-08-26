@@ -53,7 +53,7 @@ def generate_teams_pdf():
     y = height - margin - 45  # y position of the table
 
     # get teams
-    teams = get_prepared_teams_for_view()
+    teams = get_prepared_teams_for_view().get("teams", [])
     for team in teams:
         # create new empty table data
         data = []

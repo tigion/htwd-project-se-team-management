@@ -81,7 +81,7 @@ document.querySelector('#buttonGenerateTeams').addEventListener('click', async (
 </script>
 
 <div id="teams" class="container my-5">
-  <h2>Teams</h2>
+  <h2 class="clearfix">Teams<span class="float-end text-muted fs-6">{{ total_happiness.summary|safe }}</span></h2>
   {% include "student/teams_cards.inc.html" %}
 </div>
 

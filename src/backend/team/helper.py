@@ -237,12 +237,14 @@ def get_prepared_teams_for_view():
     # data = []
     data = {
         "teams": [],
-        "happiness": {},
+        "happiness": {
+            "summary": "",
+        },
     }
 
-    student_count_all = 0
-    happiness_total_score_all = 0
-    happiness_poll_total_score_all = 0
+    total_student_count = 0
+    total_happiness_score = 0
+    total_happiness_poll_score = 0
 
     project_instances = ProjectInstance.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
     for project_instance in project_instances:
@@ -253,8 +255,8 @@ def get_prepared_teams_for_view():
             "emails": [],
             "happiness": {},
         }
-        happiness_total_score = 0
-        happiness_poll_total_score = 0
+        team_happiness_score = 0
+        team_happiness_poll_score = 0
 
         teams = Team.objects.filter(project_instance=project_instance)
         for team in teams:
@@ -271,7 +273,7 @@ def get_prepared_teams_for_view():
                 "css_classes": [],
             }
 
-            # set css classes
+            # Sets the css classes.
             if student["is_initial_contact"]:
                 student["css_classes"].append("fw-semibold")
             if not student["is_visible"]:
@@ -281,48 +283,49 @@ def get_prepared_teams_for_view():
             elif not student["is_visible"]:
                 student["css_classes"].append("text-secondary")
 
-            # add email and increase active count only for active (visible) students
+            # Adds the email and increases active count only for active (visible) students.
             if student["is_visible"]:
                 data_set["emails"].append(team.student.email)
                 data_set["student_active_count"] += 1
 
-            # add student
+            # Adds the student.
             data_set["students"].append(student)
 
-            # summarize student happiness scores
-            happiness_total_score = happiness_total_score + student["stats"]["happiness"]["total"]
-            happiness_poll_total_score = happiness_poll_total_score + student["stats"]["happiness"]["poll"]["total"]
+            # Summarizes the students happiness scores in the team.
+            team_happiness_score += student["stats"]["happiness"]["total"]
+            team_happiness_poll_score += student["stats"]["happiness"]["poll"]["total"]
 
-        # set student count in team
+        # Sets the number of students in the team.
         student_count = len(data_set["students"])
-        student_count_all += student_count
+        total_student_count += student_count
 
-        # TODO: wip
-        happiness_total_score_all += happiness_total_score
-        happiness_poll_total_score_all += happiness_poll_total_score
+        # Summarizes the happiness scores of all teams.
+        total_happiness_score += team_happiness_score
+        total_happiness_poll_score += team_happiness_poll_score
 
-        # average team happiness scores
-        happiness_total_score = round(happiness_total_score / student_count, 2)
-        happiness_poll_total_score = round(happiness_poll_total_score / student_count, 2)
+        # Sets the average happiness scores of the team.
+        team_happiness_score = round(team_happiness_score / student_count, 2)
+        team_happiness_poll_score = round(team_happiness_poll_score / student_count, 2)
 
         # Set happiness icon
-        happiness_total_icon = get_happiness_icon(happiness_total_score)
+        happiness_total_icon = get_happiness_icon(team_happiness_score)
 
-        # add happiness summary
+        # Adds the happiness summary per team.
         data_set["happiness"] = {
-            "summary": f"{happiness_total_icon} <strong>{happiness_total_score}</strong> ({happiness_poll_total_score})"
+            "summary": f"{happiness_total_icon} <strong>{team_happiness_score}</strong> ({team_happiness_poll_score})"
         }
 
-        # add data per team
+        # Adds the data per team.
         data["teams"].append(data_set)
 
-    print(f"> Teams: {len(data['teams'])}")
-    happiness_total_score_all = round(happiness_total_score_all / student_count_all, 2)
-    happiness_poll_total_score_all = round(happiness_poll_total_score_all / student_count_all, 2)
+    # Sets the average happiness scores of all teams.
+    if total_student_count > 0:
+        total_happiness_score = round(total_happiness_score / total_student_count, 2)
+        total_happiness_poll_score = round(total_happiness_poll_score / total_student_count, 2)
 
-    # add happiness summary all
+    # Adds the happiness summary of all teams.
     data["happiness"] = {
-        "summary": f"{get_happiness_icon(happiness_total_score_all)} <strong>{happiness_total_score_all}</strong> ({happiness_poll_total_score_all})"
+        "summary": f"{get_happiness_icon(total_happiness_score)} <strong>{total_happiness_score}</strong> ({total_happiness_poll_score})"
     }
 
     return data
