@@ -9,16 +9,21 @@ import random
 
 
 def prepare_poll_data_from_post(student, POST, projects):
+    """
+    Returns the prepared poll data from POST for the specified
+    student and projects.
+    """
+
     poll_data = {"student": student, "project": {}, "role": {}}
 
-    # set default poll scores
+    # Sets the default poll scores.
     for project in projects:
         poll_data["project"][str(project.id)] = {
             "project": project,
             "score": POLL_SCORES["default"],
         }
 
-    # set new poll scores
+    # Sets the new poll scores.
     for post in POST:
         parts = post.split("_")
         if len(parts) == 3 and parts[2] == "score":
@@ -33,10 +38,15 @@ def prepare_poll_data_from_post(student, POST, projects):
 
 
 def save_poll_data_to_db(student, POST, projects):
-    # prepare poll data from POST
+    """
+    Saves the prepared poll data from POST for the specified
+    student and projects.
+    """
+
+    # Prepares the poll data from POST.
     poll_data = prepare_poll_data_from_post(student, POST, projects)
 
-    # save poll
+    # Saves the poll data.
     values = {
         "is_generated": False,
     }
@@ -45,7 +55,7 @@ def save_poll_data_to_db(student, POST, projects):
         defaults=values,
     )
 
-    # save project answers
+    # Saves the project answers.
     for id in poll_data["project"]:
         values = {
             "score": poll_data["project"][id]["score"],
@@ -56,19 +66,23 @@ def save_poll_data_to_db(student, POST, projects):
             defaults=values,
         )
 
-    # save update time (TODO)DateTimeField
+    # Saves the update time.
     values = {"polls_last_update": timezone.now()}
     Info.objects.update_or_create(defaults=values)
 
 
 def load_poll_data_for_form(student, projects):
-    poll_data = {"projects": []}
+    """
+    Returns the required poll data for the specified student
+    and project for the form.
 
+    If the student has no poll, the default scores are used.
+    """
+    poll_data = {"projects": []}
     poll = Poll.objects.filter(student=student).first()
 
     if poll:
         project_answers = ProjectAnswer.objects.filter(poll=poll)
-
         for answer in project_answers:
             poll_data["projects"].append({"project": answer.project, "score": answer.score})
     else:
@@ -79,6 +93,13 @@ def load_poll_data_for_form(student, projects):
 
 
 def generate_poll_data_for_students_without_poll():
+    """
+    Generates the poll data for all students without a poll.
+
+    Uses for the project answers the default score or optionally
+    random scores.
+    """
+
     settings = Settings.load()
     polls = Poll.objects.all()
     projects = Project.objects.all()
@@ -94,12 +115,11 @@ def generate_poll_data_for_students_without_poll():
             ProjectAnswer.objects.create(
                 poll=poll,
                 project=project,
-                score=POLL_SCORES["default"] if not settings.use_random_poll_defaults else random.randint(1, 5),
-                # TODO: Remove this later. This is just for testing to push 'A' and lower 'B' scores.
-                #
-                # score=POLL_SCORES["default"]
-                #   if not settings.use_random_poll_defaults
-                #   else random.randint(1 if project.pid != "A" else 3, 5 if project.pid != "B" else 3),
+                score=(
+                    POLL_SCORES["default"]
+                    if not settings.use_random_poll_defaults
+                    else random.randint(POLL_SCORES["min"], POLL_SCORES["max"])
+                ),
             )
 
     for project in projects_without_answers:
@@ -107,11 +127,20 @@ def generate_poll_data_for_students_without_poll():
             ProjectAnswer.objects.create(
                 poll=poll,
                 project=project,
-                score=POLL_SCORES["default"] if not settings.use_random_poll_defaults else random.randint(1, 5),
+                score=(
+                    POLL_SCORES["default"]
+                    if not settings.use_random_poll_defaults
+                    else random.randint(POLL_SCORES["min"], POLL_SCORES["max"])
+                ),
             )
 
 
 def get_project_ids_with_score_ordered():
+    """
+    Returns a list of project ids with the total score and
+    average score ordered by the total score.
+    """
+
     project_ids = (
         ProjectAnswer.objects.values("project")
         .annotate(total_score=Sum("score"), avg_score=Avg("score"))
@@ -121,30 +150,40 @@ def get_project_ids_with_score_ordered():
     return project_ids
 
 
-def get_poll_stats_for_student(team):
+def get_poll_stats_for_student(team) -> dict:
+    """
+    Returns the poll stats for the given team entry.
+
+    A team entry is a student and a project.
+
+    Args:
+        team: The team entry.
+    """
+
+    # Gets the student and project ids.
     student_id = team.student.id
     project_id = team.project.id
 
-    # check if poll exisist
+    # Uses the project answer scores if the poll for the student exists
+    # otherwise uses the default score.
     if Poll.objects.filter(student=student_id).exists():
+        # Uses the project answer scores.
         poll = Poll.objects.get(student=student_id)
-
-        # extract stats
         project_score = ProjectAnswer.objects.get(poll=poll, project=project_id).score
         project_score_sum = ProjectAnswer.objects.filter(poll=poll).aggregate(Sum("score"))["score__sum"]
         project_score_avg = ProjectAnswer.objects.filter(poll=poll).aggregate(Avg("score"))["score__avg"]
         project_score_min = ProjectAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
         project_score_max = ProjectAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
     else:
+        # Uses the default score.
         default_score = POLL_SCORES["default"]
-
         project_score = default_score
         project_score_sum = default_score
         project_score_avg = default_score
         project_score_min = default_score
         project_score_max = default_score
 
-    # prepare result
+    # Prepares the result.
     poll_stats = {
         "project": {
             "score": project_score,
@@ -158,14 +197,14 @@ def get_poll_stats_for_student(team):
         "summary": "",
     }
 
-    # Set happiness scores
+    # Sets the happiness scores.
     poll_stats["happiness"] = calc_happiness_score(poll_stats)
 
-    # Set happiness icon
+    # Sets the happiness icon.
     score = poll_stats["happiness"]["total"]
     poll_stats["happiness_icon"] = get_happiness_icon(score)
 
-    # Set summary text
+    # Sets the summary text.
     text_total = (
         f"Total: <strong>{poll_stats['happiness']['total']}</strong> ({poll_stats['happiness']['poll']['total']})"
     )
@@ -178,37 +217,53 @@ def get_poll_stats_for_student(team):
     return poll_stats
 
 
-def calc_happiness_score(scores):
-    # gains are from algorithm
-    # TODO: separate it and use it here and in the algorithm
-    project_gain = 1.0
-    # project_gain = 0.8
-    # role_gain = 0.2
+def calc_happiness_score(scores: dict) -> dict:
+    """
+    Calculates the total, project and own poll scores for the given scores.
+
+    Normalizes the integer scores from 1-5 to 0-4 and calculates
+    the happiness to a float between 0 and 1 like the algorithm.
+
+    Args:
+        scores: The scores.
+
+    Returns:
+        The happiness score.
+    """
 
     max_score = POLL_SCORES["max"]
 
-    # calc each happiness
-    # - normalize score (1-5 -> 0-4) to (0-1) like algorithm
+    # Gains are from algorithm
+    #
+    # NOTE: The gains are not used yet. Possibly, they will be used in the future.
+    #
+    # TODO: Separate the gains and use it here and in the algorithm
+    #       or get it from the algorithm.
+    #
+    # project_gain = 0.8
+    # role_gain = 0.2
 
-    # Happiness with max possible poll scores
-    # - use max score from POLL_SCORES
+    # Calculates the happiness score with the max possible poll scores.
+    # - Normalizes the score 1-5 -> 0-4 to 0-1 like algorithm.
     if max_score == 1:
         project_hs = 0
     else:
         project_hs = (scores["project"]["score"] - 1) / (max_score - 1)
 
-    # Happiness with own poll scores
-    # - use individual max score
+    # Calculates the happiness score with the own individual max poll scores.
+    # - Normalizes the score 1-5 -> 0-4 to 0-1 like algorithm.
     if scores["project"]["max"] == 1:
         project_poll_hs = 0
     else:
         project_poll_hs = (scores["project"]["score"] - 1) / (scores["project"]["max"] - 1)
 
-    # calc total happiness
-    total_hs = project_gain * project_hs
-    total_poll_hs = project_gain * project_poll_hs
+    # Calculates the total happiness.
+    total_hs = project_hs
+    total_poll_hs = project_poll_hs
+    # total_hs = project_gain * project_hs
+    # total_poll_hs = project_gain * project_poll_hs
 
-    # prepare result
+    # Prepares the happiness data.
     happiness = {
         "total": round(total_hs, 2),
         "project": round(project_hs, 2),
@@ -221,8 +276,15 @@ def calc_happiness_score(scores):
     return happiness
 
 
-def get_happiness_icon(score):
-    # get poll score
+def get_happiness_icon(score: float) -> str:
+    """
+    Returns the HTML string with the icon and color for the given score.
+
+    Args:
+        score: The score.
+    """
+
+    # Gets the poll score infos.
     poll_score = POLL_SCORES["choices"][0]  # very bad
     if score > 0.8:
         poll_score = POLL_SCORES["choices"][4]  # very good
@@ -233,7 +295,7 @@ def get_happiness_icon(score):
     elif score > 0.2:
         poll_score = POLL_SCORES["choices"][1]  # bad
 
-    # set icon with color
+    # Sets the icon with color as HTML string.
     icon = '<i class="bu bi-' + poll_score["icon"] + '-fill" style="color:' + poll_score["color"] + '"></i>'
 
     return icon
