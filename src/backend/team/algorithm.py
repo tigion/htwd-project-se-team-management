@@ -63,24 +63,23 @@ class AssignmentAlgo:
         self.__n_projects = len(self.__project_ids)
         self.__n_wing_students = len(dict(filter(lambda x: x[1]["is_wing"], self.__data_per_student.items())))
 
-        # Sets the limit (min and max) of students per project.
+        # Sets the min number of students per project.
         self.__min_students_per_project = min_students_per_project
-        self.__max_students_per_project = self.__min_students_per_project
-        if self.__n_students % self.__min_students_per_project != 0:
-            self.__max_students_per_project += 1
-
-        # TODO: wip
-        # FIX: Check if to many students -> more max students per project needed!
-        #      - [ ] check total happiness score changes
-        #
-        # 100 students
-        # 5 mit students per project
-        # 10 projects
-        #
-        # => 100 students / 5 students per project = 20 projects required
 
         # Sets the number of projects required.
         self.__n_projects_required = math.floor(self.__n_students / self.__min_students_per_project)
+
+        # Checks if the number of projects required is greater than the number of possible projects.
+        if self.__n_projects_required > self.__n_projects:
+            # Corrects the number of projects required.
+            self.__n_projects_required = self.__n_projects
+            # Corrects the min number of students per project.
+            self.__min_students_per_project = math.floor(self.__n_students / self.__n_projects_required)
+
+        # Sets the max number of students per project.
+        self.__max_students_per_project = self.__min_students_per_project
+        if self.__n_students % self.__min_students_per_project != 0:
+            self.__max_students_per_project += 1
 
         # Sets the limit (min and max) of wings per project.
         self.__min_wings_per_project = math.floor(self.__n_wing_students / self.__n_projects_required)
@@ -143,8 +142,7 @@ class AssignmentAlgo:
             b = self.__model.NewBoolVar("b")
             self.__model.Add(sum(project_students) == 0).OnlyEnforceIf(b.Not())
             self.__model.Add(sum(project_students) >= self.__min_students_per_project).OnlyEnforceIf(b)
-            # TODO: wip
-            # self.__model.Add(sum(project_students) <= self.__max_students_per_project).OnlyEnforceIf(b)
+            self.__model.Add(sum(project_students) <= self.__max_students_per_project).OnlyEnforceIf(b)
 
     def __add_hc_wing_students_assigned_equally(self):
         """
