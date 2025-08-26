@@ -81,7 +81,16 @@ document.querySelector('#buttonGenerateTeams').addEventListener('click', async (
 </script>
 
 <div id="teams" class="container my-5">
-  <h2 class="clearfix">Teams<span class="float-end text-muted fs-6">{{ total_happiness.summary|safe }}</span></h2>
+  <h2 class="clearfix">
+    Teams
+    {% if teams|length > 0 %}
+    <span class="float-end text-muted fs-6">
+      <i class="bi bi-people-fill me-1"></i>{{ teams|length }}
+      <span class="ms-3">{{ total_happiness.summary|safe }}</span>
+      <i class="bi bi-person-fill me-1 ms-3"></i>{{ COUNTS.student }}
+    </span>
+    {% endif %}
+  </h2>
   {% include "student/teams_cards.inc.html" %}
 </div>
 
