@@ -19,7 +19,7 @@ from poll.helper import (
     generate_poll_data_for_students_without_poll,
 )
 
-from team.models import Team
+from team.models import ProjectInstance, Team
 from team.helper import generate_teams, get_prepared_teams_for_view
 
 from .models import Project, Settings, Student, Info
@@ -151,6 +151,7 @@ def project_edit(request, id=None):
 @login_required
 @permission_required("app.view_project")
 @permission_required("app.delete_project")
+# @permission_required("team.delete_projectinstance")
 def project_delete(request, id=None):
     # TODO: ?
     # - https://www.pythontutorial.net/django-tutorial/django-delete-form/
@@ -296,6 +297,7 @@ def teams_generate(request):
 def teams_delete(request):
     if request.method == "POST":
         Team.objects.all().delete()
+        ProjectInstance.objects.all().delete()
 
     return redirect("teams")
 
