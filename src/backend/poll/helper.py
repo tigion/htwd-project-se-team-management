@@ -135,7 +135,7 @@ def generate_poll_data_for_students_without_poll():
             )
 
 
-def get_project_ids_with_score_ordered():
+def get_project_ids_ordered_by_score():
     """
     Returns a list of project ids with the total score and
     average score ordered by the total score.

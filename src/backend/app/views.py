@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from django.contrib import messages
@@ -20,7 +21,7 @@ from poll.helper import (
 )
 
 from team.models import ProjectInstance, Team
-from team.helper import generate_teams, get_prepared_teams_for_view
+from team.helper import generate_teams, get_teams_for_view
 
 from .models import Project, Settings, Student, Info
 from .forms import (
@@ -31,14 +32,13 @@ from .forms import (
     SettingsResetForm,
 )
 from .helper import (
-    load_students_from_file,
-    reset_data,
-    get_prepared_stats_for_view,
+    read_students_from_file_to_db,
+    reset_data_in_db,
+    get_statistics_for_view,
 )
 from .pdf import generate_teams_pdf
 
-import logging
-
+# Creates the logger.
 logger = logging.getLogger(__name__)
 
 # Create your views here.
@@ -93,7 +93,7 @@ def student_home(request):
     context["settings"] = settings
     context["projects"] = projects
     context["poll_scores"] = POLL_SCORES
-    context["teams"] = get_prepared_teams_for_view().get("teams", [])
+    context["teams"] = get_teams_for_view().get("teams", [])
 
     if request.method == "POST" and is_student:
         # Check: Do only allow saving, if polls are writable
@@ -189,7 +189,7 @@ def students(request):
         #     return ...
         if form.is_valid():
             try:
-                load_students_from_file(request.FILES.get("file"), request.POST.get("mode", 1))
+                read_students_from_file_to_db(request.FILES.get("file"), request.POST.get("mode", 1))
             except ProtectedError:
                 messages.error(
                     request,
@@ -257,7 +257,7 @@ def teams(request):
     context["is_management_view"] = True
     context["settings"] = settings
     context["info"] = info
-    data = get_prepared_teams_for_view()
+    data = get_teams_for_view()
     context["teams"] = data.get("teams", [])
     context["total_happiness"] = data.get("happiness", {})
 
@@ -322,7 +322,7 @@ def stats(request):
 
     context = {}
     context["settings"] = settings
-    context["stats"] = get_prepared_stats_for_view()
+    context["stats"] = get_statistics_for_view()
 
     return render(request, "lecturer/stats.html", context)
 
@@ -359,7 +359,7 @@ def settings(request):
 @permission_required("poll.delete_projectanswer")
 def settings_reset(request):
     if request.method == "POST":
-        reset_data(request.POST.get("delete_only_polls_and_teams"))
+        reset_data_in_db(request.POST.get("delete_only_polls_and_teams"))
         messages.success(request, "Die Daten wurden zurückgesetzt!")
         return redirect("home")
 
@@ -374,24 +374,24 @@ def settings_backup(request):
 
     from django.conf import settings
 
-    # check if database is SQLite
+    # Checks if the database is SQLite.
     db_engine = settings.DATABASES["default"]["ENGINE"]
     if db_engine != "django.db.backends.sqlite3":
         messages.error(request, "Download des Datenbank-Backups ist aktuell nur für SQLite möglich!")
         return redirect("settings")
 
-    # set backup file name
+    # Sets the backup file name.
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     filename = f"db_backup_{timestamp}.sqlite3"
 
-    # open database file
+    # Opens the database file.
     db_file = File(open(settings.DATABASES["default"]["NAME"], "rb"))
 
-    # variant 1: FileResponse
-    # content type (application/vnd.sqlite3) and length are set automatically
+    # Variant 1: FileResponse
+    # - content type (application/vnd.sqlite3) and length are set automatically
     response = FileResponse(db_file, as_attachment=True, filename=filename)
 
-    # variant 2: HttpResponse
+    # Variant 2: HttpResponse
     # response = HttpResponse(db_file, content_type="application/x-sqlite3")
     # response["Content-Disposition"] = f"attachment; filename={filename}"
     # response["Content-Length"] = db_file.size

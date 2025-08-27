@@ -16,7 +16,7 @@ from django_auth_ldap.config import LDAPSearch
 from dotenv import load_dotenv
 import os
 
-# load environment variables from .env (if exist for local tests) in django root
+# Loads the environment variables from .env (if exist for local tests) in django root.
 # - don't overwrites environment variables from docker (compose.yaml)
 load_dotenv()
 
@@ -244,9 +244,7 @@ LOGGING = {
     },
     "formatters": {
         "app": {
-            "format": (
-                "%(asctime)s [%(levelname)-8s] " "(%(module)s.%(funcName)s) %(message)s"
-            ),
+            "format": ("%(asctime)s [%(levelname)-8s] (%(module)s.%(funcName)s) %(message)s"),
             "datefmt": "%Y-%m-%d %H:%M:%S",
         },
     },

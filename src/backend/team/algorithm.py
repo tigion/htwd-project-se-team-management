@@ -8,7 +8,7 @@ import math
 from ortools.sat.python import cp_model
 
 
-class AssignmentAlgo:
+class AssignmentAlgorithm:
     """
     Calculates the optimal assignment of students to projects
     based on their survey responses.
@@ -31,25 +31,22 @@ class AssignmentAlgo:
     - https://medium.com/data-science/where-you-should-drop-deep-learning-in-favor-of-constraint-solvers-eaab9f11ef45
     """
 
-    def __init__(
-        self,
-        data_per_student: dict[int, dict],
-        # data_per_student: dict[int, dict[str, int | dict[int, int]]],
-        max_scores: dict[str, int],
-        min_students_per_project: int,
-    ):
+    def __init__(self, data: dict[int, dict], opts: dict):
         """
         The constructor of the assignment algorithm.
 
         Args:
-            data_per_student: The data per student. Includes the wing flag and project answers.
-            max_scores: The maximum scores.
-            min_students_per_project: The minimum number of students per project.
+            data: The data per student. Includes the wing flag and project answers.
+            opts: The options for the algorithm.
+
+        The options are:
+            `max_project_score`: The maximum project score.
+            `min_students_per_project`: The minimum number of students per project.
         """
 
         # Sets the given data.
-        self.__data_per_student = data_per_student
-        self.__max_project_score = max_scores["project"]
+        self.__data_per_student = data
+        self.__max_project_score = opts["max_project_score"]
 
         # Extracts the project and student ids.
         self.__student_ids = list(self.__data_per_student.keys())
@@ -64,7 +61,7 @@ class AssignmentAlgo:
         self.__n_wing_students = len(dict(filter(lambda x: x[1]["is_wing"], self.__data_per_student.items())))
 
         # Sets the min number of students per project.
-        self.__min_students_per_project = min_students_per_project
+        self.__min_students_per_project = opts["min_students_per_project"]
 
         # Sets the number of projects required.
         self.__n_projects_required = math.floor(self.__n_students / self.__min_students_per_project)
@@ -97,8 +94,8 @@ class AssignmentAlgo:
         # The model variables.
         self.__model_x = {}
 
-        # The result.
-        self.__result: list[tuple[int, int, int]] = []
+        # The results.
+        self.__results: list[tuple[int, int, int]] = []
 
     def __init_model_variables(self):
         """
@@ -205,12 +202,12 @@ class AssignmentAlgo:
             solver: The constraint solver.
         """
 
-        self.__result = []
+        self.__results = []
         for p_id in self.__project_ids:
             for s_id in self.__student_ids:
                 if solver.Value(self.__model_x[(p_id, s_id)]) == 1:
                     score = self.__get_total_score(p_id, s_id)
-                    self.__result.append((p_id, s_id, score))
+                    self.__results.append((p_id, s_id, score))
 
     def __normalize_score(self, answer_score: int) -> int:
         """
@@ -304,7 +301,7 @@ class AssignmentAlgo:
         else:
             raise AssignmentAlgoException("The equation cannot be solved for the given data, or the time has expired.")
 
-    def get_result(self) -> list[tuple[int, int, int]]:
+    def get_results(self) -> list[tuple[int, int, int]]:
         """
         Returns the result of the assignment as a list of tuples
         if the algorithm has already been executed.
@@ -316,7 +313,7 @@ class AssignmentAlgo:
         if not self.__has_result:
             raise AssignmentAlgoException("Tried to access result before it was run.")
         else:
-            return self.__result
+            return self.__results
 
     # TODO: Not used yet. Later, the max runtime should be set by the user.
     #

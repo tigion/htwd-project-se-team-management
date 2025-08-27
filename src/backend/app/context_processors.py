@@ -1,4 +1,4 @@
-from .helper import get_object_counts
+from .helper import get_counts_for_view
 
 
 def global_variables(request):
@@ -12,6 +12,6 @@ def global_variables(request):
 
     # only for superusers
     if request.user.is_superuser:
-        variables["COUNTS"] = get_object_counts()
+        variables["COUNTS"] = get_counts_for_view()
 
     return variables
