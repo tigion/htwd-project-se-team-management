@@ -10,6 +10,10 @@ class ProjectInstance(models.Model):
     number = models.IntegerField()
 
     class Meta:
+        # unique_together = ["project", "number"]  # may be deprecated in the future
+        constraints = [
+            models.UniqueConstraint(fields=["project", "number"], name="unique_project_number"),
+        ]
         ordering = (
             "project",
             "number",
@@ -34,4 +38,4 @@ class Team(models.Model):
         ordering = ("project", "-student_is_initial_contact", "student")
 
     def __str__(self) -> str:
-        return f"{self.project.pid}: {self.student.name2}"
+        return f"{self.project.pid}{self.project_instance.number}: {self.student.name2}"
