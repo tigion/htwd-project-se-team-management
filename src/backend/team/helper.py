@@ -245,23 +245,48 @@ def save_teams_to_db(results):
         results: The results of the algorithm.
     """
 
+    project_instance_counts = {}
     teams = []
 
-    # Saves the teams.
-    for result in results:
-        project_instance_id = id_idx_mappings["project"]["algo2db"].get(result[0])
-        student_id = id_idx_mappings["student"]["algo2db"].get(result[1])
-        score = result[2]
+    # Creates the team objects with project instance numbers in sequential order.
+    for instance_idx, results_for_instance_idx in groupby(results, lambda x: x[0]):
+        results_per_instance_idx = list(results_for_instance_idx)
 
+        # Gets the project instance ID.
+        project_instance_id = id_idx_mappings["project"]["algo2db"].get(instance_idx)
+
+        # Gets the project ID of the project instance object.
         project_id = ProjectInstance.objects.get(id=project_instance_id).project.pk
-        team = Team(
-            project_id=project_id,
-            project_instance_id=project_instance_id,
-            student_id=student_id,
-            student_is_initial_contact=False,
-            score=score,
-        )
-        teams.append(team)
+
+        # Counts the project instances per project.
+        if project_id not in project_instance_counts:
+            project_instance_counts[project_id] = 1
+        else:
+            project_instance_counts[project_id] += 1
+
+        # Gets the next project instance ID.
+        new_project_instance_id = ProjectInstance.objects.get(
+            project=project_id, number=project_instance_counts[project_id]
+        ).pk
+
+        # Creates the team objects per project instance.
+        for result in results_per_instance_idx:
+            # Gets the student ID.
+            student_id = id_idx_mappings["student"]["algo2db"].get(result[1])
+            # Gets the score.
+            score = result[2]
+            # Creates the team object.
+            team = Team(
+                project_id=project_id,
+                project_instance_id=new_project_instance_id,
+                student_id=student_id,
+                student_is_initial_contact=False,
+                score=score,
+            )
+            # Adds the team object to the list.
+            teams.append(team)
+
+    # Saves the team objects.
     Team.objects.bulk_create(teams)
 
     # Saves the update time.
