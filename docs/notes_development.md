@@ -1,11 +1,11 @@
 # Notes - Development
 
 - [Setup](#setup)
-  - [Init workspace](#init-workspace)
+  - [Initialize workspace](#initialize-workspace)
   - [Prepare Django project](#prepare-django-project)
   - [Start and stop the server](#start-and-stop-the-server)
 - [Project](#project)
-  - [Prepare for test or new git version](#prepare-for-test-or-new-git-version)
+  - [Prepare for test or new version](#prepare-for-test-or-new-version)
   - [Logging](#logging)
 - [Helpful things](#helpful-things)
   - [Python](#python)
@@ -14,7 +14,7 @@
   - [Django](#django)
     - [Reset Migrations](#reset-migrations)
     - [Generate a new SECRET_KEY](#generate-a-new-secret_key)
-  - [Sqlite](#sqlite)
+  - [SQLite](#sqlite)
     - [Backup \& Restore](#backup--restore)
   - [nginx](#nginx)
     - [Create self signed certificate](#create-self-signed-certificate)
@@ -23,82 +23,96 @@
 
 ## Setup
 
-### Init workspace
+### Initialize workspace
 
 ```sh
-# Clone the source code
+# Clones the source code.
 git clone https://github.com/tigion/htwd-project-se-team-management.git
 
-# Switch to project folder
+# Switches to the project folder.
 cd htwd-project-se-team-management
 
-# Use default config (or change something)
+# Uses the default configuration (changes can be made).
 cp .env.template .env
 
-# Create and activate Python virtual environment
+# Creates and activates the Python virtual environment.
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install required Python packages
+# Installs the required Python packages.
 pip3 install -r src/backend/requirements.txt
 ```
 
 ### Prepare Django project
 
 ```sh
-# detect and collect model changes
+# Switches to the source folder of the Django project.
+cd src/backend/
+
+# Detects and collects model changes.
 python3 manage.py makemigrations
 
-# migrate collected model changes to database
+# Migrates collected model changes to the database.
 python3 manage.py migrate
 
-# create superuser
-# - Only needed for new database
-# - Is part in the Docker compose.yaml
+# Creates a superuser.
+# He is used to log in as an admin (lecturer) and
+# manages the projects and students
+# - This is only needed for a new database.
+# - It is part of the Docker compose.yaml.
 python3 manage.py createsuperuser
 
-# collect and save static files
-# - They are later delivered directly via nginx
+# Collects and saves static files.
+# - They are later delivered directly via nginx.
 python3 manage.py collectstatic
 ```
 
 ### Start and stop the server
 
-- **Django development server**:
+#### Django development server
 
-  ```sh
-  # - URI: localhost:8000
-  # Start
-  cd htwd-project-se-team-management/src/backend/
-  python3 manage.py runserver 0.0.0.0:8000
-  # Stop: CTRL+C
-  ```
+```sh
+# Start:
+cd src/backend/
+python3 manage.py runserver 0.0.0.0:8000
 
-- **Gunicorn server**:
+# URI: localhost:8000
 
-  ```sh
-  # - URI: localhost:8000
-  cd htwd-project-se-team-management/src/backend/
-  gunicorn config.wsgi:application -c gunicorn.conf.py
-  # Stop: CTRL+C
-  ```
+# Stop: `CTRL+C`
+```
 
-- **Docker**:
+#### Gunicorn server
 
-  ```sh
-  # - URI: localhost
-  cd htwd-project-se-team-management/
-  (sudo) docker compose up -d
-  # Stop
-  (sudo) docker compose down
-  ```
+```sh
+# Start:
+cd src/backend/
+gunicorn config.wsgi:application -c gunicorn.conf.py
+
+# URI: localhost:8000
+
+# Stop: `CTRL+C`
+```
+
+#### Docker compose
+
+```sh
+# Start (in the root folder of the project):
+docker compose up -d
+
+# URI: localhost
+
+# Stop:
+docker compose down
+```
+
+Depending on the OS, the docker commands need to be started with `sudo`.
 
 ## Project
 
-### Prepare for test or new git version
+### Prepare for test or new version
 
 1. Remove sensitive data or outsource them to the .env file.
-2. Prepare Django project:
+2. Prepare the Django project:
 
    ```sh
    python3 manage.py makemigrations
@@ -106,17 +120,28 @@ python3 manage.py collectstatic
    python3 manage.py collectstatic
    ```
 
-3. Test the project
+3. Test the project.
 4. Freeze (working) pip package versions:
 
    ```sh
    pip freeze -l > requirements.freeze.txt
    ```
 
-> [!WARNING]
-> For final deployment use the [Deployment checklist](https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/):
->
-> `python3 manage.py check --deploy`.
+### Prepare for production
+
+1. Use the [Deployment checklist](https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/):
+
+   ```sh
+   python3 manage.py check --deploy
+   ```
+
+2. Check the [Prepare for test or new version](#prepare-for-test-or-new-version) section.
+3. Use the frozen versions of the working pip packages:
+
+   ```sh
+   cp requirements.txt requirements.dev.txt
+   cp requirements.freeze.txt requirements.txt
+   ```
 
 ### Logging
 
@@ -182,24 +207,24 @@ python3 manage.py createsuperuser
 python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
 ```
 
-### Sqlite
+### SQLite
 
 #### Backup & Restore
 
 ```sh
-# Backup all tables
+# Backups all tables.
 sqlite3 db.sqlite3
 sqlite> .output db_dump_all.sql
 sqlite> .dump
 sqlite> .exit
 
-# Backup table <table>
+# Backups the table <table>.
 sqlite3 db.sqlite3
 sqlite> .output db_dump_<table>.sql
 sqlite> .dump <table>
 sqlite> .exit
 
-# Restore table: <table>
+# Restores the table <table>.
 sqlite3 db.sqlite3
 .read db_dump_<table>.sql
 .exit
