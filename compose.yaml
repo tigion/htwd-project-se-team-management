@@ -46,6 +46,7 @@ services:
       - static_volume:/usr/src/app/staticfiles
     environment:
       - DJANGO_SUPERUSER_USERNAME
+      - DJANGO_SUPERUSER_EMAIL
       - DJANGO_SUPERUSER_PASSWORD
       - DJANGO_PORT
       - DJANGO_SECRET_KEY
