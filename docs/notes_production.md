@@ -4,10 +4,11 @@
   - [Requirements](#requirements)
   - [Installation](#installation)
   - [Configuration](#configuration)
-  - [Run](#run)
-  - [Update](#update)
-  - [Deinstall](#deinstall)
-  - [Backup \& Restore](#backup--restore)
+- [Run](#run)
+- [Update](#update)
+- [Deinstall](#deinstall)
+- [Backup \& Restore](#backup--restore)
+- [The start/stop scripts](#the-startstop-scripts)
 
 ## Setup
 
@@ -48,7 +49,7 @@
    > adjusted for productive use!
    - 🚧 ... A more detailed description of the settings follows later.
 
-### Run
+## Run
 
 1. Switches to the project folder:
 
@@ -59,29 +60,29 @@
 2. Starts the Docker containers with:
 
    ```sh
-   # Linux
-   sudo docker compose up -d
-
-   # macOS
+   ./start.sh
+   # or
    docker compose up -d
    ```
 
 3. Stops the Docker containers with:
 
    ```sh
-   # Linux
-   sudo docker compose down
-
-   # macOS
+   ./stop.sh
+   # or
    docker compose down
    ```
 
 > [!NOTE]
-> Depending on the OS, the docker commands need to be started with `sudo`.
+> Depending on the OS, the Docker commands or the start/stop scripts need to be
+> started with `sudo`.
+>
+> Infos about the start/stop scripts can be found
+> [here](manual_scripts.md).
 
-### Update
+## Update
 
-#### A simple variant
+### A simple variant
 
 1. Switch to the project folder:
 
@@ -92,10 +93,8 @@
 2. Stop the Docker containers:
 
    ```sh
-   # Linux
-   sudo docker compose down
-
-   # macOS
+   ./stop.sh
+   # or
    docker compose down
    ```
 
@@ -108,48 +107,46 @@
 4. Start the Docker containers:
 
    ```sh
-   # Linux
-   sudo docker compose up -d
-
-   # macOS
+   ./start.sh
+   # or
    docker compose up -d
    ```
 
-#### A variant with reset Docker environment
+### A variant with reset Docker environment
 
 1. Stop the Docker containers and remove all containers, images and networks:
 
    ```sh
-   # Linux
-   sudo docker compose down --rmi all --remove-orphans
-
-   # macOS
-   docker compose down --rmi all --remove-orphans
+   ./stop.sh
+   # or
+   docker compose down
    ```
 
-   Can be run even if Docker has already been terminated.
+2. [optional] Save relevant data ([Backup \& Restore](#backup--restore))
 
-   > [!WARNING]
-   > With an additional `--volume` also volumes with important data will be
-   > removed!
-
-2. Update the project repository with the source code:
+3. Update the project repository with the source code:
 
    ```sh
    git pull
    ```
 
-3. Start Docker with newly created containers, images and networks:
+4. Removes all containers, images and networks and starts Docker with newly
+   created ones:
 
    ```sh
-   # Linux
-   sudo docker compose up -d
-
-   # macOS
-   docker compose up -d
+   ./start.sh --reset
+   # or
+   docker compose down --rmi all --remove-orphans
    ```
 
-### Deinstall
+   > [!WARNING]
+   > With an `--reset-all` or `--volumes` also volumes with important data will
+   > be removed and new ones created.
+   >
+   > - `./start.sh --reset-all`
+   > - `docker compose down --rmi all --volumes --remove-orphans`
+
+## Deinstall
 
 1. Switch to the project folder:
 
@@ -160,10 +157,8 @@
 2. Stop the Docker containers:
 
    ```sh
-   # Linux
-   sudo docker compose down
-
-   # macOS
+   ./stop.sh
+   # or
    docker compose down
    ```
 
@@ -171,11 +166,12 @@
 
 4. Clean up Docker environment with:
 
-   ```sh
-   # Linux
-   sudo docker compose down --rmi all --volumes --remove-orphans
+   > [!WARNING]
+   > This removes all containers, images, networks and volumes!
 
-   # macOS
+   ```sh
+   ./start.sh --reset-all --no-start
+   # or
    docker compose down --rmi all --volumes --remove-orphans
    ```
 
@@ -191,7 +187,7 @@
    rm -rf htwd-project-se-team-management
    ```
 
-### Backup & Restore
+## Backup & Restore
 
 Simply stop Docker and save or restore the configuration and data manually.
 Docker can then be restarted.

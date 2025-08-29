@@ -20,6 +20,7 @@
     - [Create self signed certificate](#create-self-signed-certificate)
   - [Docker](#docker)
     - [Inspect running Docker containers](#inspect-running-docker-containers)
+    - [Reset or update Docker environment](#reset-or-update-docker-environment)
 
 ## Setup
 
@@ -97,15 +98,21 @@ gunicorn config.wsgi:application -c gunicorn.conf.py
 
 ```sh
 # Start (in the root folder of the project):
+./start.sh
+# or
 docker compose up -d
 
 # URI: localhost
 
 # Stop:
+./stop.sh
+# or
 docker compose down
 ```
 
-Depending on the OS, the docker commands need to be started with `sudo`.
+> [!NOTE]
+> Depending on the OS, the Docker commands or the start/stop scripts need to be
+> started with `sudo`.
 
 ## Project
 
@@ -246,3 +253,41 @@ sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout localhost.key -
 docker ps
 docker exec -it <Container-ID or Name> /bin/sh
 ```
+
+#### Reset or update Docker environment
+
+Recreates the docker images:
+
+```sh
+./start.sh --build --no-start
+# or
+docker compose build
+```
+
+Pulls the latest image versions and recreates the docker images:
+
+```sh
+./start.sh --update --no-start
+# or
+docker compose build --pull
+```
+
+Removes all containers, images and networks and recreates them:
+
+```sh
+./start.sh --reset --no-start
+# or
+docker compose down --rmi all --remove-orphans
+```
+
+Removes all containers, images, networks and volumes and recreates them:
+
+```sh
+./start.sh --reset-all --no-start
+# or
+docker compose down --rmi all --volumes --remove-orphans
+```
+
+> [!NOTE]
+> Infos about the start/stop scripts can be found
+> [here](manual_scripts.md).
