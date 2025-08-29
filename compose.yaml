@@ -1,7 +1,6 @@
 name: team-management
 
 services:
-
   # Reverse Proxy
   nginx:
     build:
@@ -27,9 +26,9 @@ services:
     restart: "on-failure"
 
   # Frontend
-    # networks:
-    #   - frontend
-    #   - backend
+  # networks:
+  #   - frontend
+  #   - backend
 
   # Frontend+Backend
   django:
@@ -72,13 +71,13 @@ services:
     restart: "on-failure"
 
   # Backend
-    # networks:
-    #   - backend
-    #   - database
+  # networks:
+  #   - backend
+  #   - database
 
   # Database
-    # networks:
-    #   - database
+  # networks:
+  #   - database
 
 networks:
   frontend:
