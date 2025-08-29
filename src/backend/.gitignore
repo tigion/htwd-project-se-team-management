@@ -1,6 +1,16 @@
-# Python
+# Environment variables
 .env
-.venv/
+
+# Python
 __pycache__/
-logs/
+
+# Python virtual environment
+.venv/
+venv/
+
+# Django
 *.sqlite3
+staticfiles/
+
+# Logs
+logs/

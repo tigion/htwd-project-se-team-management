@@ -28,7 +28,3 @@ RUN pip install --no-cache-dir -r ./requirements.txt
 
 # Copy all files in our project
 COPY ./src/backend/ .
-
-# Set file permissions for nginx docker container
-# - TODO: Fixes a problem with file permissions. Is there a better way?
-RUN find /usr/src/app/staticfiles -type f -print0 | xargs -0 chmod 644
