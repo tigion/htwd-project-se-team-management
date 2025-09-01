@@ -427,8 +427,8 @@ def get_teams_for_view() -> dict:
 
     # Sets the average happiness scores of all teams.
     if total_student_count > 0:
-        total_happiness_score = round(total_happiness_score / total_student_count, 2)
-        total_happiness_poll_score = round(total_happiness_poll_score / total_student_count, 2)
+        total_happiness_score = round(total_happiness_score / total_student_count, 3)
+        total_happiness_poll_score = round(total_happiness_poll_score / total_student_count, 3)
 
     # Adds the happiness summary of all teams.
     data["happiness"] = {
