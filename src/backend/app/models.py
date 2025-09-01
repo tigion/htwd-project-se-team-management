@@ -39,7 +39,7 @@ class Project(models.Model):
     pid = models.CharField(
         max_length=1,
         unique=True,
-        verbose_name="ID",
+        verbose_name="Projekt-ID",
         help_text="Muss ein Großbuchstaben von A bis Z sein",
         validators=[RegexValidator("[A-Z]")],
     )

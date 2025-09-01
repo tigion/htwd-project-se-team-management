@@ -12,14 +12,21 @@ from team.models import Team, ProjectInstance
 from .models import STUDY_PROGRAM_CHOICES, Project, Settings, Student
 
 
-# NOTE: Export students from Opal:
-#
-# 1. SE I -> Gruppenmanagement
-# 2. Gruppe "Teilnehmer Projektarbeit"
-# 3. Symbol Einträge auswählen: Vorname, Nachname, E-Mail-Adresse, Studiengruppe
-# 4. Symbol Tabelle herunterladen -> table.xls
-# 5. LibreOffice/Excell: als CSV-Datei speichern (Komma-Separator, Erste Zeile sind die Spaltennamen welche beim Import ignoriert werden)
-# 6. (Falls notwending: Separator auf ',' ändern) (:%s/;/,/g)
+def get_free_project_pids() -> list:
+    """
+    Returns a list of free project PIDs (pid).
+
+    The pid is not the pk (id) of a project object.
+    """
+
+    # TODO: The allowed PID letters A-Z are currently hard-coded
+    #       and limits the number of projects to 26.
+
+    allowed_pids = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    used_pids = list(Project.objects.values_list("pid", flat=True))
+    free_pids = list(pid for pid in allowed_pids if pid not in used_pids)
+
+    return free_pids
 
 
 def read_students_from_file_to_db(file, mode):
@@ -35,6 +42,15 @@ def read_students_from_file_to_db(file, mode):
         file: The file to read.
         mode: The mode to use. Can be "add" or "new".
     """
+
+    # NOTE: Export students from Opal:
+    #
+    # 1. SE I -> Gruppenmanagement
+    # 2. Gruppe "Teilnehmer Projektarbeit"
+    # 3. Symbol Einträge auswählen: Vorname, Nachname, E-Mail-Adresse, Studiengruppe
+    # 4. Symbol Tabelle herunterladen -> table.xls
+    # 5. LibreOffice/Excell: als CSV-Datei speichern (Komma-Separator, Erste Zeile sind die Spaltennamen welche beim Import ignoriert werden)
+    # 6. (Falls notwending: Separator auf ',' ändern) (:%s/;/,/g)
 
     # Deletes all existing students if mode is "new".
     if mode == "new":

@@ -5,12 +5,32 @@ from .models import (
     Student,
     Settings,
 )
+from .helper import get_free_project_pids
 
 
 class ProjectForm(ModelForm):
     class Meta:
         model = Project
+        # fields = ["pid", "instances", "name", "description", "technologies", "company", "contact", "url"]
         fields = "__all__"
+
+    def get_pid_choices(self, project):
+        free_pids = get_free_project_pids()
+        # Adds the current project to the list of free IDs.
+        # Needed, if an existing project is edited.
+        if project is not None:
+            free_pids.append(project.pid)
+            free_pids.sort()
+        # Creates a list of tuples. 'A' -> ('A', 'A')
+        pid_choices = list((pid, pid) for pid in free_pids)
+        return pid_choices
+
+    def __init__(self, *args, **kwargs):
+        super(ProjectForm, self).__init__(*args, **kwargs)
+        self.fields["pid"] = forms.ChoiceField(
+            label="Projekt-ID",
+            choices=self.get_pid_choices(kwargs.get("instance")),
+        )
 
 
 class StudentForm(ModelForm):
