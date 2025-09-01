@@ -252,3 +252,11 @@ LOGGING = {
         },
     },
 }
+
+# --- Bootstrap 5 (django-bootstrap5)----------------------------------
+# - https://django-bootstrap5.readthedocs.io/en/latest/settings.html
+
+BOOTSTRAP5 = {
+    # Set placeholder attributes to label if no placeholder is provided.
+    "set_placeholder": False,
+}
