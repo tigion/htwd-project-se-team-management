@@ -69,6 +69,8 @@ More detailed instructions can be found at:
 
 ## Known bugs
 
+- `2025-09-01`: [Issue #4](https://github.com/tigion/htwd-project-se-team-management/issues/4):
+  Field error messages are not displayed correctly
 - `2023-09-14`: ~~[Issue
   #3](https://github.com/tigion/htwd-project-se-team-management/issues/3):
   CommandError: You must use --email with --noinput~~
