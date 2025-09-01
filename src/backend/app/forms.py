@@ -11,8 +11,8 @@ from .helper import get_free_project_pids
 class ProjectForm(ModelForm):
     class Meta:
         model = Project
-        # fields = ["pid", "instances", "name", "description", "technologies", "company", "contact", "url"]
-        fields = "__all__"
+        fields = ["pid", "name", "description", "technologies", "company", "contact", "url", "instances"]
+        # fields = "__all__"
 
     def get_pid_choices(self, project):
         free_pids = get_free_project_pids()
@@ -30,6 +30,7 @@ class ProjectForm(ModelForm):
         self.fields["pid"] = forms.ChoiceField(
             label="Projekt-ID",
             choices=self.get_pid_choices(kwargs.get("instance")),
+            help_text="Aktuell limitiert auf Grossbuchstaben von A bis Z",
         )
 
 

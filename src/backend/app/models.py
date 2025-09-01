@@ -36,18 +36,18 @@ for study_program in STUDY_PROGRAMS:
 
 
 class Project(models.Model):
-    pid = models.CharField(
+    pid = models.CharField(  # Form is overwritten in ProjectForm.
         max_length=1,
         unique=True,
         verbose_name="Projekt-ID",
-        help_text="Muss ein Großbuchstaben von A bis Z sein",
+        help_text="Aktuell limitiert auf Grossbuchstaben von A bis Z",
         validators=[RegexValidator("[A-Z]")],
     )
     instances = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name="Instanzen",
-        help_text="Leer für Standardanzahl aus den Einstellungen oder Angabe der individuellen Anzahl der maximalen Projektinstanzen (1-99)",
+        help_text="Anzahl der Projektinstanzen (1-99) oder leer für Standardanzahl",
         validators=[MinValueValidator(1), MaxValueValidator(99)],
     )
     name = models.CharField(max_length=255, verbose_name="Name")
@@ -58,14 +58,14 @@ class Project(models.Model):
         blank=True,
         null=True,
         verbose_name="Auftraggeber",
-        help_text="Name der Firma, des Verein oder der Hochschule mit Fakultät",
+        help_text="Name der Firma, des Vereins oder der Hochschule mit Fakultät",
     )
     contact = models.CharField(max_length=255, blank=True, null=True, verbose_name="Kontakt")
     url = models.URLField(
         blank=True,
         null=True,
         verbose_name="Link zu weiteren Informationen",
-        help_text="PDF-Link zu den Projektbescheibungen in Opal",
+        help_text="PDF oder Webseite zu den Projektbescheibungen",
     )
 
     class Meta:
