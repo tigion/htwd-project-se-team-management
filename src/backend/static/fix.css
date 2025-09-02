@@ -1,0 +1,5 @@
+/* Temporary fix for the not shown invalid-feedback messages. */
+/* - https://github.com/tigion/htwd-project-se-team-management/issues/4 */
+.invalid-feedback {
+  display: block !important;
+}
