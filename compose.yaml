@@ -66,7 +66,7 @@ services:
       - -c
       - |
         python manage.py migrate
-        python manage.py collectstatic
+        python manage.py collectstatic --noinput
         python manage.py createsuperuser --noinput
         gunicorn config.wsgi:application -c gunicorn.conf.py
     restart: "on-failure"
