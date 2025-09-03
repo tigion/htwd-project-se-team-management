@@ -46,6 +46,34 @@ POLL_SCORES = {
     ],
 }
 
+POLL_LEVELS = {
+    "default": 1,
+    "min": 1,
+    "max": 4,
+    "choices": [
+        {
+            "id": 1,
+            "value": 1,
+            "label": "keine Angabe",
+        },
+        {
+            "id": 2,
+            "value": 2,
+            "label": "Besondere eigenständige Leistung erbringen",
+        },
+        {
+            "id": 3,
+            "value": 3,
+            "label": "Solides Verständnis von SE aufbauen",
+        },
+        {
+            "id": 4,
+            "value": 4,
+            "label": "Hauptsache bestehen",
+        },
+    ],
+}
+
 
 # Create your models here.
 
@@ -79,3 +107,14 @@ class ProjectAnswer(models.Model):
 
     def __str__(self) -> str:
         return f"{self.poll.student.name2} - {self.project.pid}"
+
+
+class LevelAnswer(models.Model):
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
+    level = models.PositiveIntegerField(
+        default=POLL_LEVELS["default"],
+        validators=[MinValueValidator(POLL_LEVELS["min"]), MaxValueValidator(POLL_LEVELS["max"])],
+    )
+
+    def __str__(self) -> str:
+        return f"{self.poll.student.name2}"

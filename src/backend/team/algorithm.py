@@ -185,11 +185,31 @@ class AssignmentAlgorithm:
 
         soft_constraints = []
         for p_id in self.__project_ids:
+            p_scores = []
+            p_levels = []
             for s_id in self.__student_ids:
                 score = self.__get_total_score(p_id, s_id)
+                # p_scores.append(score * self.__model_x[(p_id, s_id)])
+                # soft_constraints.append(score * self.__model_x[(p_id, s_id)])
+
+                # TODO: Testing levels: Variante boost/reduce score
+                level = self.__data_per_student[s_id]["level_answer"]
+                if score > 50 and level != 0:
+                    score += level
+                elif score < 50 and level != 0:
+                    score -= level
+                # p_levels.append(score * self.__model_x[(p_id, s_id)])
                 soft_constraints.append(score * self.__model_x[(p_id, s_id)])
 
+                # if self.__data_per_student[s_id]["level"] == 1 and p_id == 1:
+                #     p_levels.append(self.__model_x[(p_id, s_id)])
+                # if self.__data_per_student[s_id]["level"] == 2 and p_id == 2:
+                #     p_levels.append(self.__model_x[(p_id, s_id)])
+
+            # soft_constraints.append(sum(p_levels))
+
         self.__model.Maximize(sum(soft_constraints))
+        # self.__model.Maximize(sum(soft_constraints) + sum(soft_constraints2))
 
     def __extract_solution(self, solver: cp_model.CpSolver):
         """
@@ -202,12 +222,15 @@ class AssignmentAlgorithm:
             solver: The constraint solver.
         """
 
+        total_score = 0
         self.__results = []
         for p_id in self.__project_ids:
             for s_id in self.__student_ids:
                 if solver.Value(self.__model_x[(p_id, s_id)]) == 1:
                     score = self.__get_total_score(p_id, s_id)
+                    total_score += score
                     self.__results.append((p_id, s_id, score))
+        print(f"Total score: {total_score}")
 
     def __normalize_score(self, answer_score: int) -> int:
         """
@@ -238,7 +261,7 @@ class AssignmentAlgorithm:
 
     def __get_total_score(self, project: int, student: int) -> int:
         """
-        Returns the total score for the given project and student.
+        Returns the total score between 0 and 100 for the given project and student.
 
         Args:
             project: The project id.

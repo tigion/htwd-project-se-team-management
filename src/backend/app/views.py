@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.forms import AuthenticationForm
 # from django.contrib.auth.models import User
 
-from poll.models import POLL_SCORES
+from poll.models import POLL_SCORES, POLL_LEVELS
 from poll.helper import (
     save_poll_data_to_db,
     load_poll_data_for_form,
@@ -93,6 +93,7 @@ def student_home(request):
     context["settings"] = settings
     context["projects"] = projects
     context["poll_scores"] = POLL_SCORES
+    context["poll_levels"] = POLL_LEVELS
     context["teams"] = get_teams_for_view().get("teams", [])
 
     if request.method == "POST" and is_student:

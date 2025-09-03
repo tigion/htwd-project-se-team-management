@@ -4,7 +4,7 @@ from django.db.models import F
 # from django.db.models import F, Sum
 
 from app.models import Project, Student, Settings, Info
-from poll.models import POLL_SCORES, Poll, ProjectAnswer
+from poll.models import POLL_SCORES, Poll, ProjectAnswer, LevelAnswer
 from poll.helper import (
     get_poll_stats_for_student,
     get_happiness_icon,
@@ -115,7 +115,9 @@ def create_id_idx_mappings(students: list, project_instances: list):
         id_idx_mappings["project"]["algo2db"][idx] = project_instances[idx]["id"]
 
 
-def create_data_per_student(students: list[dict], project_instances: list[dict], project_answers: list[dict]) -> dict:
+def create_data_per_student(
+    students: list[dict], project_instances: list[dict], project_answers: list[dict], level_answers: list[dict]
+) -> dict:
     """
     Returns the prepared data per student for the algorithm.
 
@@ -136,6 +138,7 @@ def create_data_per_student(students: list[dict], project_instances: list[dict],
         students: The list of students.
         project_instances: The list of project instances.
         project_answers: The list of project answers.
+        level_answers: The list of level answers.
     """
 
     project_instance_answers_per_student = {}
@@ -151,6 +154,7 @@ def create_data_per_student(students: list[dict], project_instances: list[dict],
             # "student_infos": {},
             "is_wing": False,
             "project_answers": {},
+            "level_answer": 0,  # TODO: Testing levels
         }
 
         for project_answer in project_answers_per_student:
@@ -171,6 +175,16 @@ def create_data_per_student(students: list[dict], project_instances: list[dict],
     for student in students:
         # student_infos[id_mapper["student"]["db2algo"].get(student["id"])] = int(student["is_wing"])
         data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["is_wing"] = int(student["is_wing"])
+
+        # TODO: Testing levels with AI and WI.
+        tmp_student = Student.objects.get(id=student["id"])
+        if tmp_student.study_program_short == "AI":
+            data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = 1
+        elif tmp_student.study_program_short == "WI":
+            data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = -1
+
+    # for level_answer in level_answers:
+    #     data_per_student[id_idx_mappings["student"]["db2algo"].get(level_answer["student"])]["level_answer"] = level_answer["level"]
 
     return data_per_student
 
@@ -199,9 +213,11 @@ def create_data_for_algorithm() -> dict:
         ProjectAnswer.objects.order_by("poll").values("project", "score", student=F("poll__student"))
     )
 
+    level_answers_data = list(LevelAnswer.objects.values("level", student=F("poll__student")))
+
     # Prepares the data for the algorithm.
     create_id_idx_mappings(students_data, project_instances_data)
-    data = create_data_per_student(students_data, project_instances_data, project_answers_data)
+    data = create_data_per_student(students_data, project_instances_data, project_answers_data, level_answers_data)
 
     return data
 
