@@ -323,6 +323,7 @@ def stats(request):
 
     context = {}
     context["settings"] = settings
+    context["poll_scores"] = POLL_SCORES
     context["stats"] = get_statistics_for_view()
 
     return render(request, "lecturer/stats.html", context)

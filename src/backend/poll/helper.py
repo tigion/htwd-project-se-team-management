@@ -145,7 +145,10 @@ def generate_poll_data_for_students_without_poll():
                 score=(
                     POLL_SCORES["default"]
                     if not settings.use_random_poll_defaults
-                    else random.randint(POLL_SCORES["min"], POLL_SCORES["max"])
+                    else random.randint(
+                        POLL_SCORES["min"] if project.pid != "A" else POLL_SCORES["min"] + 2,
+                        POLL_SCORES["max"] if project.pid != "B" else POLL_SCORES["max"] - 2,
+                    )
                 ),
             )
         LevelAnswer.objects.create(

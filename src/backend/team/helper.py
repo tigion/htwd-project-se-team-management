@@ -4,7 +4,7 @@ from django.db.models import F
 # from django.db.models import F, Sum
 
 from app.models import Project, Student, Settings, Info
-from poll.models import POLL_SCORES, Poll, ProjectAnswer, LevelAnswer
+from poll.models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
 from poll.helper import (
     get_poll_stats_for_student,
     get_happiness_icon,
@@ -128,7 +128,8 @@ def create_data_per_student(
             "project_answers": {
                 <project_instance_id>: <score>,
                 ...
-            }
+            },
+            "level_answer": int,
         },
         ...
     }
@@ -154,7 +155,7 @@ def create_data_per_student(
             # "student_infos": {},
             "is_wing": False,
             "project_answers": {},
-            "level_answer": 0,  # TODO: Testing levels
+            "level_answer": POLL_LEVELS["default"],  # TODO: Testing levels
         }
 
         for project_answer in project_answers_per_student:
@@ -179,10 +180,14 @@ def create_data_per_student(
         # TODO: Testing levels with AI and WI.
         tmp_student = Student.objects.get(id=student["id"])
         if tmp_student.study_program_short == "AI":
-            data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = 1
+            data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = 2
         elif tmp_student.study_program_short == "WI":
-            data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = -1
+            data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = 3
+        elif tmp_student.study_program_short == "VI":
+            data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = 4
 
+    # TODO: Testing levels with AI and WI.
+    #
     # for level_answer in level_answers:
     #     data_per_student[id_idx_mappings["student"]["db2algo"].get(level_answer["student"])]["level_answer"] = level_answer["level"]
 
@@ -239,6 +244,7 @@ def generate_teams_with_algorithm() -> list[tuple[int, int, int]]:
     opts = {
         "max_project_score": POLL_SCORES["max"],
         "min_students_per_project": settings.team_min_member,
+        "level_variant": 2,
     }
 
     # Creates and initializes the algorithm with the given data and options.

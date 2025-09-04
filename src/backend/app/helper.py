@@ -5,7 +5,7 @@ from io import StringIO
 
 from django.db.models import Count
 
-from poll.models import Poll, ProjectAnswer
+from poll.models import POLL_SCORES, Poll, ProjectAnswer
 from poll.helper import get_project_ids_ordered_by_score
 from team.models import Team, ProjectInstance
 
@@ -232,8 +232,20 @@ def get_statistics_for_view() -> dict:
     projects = []
     for project_id in project_ids:
         # Sets the score and average score.
-        score = project_id["total_score"]
+        poll_score = project_id["total_score"]
         score_avg = project_id["avg_score"]
+
+        # Sets the score counts.
+        score_counts = []
+
+        for x_poll_score in sorted(POLL_SCORES["choices"], key=lambda x: x["value"], reverse=True):
+            score_counts.append({
+                "score": x_poll_score,
+                "count": ProjectAnswer.objects.filter(
+                    project=project_id["project"], score=x_poll_score["value"]
+                ).count(),
+            })
+
         # Gets the project.
         project = Project.objects.get(id=project_id["project"])
         # Gets the project instances.
@@ -256,8 +268,9 @@ def get_statistics_for_view() -> dict:
             "name": project.name,
             "instances": len(project_instances),
             "instances_used": project_instances_used_count,
-            "score": score,
+            "score": poll_score,
             "score_avg": score_avg,
+            "score_counts": score_counts,
             "color": color,
         })
 

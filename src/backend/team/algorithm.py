@@ -47,6 +47,7 @@ class AssignmentAlgorithm:
         # Sets the given data.
         self.__data_per_student = data
         self.__max_project_score = opts["max_project_score"]
+        self.__level_variant = opts["level_variant"]
 
         # Extracts the project and student ids.
         self.__student_ids = list(self.__data_per_student.keys())
@@ -185,7 +186,7 @@ class AssignmentAlgorithm:
 
         soft_constraints = []
         for p_id in self.__project_ids:
-            p_scores = []
+            # p_scores = []
             p_levels = []
             for s_id in self.__student_ids:
                 score = self.__get_total_score(p_id, s_id)
@@ -193,20 +194,30 @@ class AssignmentAlgorithm:
                 # soft_constraints.append(score * self.__model_x[(p_id, s_id)])
 
                 # TODO: Testing levels: Variante boost/reduce score
-                level = self.__data_per_student[s_id]["level_answer"]
-                if score > 50 and level != 0:
-                    score += level
-                elif score < 50 and level != 0:
-                    score -= level
+                # Raises the higher scores and lowers the lower scores.
+                factors = {
+                    1: 0,
+                    2: 1,
+                    3: 0,
+                    4: -1,
+                }
+                if self.__level_variant == 2:
+                    level = self.__data_per_student[s_id]["level_answer"]
+                    factor = factors[level]
+                    print(f"Level: {level}")
+                    if score > 50 and factor != 0:
+                        score += factor
+                    elif score < 50 and factor != 0:
+                        score -= factor
+
                 # p_levels.append(score * self.__model_x[(p_id, s_id)])
                 soft_constraints.append(score * self.__model_x[(p_id, s_id)])
 
-                # if self.__data_per_student[s_id]["level"] == 1 and p_id == 1:
-                #     p_levels.append(self.__model_x[(p_id, s_id)])
-                # if self.__data_per_student[s_id]["level"] == 2 and p_id == 2:
+                # if self.__data_per_student[s_id]["level_answer"] == 1 and p_id == 1:
                 #     p_levels.append(self.__model_x[(p_id, s_id)])
 
-            # soft_constraints.append(sum(p_levels))
+            # soft_constraints.append(sum(p_scores))
+            soft_constraints.append(sum(p_levels))
 
         self.__model.Maximize(sum(soft_constraints))
         # self.__model.Maximize(sum(soft_constraints) + sum(soft_constraints2))
