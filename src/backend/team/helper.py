@@ -178,18 +178,21 @@ def create_data_per_student(
         data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["is_wing"] = int(student["is_wing"])
 
         # TODO: Testing levels with AI and WI.
-        tmp_student = Student.objects.get(id=student["id"])
-        if tmp_student.study_program_short == "AI":
-            data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = 2
-        elif tmp_student.study_program_short == "WI":
-            data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = 3
-        elif tmp_student.study_program_short == "VI":
-            data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = 4
+        #
+        # tmp_student = Student.objects.get(id=student["id"])
+        # if tmp_student.study_program_short == "AI":
+        #     data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = 2
+        # elif tmp_student.study_program_short == "WI":
+        #     data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = 3
+        # elif tmp_student.study_program_short == "VI":
+        #     data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["level_answer"] = 4
 
     # TODO: Testing levels with AI and WI.
     #
-    # for level_answer in level_answers:
-    #     data_per_student[id_idx_mappings["student"]["db2algo"].get(level_answer["student"])]["level_answer"] = level_answer["level"]
+    for level_answer in level_answers:
+        data_per_student[id_idx_mappings["student"]["db2algo"].get(level_answer["student"])]["level_answer"] = (
+            level_answer["level"]
+        )
 
     return data_per_student
 

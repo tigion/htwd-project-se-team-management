@@ -50,28 +50,32 @@ POLL_LEVELS = {
     "default": 1,
     "min": 1,
     "max": 4,
-    "choices": [
-        {
-            "id": 1,
+    "choices": {
+        1: {
             "value": 1,
-            "label": "keine Angabe",
+            "name": "keine Angabe",
+            "icon": "record-fill",
+            "color": "lightgrey",
         },
-        {
-            "id": 2,
+        2: {
             "value": 2,
-            "label": "Besondere eigenständige Leistung erbringen",
+            "name": "Besondere eigenständige Leistung erbringen",
+            "icon": "caret-up-fill",
+            "color": "green",
         },
-        {
-            "id": 3,
+        3: {
             "value": 3,
-            "label": "Solides Verständnis von SE aufbauen",
+            "name": "Solides Verständnis von SE aufbauen",
+            "icon": "record-fill",
+            "color": "#9ACD32",
         },
-        {
-            "id": 4,
+        4: {
             "value": 4,
-            "label": "Hauptsache bestehen",
+            "name": "Hauptsache bestehen",
+            "icon": "caret-down-fill",
+            "color": "red",
         },
-    ],
+    },
 }
 
 

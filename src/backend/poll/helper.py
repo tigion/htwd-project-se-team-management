@@ -212,6 +212,7 @@ def get_poll_stats_for_student(team) -> dict:
         project_score_avg = ProjectAnswer.objects.filter(poll=poll).aggregate(Avg("score"))["score__avg"]
         project_score_min = ProjectAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
         project_score_max = ProjectAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
+        level = LevelAnswer.objects.get(poll=poll).level
     else:
         # Uses the default score.
         default_score = POLL_SCORES["default"]
@@ -220,6 +221,7 @@ def get_poll_stats_for_student(team) -> dict:
         project_score_avg = default_score
         project_score_min = default_score
         project_score_max = default_score
+        level = POLL_LEVELS["default"]
 
     # Prepares the result.
     poll_stats = {
@@ -230,6 +232,7 @@ def get_poll_stats_for_student(team) -> dict:
             "min": project_score_min,
             "max": project_score_max,
         },
+        "level": POLL_LEVELS["choices"][level],
         "happiness": {},
         "happiness_icon": "",
         "summary": "",
