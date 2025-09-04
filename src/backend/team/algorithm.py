@@ -137,10 +137,14 @@ class AssignmentAlgorithm:
                 project_students.append(self.__model_x[(p_id, s_id)])
 
             # Number of students should be 0 or between min and max.
-            b = self.__model.NewBoolVar("b")
-            self.__model.Add(sum(project_students) == 0).OnlyEnforceIf(b.Not())
-            self.__model.Add(sum(project_students) >= self.__min_students_per_project).OnlyEnforceIf(b)
-            self.__model.Add(sum(project_students) <= self.__max_students_per_project).OnlyEnforceIf(b)
+            project_hast_students1 = self.__model.NewBoolVar("project_hast_students1")
+            self.__model.Add(sum(project_students) == 0).OnlyEnforceIf(project_hast_students1.Not())
+            self.__model.Add(sum(project_students) >= self.__min_students_per_project).OnlyEnforceIf(
+                project_hast_students1
+            )
+            self.__model.Add(sum(project_students) <= self.__max_students_per_project).OnlyEnforceIf(
+                project_hast_students1
+            )
 
     def __add_hc_wing_students_assigned_equally(self):
         """
@@ -169,10 +173,10 @@ class AssignmentAlgorithm:
             project_students = []
             for s_id in self.__student_ids:
                 project_students.append(self.__model_x[(p_id, s_id)])
-            has_students = self.__model.NewBoolVar("has_students")
-            self.__model.Add(sum(project_students) == 0).OnlyEnforceIf(has_students.Not())
-            self.__model.Add(sum(project_students) > 0).OnlyEnforceIf(has_students)
-            used_projects_count += has_students
+            project_has_students2 = self.__model.NewBoolVar("project_has_students2")
+            self.__model.Add(sum(project_students) == 0).OnlyEnforceIf(project_has_students2.Not())
+            self.__model.Add(sum(project_students) > 0).OnlyEnforceIf(project_has_students2)
+            used_projects_count += project_has_students2
 
         self.__model.Add(used_projects_count == self.__n_projects_required)
 
@@ -186,11 +190,17 @@ class AssignmentAlgorithm:
 
         soft_constraints = []
         for p_id in self.__project_ids:
-            # p_scores = []
-            p_levels = []
+            used_level2_count = 0
+            used_level3_count = 0
+            used_level23_count = 0
+            used_level123_count = 0
+            used_level13_count = 0
+            used_level4_count = 0
+            used_level2_3_count = 0
+            used_level2_4_count = 0
+            p_levels = {1: [], 2: [], 3: [], 4: []}
             for s_id in self.__student_ids:
                 score = self.__get_total_score(p_id, s_id)
-                # p_scores.append(score * self.__model_x[(p_id, s_id)])
                 # soft_constraints.append(score * self.__model_x[(p_id, s_id)])
 
                 # TODO: Testing levels: Variante boost/reduce score
@@ -204,23 +214,62 @@ class AssignmentAlgorithm:
                 if self.__level_variant == 2:
                     level = self.__data_per_student[s_id]["level_answer"]
                     factor = factors[level]
-                    print(f"Level: {level}")
                     if score > 50 and factor != 0:
                         score += factor
                     elif score < 50 and factor != 0:
                         score -= factor
 
-                # p_levels.append(score * self.__model_x[(p_id, s_id)])
                 soft_constraints.append(score * self.__model_x[(p_id, s_id)])
 
                 # if self.__data_per_student[s_id]["level_answer"] == 1 and p_id == 1:
                 #     p_levels.append(self.__model_x[(p_id, s_id)])
+                if self.__level_variant == 1:
+                    level = self.__data_per_student[s_id]["level_answer"]
+                    p_levels[level].append(self.__model_x[(p_id, s_id)])
 
-            # soft_constraints.append(sum(p_scores))
-            soft_constraints.append(sum(p_levels))
+            if self.__level_variant == 1:
+                b2 = self.__model.NewBoolVar("b2")
+                b3 = self.__model.NewBoolVar("b3")
+                b23 = self.__model.NewBoolVar("b23")
+                b123 = self.__model.NewBoolVar("b23")
+                b13 = self.__model.NewBoolVar("b23")
+                b4 = self.__model.NewBoolVar("b4")
+                self.__model.Add(sum(p_levels[2]) < self.__min_students_per_project).OnlyEnforceIf(b2.Not())
+                self.__model.Add(sum(p_levels[2]) >= self.__min_students_per_project).OnlyEnforceIf(b2)
+                self.__model.Add(sum(p_levels[3]) < self.__min_students_per_project).OnlyEnforceIf(b3.Not())
+                self.__model.Add(sum(p_levels[3]) >= self.__min_students_per_project).OnlyEnforceIf(b3)
+                # self.__model.Add(sum(p_levels[2]) + sum(p_levels[3]) < self.__min_students_per_project).OnlyEnforceIf(
+                #     b23.Not()
+                # )
+                self.__model.Add(sum(p_levels[2]) + sum(p_levels[3]) >= self.__min_students_per_project).OnlyEnforceIf(
+                    b23
+                )
+                # self.__model.Add(
+                #     sum(p_levels[1]) + sum(p_levels[2]) + sum(p_levels[3]) < self.__min_students_per_project
+                # ).OnlyEnforceIf(b123.Not())
+                self.__model.Add(
+                    sum(p_levels[1]) + sum(p_levels[2]) + sum(p_levels[3]) >= self.__min_students_per_project
+                ).OnlyEnforceIf(b123)
+                # self.__model.Add(
+                #     sum(p_levels[1]) + sum(p_levels[3]) < self.__min_students_per_project
+                # ).OnlyEnforceIf(b13.Not())
+                self.__model.Add(sum(p_levels[1]) + sum(p_levels[3]) >= self.__min_students_per_project).OnlyEnforceIf(
+                    b13
+                )
+                self.__model.Add(sum(p_levels[4]) < self.__min_students_per_project).OnlyEnforceIf(b4.Not())
+                self.__model.Add(sum(p_levels[4]) >= self.__min_students_per_project).OnlyEnforceIf(b4)
+
+                # ****** b2
+                # ***+++ b23
+                # ++++++ b3
+                # **++.. b123
+                # +++... b13
+                # ++..--
+                # ...---
+                # ------ b4
+                soft_constraints.append(b2 * 5 + b23 * 4 + b3 * 3 + b123 * 2 + b13 + b4 * 5)
 
         self.__model.Maximize(sum(soft_constraints))
-        # self.__model.Maximize(sum(soft_constraints) + sum(soft_constraints2))
 
     def __extract_solution(self, solver: cp_model.CpSolver):
         """
@@ -328,6 +377,7 @@ class AssignmentAlgorithm:
         # Solves the equation.
         self.__has_result = False
         status = solver.Solve(self.__model)
+        # TODO: Catch the exceptions ...
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
             # Extracts the solution.
             self.__extract_solution(solver)

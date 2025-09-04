@@ -247,7 +247,7 @@ def generate_teams_with_algorithm() -> list[tuple[int, int, int]]:
     opts = {
         "max_project_score": POLL_SCORES["max"],
         "min_students_per_project": settings.team_min_member,
-        "level_variant": 2,
+        "level_variant": 1,
     }
 
     # Creates and initializes the algorithm with the given data and options.
