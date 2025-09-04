@@ -17,11 +17,12 @@ Es gibt zwei Importvarianten:
 ##### Hinweise zum Export der Studenten aus Opal
 
 1. SE I -> Gruppenmanagement
-2. Gruppe "Teilnehmer Projektarbeit"
+2. Gruppe "Teilnehmende Projektarbeit" -> "Mitglieder verwalten" -> "Teilnehmer"
 3. Symbol Einträge auswählen: `Vorname`, `Nachname`, `E-Mail-Adresse`,
    `Studiengruppe`
-4. Symbol Tabelle herunterladen -> _table.xls_
-5. LibreOffice/Excell: als **CSV**-Datei speichern (**Komma**-Separator, Erste
+4. Alle Studenten auswählen
+5. Symbol Tabelle herunterladen -> _table.xlsx_
+6. LibreOffice/Excel: als **CSV**-Datei speichern (**Komma**-Separator, Erste
    Zeile sind die Spaltennamen welche beim Import ignoriert werden)
 
 Beim Import werden entweder nur neue Studenten importiert oder die vorhandenen ersetzt.
