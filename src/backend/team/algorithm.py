@@ -4,6 +4,7 @@ to projects as optimally as possible based on their survey responses.
 """
 
 import math
+import datetime
 
 from ortools.sat.python import cp_model
 
@@ -85,6 +86,7 @@ class AssignmentAlgorithm:
 
         # The maximum runtime of the solver in seconds.
         self.__max_runtime = 60
+        # self.__max_runtime = 600
 
         # Indicates whether the algorithm has already been executed and a result exists.
         self.__has_result = False
@@ -376,7 +378,12 @@ class AssignmentAlgorithm:
 
         # Solves the equation.
         self.__has_result = False
+        start_time = datetime.datetime.now()
+        print(f"Start time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
         status = solver.Solve(self.__model)
+        end_time = datetime.datetime.now()
+        print(f"End time  : {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Duration  : {end_time - start_time}")
         # TODO: Catch the exceptions ...
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
             # Extracts the solution.
