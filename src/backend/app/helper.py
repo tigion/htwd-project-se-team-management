@@ -50,7 +50,7 @@ def read_students_from_file_to_db(file, mode):
     # 3. Symbol Einträge auswählen: Vorname, Nachname, E-Mail-Adresse, Studiengruppe
     # 4. Alle Studenten auswählen
     # 5. Symbol Tabelle herunterladen -> table.xlsx
-    # 6. LibreOffice/Excell: als CSV-Datei speichern (Komma-Separator, Erste Zeile sind die Spaltennamen welche beim Import ignoriert werden)
+    # 6. LibreOffice/Excel: als CSV-Datei speichern (Komma-Separator, Erste Zeile sind die Spaltennamen welche beim Import ignoriert werden)
     # 7. (Falls notwending: Separator auf ',' ändern) (:%s/;/,/g)
 
     # Deletes all existing students if mode is "new".
