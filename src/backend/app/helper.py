@@ -46,11 +46,12 @@ def read_students_from_file_to_db(file, mode):
     # NOTE: Export students from Opal:
     #
     # 1. SE I -> Gruppenmanagement
-    # 2. Gruppe "Teilnehmer Projektarbeit"
+    # 2. Gruppe "Teilnehmende Projektarbeit" -> "Mitglieder verwalten" -> "Teilnehmer"
     # 3. Symbol Einträge auswählen: Vorname, Nachname, E-Mail-Adresse, Studiengruppe
-    # 4. Symbol Tabelle herunterladen -> table.xls
-    # 5. LibreOffice/Excell: als CSV-Datei speichern (Komma-Separator, Erste Zeile sind die Spaltennamen welche beim Import ignoriert werden)
-    # 6. (Falls notwending: Separator auf ',' ändern) (:%s/;/,/g)
+    # 4. Alle Studenten auswählen
+    # 5. Symbol Tabelle herunterladen -> table.xlsx
+    # 6. LibreOffice/Excell: als CSV-Datei speichern (Komma-Separator, Erste Zeile sind die Spaltennamen welche beim Import ignoriert werden)
+    # 7. (Falls notwending: Separator auf ',' ändern) (:%s/;/,/g)
 
     # Deletes all existing students if mode is "new".
     if mode == "new":
@@ -62,7 +63,7 @@ def read_students_from_file_to_db(file, mode):
     # Reads the data from the file.
     data_set = file.read().decode("UTF-8")
     io_string = StringIO(data_set)
-    next(io_string)
+    next(io_string)  # Skips the header line.
 
     # Creates the patterns to match a student ID and a study program.
     student_id_pattern = re.compile("^g?s[0-9]{1,9}@")
