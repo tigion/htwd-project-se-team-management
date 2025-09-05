@@ -5,7 +5,7 @@ from io import StringIO
 
 from django.db.models import Count
 
-from poll.models import POLL_SCORES, Poll, ProjectAnswer
+from poll.models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
 from poll.helper import get_project_ids_ordered_by_score
 from team.models import Team, ProjectInstance
 
@@ -224,6 +224,16 @@ def get_statistics_for_view() -> dict:
             "percent": poll_empty_percent,
         },
     }
+
+    # Fill the "level" part.
+    level_counts = []
+    for key, poll_level in POLL_LEVELS["choices"].items():
+        level_count = LevelAnswer.objects.filter(level=poll_level["value"]).count()
+        level_counts.append({
+            "level": poll_level,
+            "count": level_count,
+        })
+    stats["level"] = level_counts
 
     # Sets the project IDs ordered by the total score.
     project_ids = get_project_ids_ordered_by_score()
