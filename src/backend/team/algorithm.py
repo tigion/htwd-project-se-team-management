@@ -85,7 +85,7 @@ class AssignmentAlgorithm:
         self.__max_wings_per_project = math.ceil(self.__n_wing_students / self.__n_projects_required)
 
         # The maximum runtime of the solver in seconds.
-        self.__max_runtime = 60
+        self.__max_runtime = 30
         # self.__max_runtime = 600
 
         # Indicates whether the algorithm has already been executed and a result exists.
@@ -186,34 +186,29 @@ class AssignmentAlgorithm:
         """
         Adds the following soft constraints to the model:
         - Maximizes the assignment scores of the students.
+        - TODO: Testing variants of level impact.
 
         The higher the value, the better the match with the student's preferences.
         """
 
         soft_constraints = []
         for p_id in self.__project_ids:
-            used_level2_count = 0
-            used_level3_count = 0
-            used_level23_count = 0
-            used_level123_count = 0
-            used_level13_count = 0
-            used_level4_count = 0
-            used_level2_3_count = 0
-            used_level2_4_count = 0
-            p_levels = {1: [], 2: [], 3: [], 4: []}
+            p_levels = {1: [], 2: [], 3: [], 4: []}  # Variant 1: The students per level.
+            p_students = []
             for s_id in self.__student_ids:
+                # Gets the score (poll wish) for the given project and student.
                 score = self.__get_total_score(p_id, s_id)
-                # soft_constraints.append(score * self.__model_x[(p_id, s_id)])
 
-                # TODO: Testing levels: Variante boost/reduce score
-                # Raises the higher scores and lowers the lower scores.
-                factors = {
-                    1: 0,
-                    2: 1,
-                    3: 0,
-                    4: -1,
-                }
+                # TODO: Testing variants of level impact.
+                #
+                # Variants:
+                # 0: No level impact.
+                # 1: Groups the students by level.
+                # 2: Raises/lowers the higher scores and lowers/raises the lower scores.
+
+                # Variant 2:
                 if self.__level_variant == 2:
+                    factors = {1: 0, 2: 1, 3: 0, 4: -1}
                     level = self.__data_per_student[s_id]["level_answer"]
                     factor = factors[level]
                     if score > 50 and factor != 0:
@@ -221,56 +216,125 @@ class AssignmentAlgorithm:
                     elif score < 50 and factor != 0:
                         score -= factor
 
+                # Adds the score per project and student to the soft constraints,
+                # if the student is assigned to the project, otherwise adds 0.
+                #
+                # - `score * (p_id, s_id)`, where
+                #   `(p_id, s_id)` gives a boolean with 0 or 1
+                #
+                #   not assigned: 0|25|50|75|100 * 0 = 0
+                #   assigned:     0|25|50|75|100 * 1 = 0|25|50|75|100
+                #
                 soft_constraints.append(score * self.__model_x[(p_id, s_id)])
 
-                # if self.__data_per_student[s_id]["level_answer"] == 1 and p_id == 1:
-                #     p_levels.append(self.__model_x[(p_id, s_id)])
+                # Variant 1:
                 if self.__level_variant == 1:
+                    # Collects the students per level of the current project.
                     level = self.__data_per_student[s_id]["level_answer"]
                     p_levels[level].append(self.__model_x[(p_id, s_id)])
+                    p_students.append(self.__model_x[(p_id, s_id)])
 
+            # Variant 1:
             if self.__level_variant == 1:
-                b2 = self.__model.NewBoolVar("b2")
-                b3 = self.__model.NewBoolVar("b3")
-                b23 = self.__model.NewBoolVar("b23")
-                b123 = self.__model.NewBoolVar("b23")
-                b13 = self.__model.NewBoolVar("b23")
-                b4 = self.__model.NewBoolVar("b4")
-                self.__model.Add(sum(p_levels[2]) < self.__min_students_per_project).OnlyEnforceIf(b2.Not())
-                self.__model.Add(sum(p_levels[2]) >= self.__min_students_per_project).OnlyEnforceIf(b2)
-                self.__model.Add(sum(p_levels[3]) < self.__min_students_per_project).OnlyEnforceIf(b3.Not())
-                self.__model.Add(sum(p_levels[3]) >= self.__min_students_per_project).OnlyEnforceIf(b3)
-                # self.__model.Add(sum(p_levels[2]) + sum(p_levels[3]) < self.__min_students_per_project).OnlyEnforceIf(
-                #     b23.Not()
-                # )
-                self.__model.Add(sum(p_levels[2]) + sum(p_levels[3]) >= self.__min_students_per_project).OnlyEnforceIf(
-                    b23
-                )
-                # self.__model.Add(
-                #     sum(p_levels[1]) + sum(p_levels[2]) + sum(p_levels[3]) < self.__min_students_per_project
-                # ).OnlyEnforceIf(b123.Not())
-                self.__model.Add(
-                    sum(p_levels[1]) + sum(p_levels[2]) + sum(p_levels[3]) >= self.__min_students_per_project
-                ).OnlyEnforceIf(b123)
-                # self.__model.Add(
-                #     sum(p_levels[1]) + sum(p_levels[3]) < self.__min_students_per_project
-                # ).OnlyEnforceIf(b13.Not())
-                self.__model.Add(sum(p_levels[1]) + sum(p_levels[3]) >= self.__min_students_per_project).OnlyEnforceIf(
-                    b13
-                )
-                self.__model.Add(sum(p_levels[4]) < self.__min_students_per_project).OnlyEnforceIf(b4.Not())
-                self.__model.Add(sum(p_levels[4]) >= self.__min_students_per_project).OnlyEnforceIf(b4)
+                # Weights the level combinations.
+                #
+                #  7: ************ 2     ------------ 4
+                #  6: ******++++++ 23
+                #  5: ++++++++++++ 3
+                #  4: ******...... 12    ......------ 14
+                #  3: ****++++.... 123
+                #  2: ++++++...... 13
+                #  1: ............ 1
+                #
+                #  0: ++++....----       ++++....----
+                #  0: ***+++...---       ***+++...---
+                #
+                # -1: ***??????---
 
-                # ****** b2
-                # ***+++ b23
-                # ++++++ b3
-                # **++.. b123
-                # +++... b13
-                # ++..--
-                # ...---
-                # ------ b4
-                soft_constraints.append(b2 * 5 + b23 * 4 + b3 * 3 + b123 * 2 + b13 + b4 * 5)
+                min = self.__min_students_per_project
+                max = self.__max_students_per_project
 
+                has_max_students = self.__model.NewBoolVar("has_max_students")
+                self.__model.Add(sum(p_students) < max).OnlyEnforceIf(has_max_students.Not())
+                self.__model.Add(sum(p_students) >= max).OnlyEnforceIf(has_max_students)
+
+                has_level_2 = self.__model.NewBoolVar("has_level_2")
+                self.__model.Add(sum(p_levels[2]) < min).OnlyEnforceIf(has_level_2.Not())  # b2 = 0
+                self.__model.Add(sum(p_levels[2]) >= min).OnlyEnforceIf(has_level_2)  # b2 = 1
+
+                has_level_23 = self.__model.NewBoolVar("has_level_23")
+                self.__model.Add(sum(p_levels[2]) + sum(p_levels[3]) < min).OnlyEnforceIf(has_level_23.Not())
+                self.__model.Add(sum(p_levels[2]) + sum(p_levels[3]) >= min).OnlyEnforceIf(has_level_23)
+
+                has_level_3 = self.__model.NewBoolVar("has_level_3")
+                self.__model.Add(sum(p_levels[3]) < min).OnlyEnforceIf(has_level_3.Not())
+                self.__model.Add(sum(p_levels[3]) >= min).OnlyEnforceIf(has_level_3)
+
+                has_level_12 = self.__model.NewBoolVar("has_level_12")
+                self.__model.Add(sum(p_levels[1]) + sum(p_levels[2]) < min).OnlyEnforceIf(has_level_12.Not())
+                self.__model.Add(sum(p_levels[1]) + sum(p_levels[2]) >= min).OnlyEnforceIf(has_level_12)
+
+                has_level_123 = self.__model.NewBoolVar("has_level_123")
+                sum_level_123 = sum(p_levels[1]) + sum(p_levels[2]) + sum(p_levels[3])
+                self.__model.Add(sum_level_123 < min).OnlyEnforceIf(has_level_123.Not())
+                self.__model.Add(sum_level_123 >= min).OnlyEnforceIf(has_level_123)
+
+                has_level_13 = self.__model.NewBoolVar("has_level_13")
+                self.__model.Add(sum(p_levels[1]) + sum(p_levels[3]) < min).OnlyEnforceIf(has_level_13.Not())
+                self.__model.Add(sum(p_levels[1]) + sum(p_levels[3]) >= min).OnlyEnforceIf(has_level_13)
+
+                has_level_1 = self.__model.NewBoolVar("has_level_1")
+                self.__model.Add(sum(p_levels[1]) < min).OnlyEnforceIf(has_level_1.Not())
+                self.__model.Add(sum(p_levels[1]) >= min).OnlyEnforceIf(has_level_1)
+
+                has_level_4 = self.__model.NewBoolVar("has_level_4")
+                self.__model.Add(sum(p_levels[4]) < min).OnlyEnforceIf(has_level_4.Not())
+                self.__model.Add(sum(p_levels[4]) >= min).OnlyEnforceIf(has_level_4)
+
+                has_level_14 = self.__model.NewBoolVar("has_level_14")
+                self.__model.Add(sum(p_levels[4]) + sum(p_levels[1]) < min).OnlyEnforceIf(has_level_14.Not())
+                self.__model.Add(sum(p_levels[4]) + sum(p_levels[1]) >= min).OnlyEnforceIf(has_level_14)
+
+                has_level_24 = self.__model.NewBoolVar("has_level_24")
+                self.__model.Add(sum(p_levels[2]) + sum(p_levels[4]) < 2).OnlyEnforceIf(has_level_24.Not())
+                self.__model.Add(sum(p_levels[2]) + sum(p_levels[4]) >= 2).OnlyEnforceIf(has_level_24)
+
+                # has_level_34 = self.__model.NewBoolVar("has_level_34")
+                # self.__model.Add(sum(p_levels[3]) + sum(p_levels[4]) < 2).OnlyEnforceIf(has_level_34.Not())
+                # self.__model.Add(sum(p_levels[3]) + sum(p_levels[4]) >= 2).OnlyEnforceIf(has_level_34)
+
+                # Adds the weighted level combinations to the soft constraints.
+                #
+                # TODO: Results are not good.
+                #       - [ ] Works only for min students per project. Use also max students per project!
+                #       - [ ] unwanted combinations like (...) or (...)
+                #       - [ ] factor vs score impact
+
+                # NOTE: A higher factor increases the weight of the level over the score.
+                #
+                # - Projects have a score of 0, 25, 50, 75 or 100 points.
+                # - If the level * factor is lower than the score, the score is stronger.
+                # - If the level * factor is higher than the score, the level is stronger.
+                #
+                factor = 500
+
+                # The positive combinations.
+                soft_constraints.append(
+                    0
+                    + 7 * factor * has_level_2
+                    + 7 * factor * has_level_4
+                    + 6 * factor * has_level_23
+                    + 5 * factor * has_level_3
+                    + 4 * factor * has_level_12
+                    + 4 * factor * has_level_14
+                    + 3 * factor * has_level_123
+                    + 2 * factor * has_level_13
+                    + 1 * factor * has_level_1
+                )
+                # The negative combinations.
+                soft_constraints.append(has_level_24 * -10000)
+
+        # Maximizes the soft constraints.
         self.__model.Maximize(sum(soft_constraints))
 
     def __extract_solution(self, solver: cp_model.CpSolver):
