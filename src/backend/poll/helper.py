@@ -2,8 +2,8 @@ from django.utils import timezone
 
 from django.db.models import Sum, Avg, Min, Max
 
-from app.models import Student, Project, Info, Settings
-from .models import POLL_SCORES, Poll, ProjectAnswer
+from app.models import Student, Project, Info, DevSettings
+from .models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
 
 import random
 
@@ -14,7 +14,11 @@ def prepare_poll_data_from_post(student, POST, projects):
     student and projects.
     """
 
-    poll_data = {"student": student, "project": {}, "role": {}}
+    poll_data = {
+        "student": student,
+        "project": {},
+        "level": POLL_LEVELS["default"],
+    }
 
     # Sets the default poll scores.
     for project in projects:
@@ -22,6 +26,8 @@ def prepare_poll_data_from_post(student, POST, projects):
             "project": project,
             "score": POLL_SCORES["default"],
         }
+
+    # TODO: Refactor the following two for loops to a single loop.
 
     # Sets the new poll scores.
     for post in POST:
@@ -33,6 +39,11 @@ def prepare_poll_data_from_post(student, POST, projects):
             if object_name in ["project"]:  # There was also a "role" originally.
                 if object_id in poll_data[object_name]:
                     poll_data[object_name][object_id]["score"] = object_score
+
+    # Sets the new level.
+    for post in POST:
+        if str(post) == "level":
+            poll_data["level"] = int(POST.get(post, POLL_LEVELS["default"]))
 
     return poll_data
 
@@ -66,6 +77,15 @@ def save_poll_data_to_db(student, POST, projects):
             defaults=values,
         )
 
+    # Saves the level answer.
+    values = {
+        "level": poll_data["level"],
+    }
+    LevelAnswer.objects.update_or_create(
+        poll=poll,
+        defaults=values,
+    )
+
     # Saves the update time.
     values = {"polls_last_update": timezone.now()}
     Info.objects.update_or_create(defaults=values)
@@ -78,14 +98,21 @@ def load_poll_data_for_form(student, projects):
 
     If the student has no poll, the default scores are used.
     """
-    poll_data = {"projects": []}
+    poll_data = {
+        "projects": [],
+        "level": POLL_LEVELS["default"],
+    }
     poll = Poll.objects.filter(student=student).first()
 
     if poll:
+        # Uses the project answers from the database.
         project_answers = ProjectAnswer.objects.filter(poll=poll)
         for answer in project_answers:
             poll_data["projects"].append({"project": answer.project, "score": answer.score})
+        # Uses the level answer from the database.
+        poll_data["level"] = LevelAnswer.objects.filter(poll=poll)
     else:
+        # Uses the default project answer scores. if no poll exists.
         for project in projects:
             poll_data["projects"].append({"project": project, "score": POLL_SCORES["default"]})
 
@@ -100,7 +127,7 @@ def generate_poll_data_for_students_without_poll():
     random scores.
     """
 
-    settings = Settings.load()
+    dev_settings = DevSettings.load()
     polls = Poll.objects.all()
     projects = Project.objects.all()
     students_without_answers = Student.objects.filter(poll__isnull=True)
@@ -117,10 +144,21 @@ def generate_poll_data_for_students_without_poll():
                 project=project,
                 score=(
                     POLL_SCORES["default"]
-                    if not settings.use_random_poll_defaults
-                    else random.randint(POLL_SCORES["min"], POLL_SCORES["max"])
+                    if not dev_settings.use_random_poll_defaults
+                    else random.randint(
+                        POLL_SCORES["min"] if project.pid != "A" else POLL_SCORES["min"] + 2,
+                        POLL_SCORES["max"] if project.pid != "B" else POLL_SCORES["max"] - 2,
+                    )
                 ),
             )
+        LevelAnswer.objects.create(
+            poll=poll,
+            level=(
+                POLL_LEVELS["default"]
+                if not dev_settings.use_random_poll_defaults
+                else random.randint(POLL_LEVELS["min"], POLL_LEVELS["max"])
+            ),
+        )
 
     for project in projects_without_answers:
         for poll in polls:
@@ -129,7 +167,7 @@ def generate_poll_data_for_students_without_poll():
                 project=project,
                 score=(
                     POLL_SCORES["default"]
-                    if not settings.use_random_poll_defaults
+                    if not dev_settings.use_random_poll_defaults
                     else random.randint(POLL_SCORES["min"], POLL_SCORES["max"])
                 ),
             )
@@ -174,6 +212,7 @@ def get_poll_stats_for_student(team) -> dict:
         project_score_avg = ProjectAnswer.objects.filter(poll=poll).aggregate(Avg("score"))["score__avg"]
         project_score_min = ProjectAnswer.objects.filter(poll=poll).aggregate(Min("score"))["score__min"]
         project_score_max = ProjectAnswer.objects.filter(poll=poll).aggregate(Max("score"))["score__max"]
+        level = LevelAnswer.objects.get(poll=poll).level
     else:
         # Uses the default score.
         default_score = POLL_SCORES["default"]
@@ -182,6 +221,7 @@ def get_poll_stats_for_student(team) -> dict:
         project_score_avg = default_score
         project_score_min = default_score
         project_score_max = default_score
+        level = POLL_LEVELS["default"]
 
     # Prepares the result.
     poll_stats = {
@@ -192,6 +232,7 @@ def get_poll_stats_for_student(team) -> dict:
             "min": project_score_min,
             "max": project_score_max,
         },
+        "level": POLL_LEVELS["choices"][level],
         "happiness": {},
         "happiness_icon": "",
         "summary": "",

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% load django_bootstrap5 %}
+
+{% block content %}
+
+<div class="container my-5">
+  <h2>Entwicklungseinstellungen</h2>
+  <form method="post" class="form">
+    {% csrf_token %}
+    {% bootstrap_form DevSettingsForm %}
+    {% bootstrap_button button_type="submit" content="Speichern" %}
+  </form>
+</div>
+
+{% endblock content %}

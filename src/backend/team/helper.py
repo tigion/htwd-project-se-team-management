@@ -1,10 +1,9 @@
 from itertools import groupby
 from django.utils import timezone
-from django.db.models import F
-# from django.db.models import F, Sum
+from django.db.models import F, Sum
 
-from app.models import Project, Student, Settings, Info
-from poll.models import POLL_SCORES, Poll, ProjectAnswer
+from app.models import Project, Student, Settings, DevSettings, Info
+from poll.models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
 from poll.helper import (
     get_poll_stats_for_student,
     get_happiness_icon,
@@ -34,6 +33,12 @@ def clean_up():
 
     Team.objects.all().delete()
     recreate_project_instances()
+
+    values = {
+        "teams_last_update": None,
+        "result_info": None,
+    }
+    Info.objects.update_or_create(defaults=values)
 
 
 def recreate_project_instances():
@@ -115,7 +120,9 @@ def create_id_idx_mappings(students: list, project_instances: list):
         id_idx_mappings["project"]["algo2db"][idx] = project_instances[idx]["id"]
 
 
-def create_data_per_student(students: list[dict], project_instances: list[dict], project_answers: list[dict]) -> dict:
+def create_data_per_student(
+    students: list[dict], project_instances: list[dict], project_answers: list[dict], level_answers: list[dict]
+) -> dict:
     """
     Returns the prepared data per student for the algorithm.
 
@@ -126,7 +133,8 @@ def create_data_per_student(students: list[dict], project_instances: list[dict],
             "project_answers": {
                 <project_instance_id>: <score>,
                 ...
-            }
+            },
+            "level_answer": int,
         },
         ...
     }
@@ -136,6 +144,7 @@ def create_data_per_student(students: list[dict], project_instances: list[dict],
         students: The list of students.
         project_instances: The list of project instances.
         project_answers: The list of project answers.
+        level_answers: The list of level answers.
     """
 
     project_instance_answers_per_student = {}
@@ -151,6 +160,7 @@ def create_data_per_student(students: list[dict], project_instances: list[dict],
             # "student_infos": {},
             "is_wing": False,
             "project_answers": {},
+            "level_answer": POLL_LEVELS["default"],
         }
 
         for project_answer in project_answers_per_student:
@@ -172,6 +182,12 @@ def create_data_per_student(students: list[dict], project_instances: list[dict],
         # student_infos[id_mapper["student"]["db2algo"].get(student["id"])] = int(student["is_wing"])
         data_per_student[id_idx_mappings["student"]["db2algo"].get(student["id"])]["is_wing"] = int(student["is_wing"])
 
+    # Sets the level answers.
+    for level_answer in level_answers:
+        data_per_student[id_idx_mappings["student"]["db2algo"].get(level_answer["student"])]["level_answer"] = (
+            level_answer["level"]
+        )
+
     return data_per_student
 
 
@@ -185,7 +201,12 @@ def create_data_for_algorithm() -> dict:
 
     # Sets the students data: student_id, is_wing.
     students_data = []
+
+    # Variant 1: Students in default order.
     students = Student.objects.all()
+    # Variant 2: Students in random order.
+    # students = Student.objects.order_by("?").all()
+
     for student in students:
         students_data.append({"id": student.pk, "is_wing": student.is_wing})
     # students_data = list(Student.objects.values("id", "is_wing"))  # keyword 'is_wing' is not a field in Student
@@ -199,22 +220,25 @@ def create_data_for_algorithm() -> dict:
         ProjectAnswer.objects.order_by("poll").values("project", "score", student=F("poll__student"))
     )
 
+    level_answers_data = list(LevelAnswer.objects.values("level", student=F("poll__student")))
+
     # Prepares the data for the algorithm.
     create_id_idx_mappings(students_data, project_instances_data)
-    data = create_data_per_student(students_data, project_instances_data, project_answers_data)
+    data = create_data_per_student(students_data, project_instances_data, project_answers_data, level_answers_data)
 
     return data
 
 
-def generate_teams_with_algorithm() -> list[tuple[int, int, int]]:
+def generate_teams_with_algorithm() -> dict:
     """
-    Generates the teams with the algorithm and returns the results.
+    Generates the teams with the algorithm and returns the result.
 
     Returns:
         The results of the algorithm.
     """
 
     settings = Settings.load()
+    dev_settings = DevSettings.load()
 
     # Creates the data for the algorithm.
     data = create_data_for_algorithm()
@@ -223,34 +247,43 @@ def generate_teams_with_algorithm() -> list[tuple[int, int, int]]:
     opts = {
         "max_project_score": POLL_SCORES["max"],
         "min_students_per_project": settings.team_min_member,
+        "level_variant": dev_settings.level_variant,
+        "max_runtime": dev_settings.max_runtime,
+        "relative_gap_limit": dev_settings.relative_gap_limit,
+        "num_workers": dev_settings.num_workers,
     }
 
-    # Creates and initializes the algorithm with the given data and options.
-    algorithm = AssignmentAlgorithm(data, opts)
+    result = {
+        "assignments": [],
+        "info": {},
+    }
+    if not AssignmentAlgorithm.get_is_running():
+        # Creates and initializes the algorithm with the given data and options.
+        algorithm = AssignmentAlgorithm(data, opts)
+        # Runs the algorithm to find an optimal assignment of students to projects.
+        algorithm.run()
+        # Gets the results.
+        result = algorithm.get_result()
 
-    # Runs the algorithm to find an optimal assignment of students to projects.
-    algorithm.run()
-
-    # Gets the results.
-    results = algorithm.get_results()
-
-    return results
+    return result
 
 
-def save_teams_to_db(results):
+def save_teams_to_db(result):
     """
-    Saves the generated teams in the results to the database.
+    Saves the generated teams in the result to the database.
 
     Args:
-        results: The results of the algorithm.
+        result: The result of the algorithm.
     """
 
+    assignments = result["assignments"] or []
+    info = result["info"] or {}
     project_instance_counts = {}
     teams = []
 
     # Creates the team objects with project instance numbers in sequential order.
-    for instance_idx, results_for_instance_idx in groupby(results, lambda x: x[0]):
-        results_per_instance_idx = list(results_for_instance_idx)
+    for instance_idx, assignments_per_instance_idx in groupby(assignments, lambda x: x[0]):
+        assignments_per_instance_idx = list(assignments_per_instance_idx)
 
         # Gets the project instance ID.
         project_instance_id = id_idx_mappings["project"]["algo2db"].get(instance_idx)
@@ -270,7 +303,7 @@ def save_teams_to_db(results):
         ).pk
 
         # Creates the team objects per project instance.
-        for result in results_per_instance_idx:
+        for result in assignments_per_instance_idx:
             # Gets the student ID.
             student_id = id_idx_mappings["student"]["algo2db"].get(result[1])
             # Gets the score.
@@ -289,8 +322,15 @@ def save_teams_to_db(results):
     # Saves the team objects.
     Team.objects.bulk_create(teams)
 
-    # Saves the update time.
-    values = {"teams_last_update": timezone.now()}
+    # Saves the result info.
+    result_infos = []
+    for key in info:
+        result_infos.append(f"{key}: {info[key]}")
+    result_info = "\n".join(result_infos)
+    values = {
+        "teams_last_update": timezone.now(),
+        "result_info": result_info,
+    }
     Info.objects.update_or_create(defaults=values)
 
 
@@ -324,10 +364,10 @@ def generate_teams() -> bool:
         return False
 
     # Generates the teams with the algorithm.
-    results = generate_teams_with_algorithm()
+    result = generate_teams_with_algorithm()
 
     # Saves the teams to the database.
-    save_teams_to_db(results)
+    save_teams_to_db(result)
 
     # Sets the initial project leaders.
     set_initial_project_leaders()

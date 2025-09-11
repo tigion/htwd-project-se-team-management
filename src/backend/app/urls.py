@@ -28,4 +28,5 @@ urlpatterns = [
     path("settings/", views.settings, name="settings"),
     path("settings/reset", views.settings_reset, name="reset"),
     path("settings/backup", views.settings_backup, name="backup"),
+    path("settings/dev", views.dev_settings, name="dev"),
 ]

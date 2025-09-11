@@ -4,6 +4,7 @@ from .models import (
     Project,
     Student,
     Settings,
+    DevSettings,
 )
 from .helper import get_free_project_pids
 
@@ -70,3 +71,9 @@ class SettingsResetForm(forms.Form):
         help_text="Wenn aktiv, werden nur die Fragebogenantworten und Teams gelöscht. Die Projekte, Studenten und Einstellungen bleiben beim Zurücksetzen erhalten.",
     )
     confirmed = forms.BooleanField(required=True, initial=False, label="Ich bin mir sicher")
+
+
+class DevSettingsForm(ModelForm):
+    class Meta:
+        model = DevSettings
+        fields = "__all__"

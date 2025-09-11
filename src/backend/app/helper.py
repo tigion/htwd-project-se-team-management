@@ -5,7 +5,7 @@ from io import StringIO
 
 from django.db.models import Count
 
-from poll.models import Poll, ProjectAnswer
+from poll.models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
 from poll.helper import get_project_ids_ordered_by_score
 from team.models import Team, ProjectInstance
 
@@ -225,6 +225,16 @@ def get_statistics_for_view() -> dict:
         },
     }
 
+    # Fill the "level" part.
+    level_counts = []
+    for key, poll_level in POLL_LEVELS["choices"].items():
+        level_count = LevelAnswer.objects.filter(level=poll_level["value"]).count()
+        level_counts.append({
+            "level": poll_level,
+            "count": level_count,
+        })
+    stats["level"] = level_counts
+
     # Sets the project IDs ordered by the total score.
     project_ids = get_project_ids_ordered_by_score()
 
@@ -233,8 +243,20 @@ def get_statistics_for_view() -> dict:
     projects = []
     for project_id in project_ids:
         # Sets the score and average score.
-        score = project_id["total_score"]
+        poll_score = project_id["total_score"]
         score_avg = project_id["avg_score"]
+
+        # Sets the score counts.
+        score_counts = []
+
+        for x_poll_score in sorted(POLL_SCORES["choices"], key=lambda x: x["value"], reverse=True):
+            score_counts.append({
+                "score": x_poll_score,
+                "count": ProjectAnswer.objects.filter(
+                    project=project_id["project"], score=x_poll_score["value"]
+                ).count(),
+            })
+
         # Gets the project.
         project = Project.objects.get(id=project_id["project"])
         # Gets the project instances.
@@ -257,8 +279,9 @@ def get_statistics_for_view() -> dict:
             "name": project.name,
             "instances": len(project_instances),
             "instances_used": project_instances_used_count,
-            "score": score,
+            "score": poll_score,
             "score_avg": score_avg,
+            "score_counts": score_counts,
             "color": color,
         })
 

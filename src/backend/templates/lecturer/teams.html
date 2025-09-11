@@ -6,19 +6,24 @@
   <h2>Teamverwaltung</h2>
 
   {% if settings.teams_is_visible %}
-  <div class="alert alert-danger" role="alert">
-    Achtung, solange die Teams für die Studenten sichtbar sind, können keine Änderungen vorgenommen werden!
+  <div class="alert alert-warning" role="alert">
+    Achtung, solange die Teams für die Studenten sichtbar sind, können keine Änderungen an den Teams vorgenommen werden!
   </div>
-  {% elif settings.use_random_poll_defaults %}
+  {% elif is_team_generation_running %}
+  <div class="alert alert-warning" role="alert">
+    Es läuft aktuell eine Teamgenerierung, welche bis zu {{ dev_settings.max_runtime }} Sekunden dauern kann.<br />
+    Rufen Sie die <a href="/teams">Teams</a> Seite erneut auf, um zu sehen, ob die Teamgenerierung fertig ist.
+  </div>
+  {% elif dev_settings.use_random_poll_defaults %}
   <div class="alert alert-danger" role="alert">
-    Achtung, es ist die <a href="/settings">Einstellung</a> gesetzt, dass leere Fragebögen mit zufälligen Anworten ausgefüllt werden!
+    Achtung, es ist die <a href="/settings/dev">Development Einstellung</a> gesetzt, dass leere Fragebögen mit zufälligen Anworten ausgefüllt werden!
   </div>
   {% endif %}
   <div class="d-flex flex-row bd-highlight mb-3">
     <div class="bd-highlight">
       <form id="formGenerateTeams" action="{% url 'teams-generate' %}" method="POST">
         {% csrf_token %}
-        <button id="buttonGenerateTeams" class="btn {% if teams %}btn-warning{% else %}btn-success{% endif %}" type="submit"{% if settings.teams_is_visible %} disabled{% endif %}><i class="bi bi-play-circle me-2"></i>Teams {% if teams %}erneut {% endif %}generieren</button>
+        <button id="buttonGenerateTeams" class="btn {% if teams %}btn-warning{% else %}btn-success{% endif %}" type="submit"{% if settings.teams_is_visible or is_team_generation_running %} disabled{% endif %}><i class="bi bi-play-circle me-2"></i>Teams {% if teams %}erneut {% endif %}generieren</button>
       </form>
     </div>
     <div class="ms-3 bd-highlight">
@@ -53,13 +58,28 @@
       </form>
     </div>
   </div>
-  <div class="text-muted small">Letzte Teamgenerierung: <strong>{{ info.teams_last_update }}</strong><br />Letzte Fragebogenänderung: <strong>{{ info.polls_last_update }}</strong></div>
+  {% with max_runtime_str=dev_settings.max_runtime|stringformat:"d" %}
+  {% with my_style="width: 100%;--bs-progress-bar-transition: width "|add:max_runtime_str|add:"s ease" %}
+  <div id="calculation-progress" class="progress d-none">
+    <div id="calculation-progress-bar" class="progress-bar bg-secondary" role="progressbar" style="{{ my_style }}" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+  </div>
+  {% endwith %}
+  {% endwith %}
+  <div class="text-muted small">Teamgenerierung: <strong>{{ info.teams_last_update }}</strong><br />Fragebogenänderung: <strong>{{ info.polls_last_update }}</strong></div>
+  {% if dev_settings.show_debug_info and info.result_info %}
+  <div class="alert alert-light small font-monospace mt-3" role="alert">
+    {{ info.result_info|linebreaksbr }}
+  </div>
+  {% endif %}
+
 </div>
 
 <script>
 // if the team generation button is clicked:
 // - disable the buttons and replace the icon with a spinner (bootstrap)
 document.querySelector('#buttonGenerateTeams').addEventListener('click', async (e) => {
+  e.preventDefault();
+
   const span1 = document.createElement("span")
   span1.setAttribute('class', 'spinner-border spinner-border-sm me-2')
   span1.setAttribute('aria-hidden', 'true')
@@ -69,11 +89,17 @@ document.querySelector('#buttonGenerateTeams').addEventListener('click', async (
   span2.textContent = 'Generating...'
   e.target.getElementsByTagName('i')[0].replaceWith(span1, span2)
 
+  const progress = document.getElementById('calculation-progress')
+  progress.classList.remove('d-none')
+
   e.target.disabled = true  // buttonGenerateTeams
   document.querySelector('#buttonDeleteTeams').disabled = true // buttonDeleteTeams
 
   // Workaround to trigger submit in some browsers
   window.setTimeout(() => {
+    const progressBar = document.getElementById('calculation-progress-bar')
+    progressBar.setAttribute('aria-valuenow', '0')
+    progressBar.style.width = '0%'
     var form = document.getElementById('formGenerateTeams');
     form.submit();
   }, 500);
