@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.forms import AuthenticationForm
 # from django.contrib.auth.models import User
 
-from poll.models import POLL_SCORES
+from poll.models import POLL_SCORES, POLL_LEVELS
 from poll.helper import (
     save_poll_data_to_db,
     load_poll_data_for_form,
@@ -22,13 +22,15 @@ from poll.helper import (
 
 from team.models import ProjectInstance, Team
 from team.helper import generate_teams, get_teams_for_view
+from team.algorithm import AssignmentAlgorithm
 
-from .models import Project, Settings, Student, Info
+from .models import Project, Settings, Student, Info, DevSettings
 from .forms import (
     ProjectForm,
     StudentForm,
     UploadStudentsForm,
     SettingsForm,
+    DevSettingsForm,
     SettingsResetForm,
 )
 from .helper import (
@@ -93,6 +95,7 @@ def student_home(request):
     context["settings"] = settings
     context["projects"] = projects
     context["poll_scores"] = POLL_SCORES
+    context["poll_levels"] = POLL_LEVELS
     context["teams"] = get_teams_for_view().get("teams", [])
 
     if request.method == "POST" and is_student:
@@ -251,11 +254,14 @@ def student_delete(request, id=None):
 @permission_required("team.view_team")
 def teams(request):
     settings = Settings.load()
+    dev_settings = DevSettings.load()
     info = Info.load()
 
     context = {}
     context["is_management_view"] = True
     context["settings"] = settings
+    context["dev_settings"] = dev_settings
+    context["is_team_generation_running"] = AssignmentAlgorithm.get_is_running()
     context["info"] = info
     data = get_teams_for_view()
     context["teams"] = data.get("teams", [])
@@ -322,6 +328,7 @@ def stats(request):
 
     context = {}
     context["settings"] = settings
+    context["poll_scores"] = POLL_SCORES
     context["stats"] = get_statistics_for_view()
 
     return render(request, "lecturer/stats.html", context)
@@ -397,3 +404,27 @@ def settings_backup(request):
     # response["Content-Length"] = db_file.size
 
     return response
+
+
+@login_required
+@permission_required("app.view_devsettings")
+@permission_required("app.add_devsettings")
+@permission_required("app.change_devsettings")
+@permission_required("app.delete_devsettings")
+def dev_settings(request):
+    settings = Settings.load()
+    dev_settings = DevSettings.load()
+
+    context = {}
+    context["settings"] = settings
+    context["dev_settings"] = dev_settings
+
+    form = DevSettingsForm(request.POST or None, instance=dev_settings)
+
+    if request.method == "POST":
+        if form.is_valid():
+            form.save()
+            return redirect("dev")
+
+    context["DevSettingsForm"] = form
+    return render(request, "lecturer/dev-settings.html", context)

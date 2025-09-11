@@ -43,6 +43,29 @@
   </p>
 </div>
 
+{# TODO: Add statistics for the level answers. #}
+<div class="container my-5">
+  <h3>Angestrebtes Ergebnis</h3>
+  <table class="table w-auto align-middle">
+    <thead>
+      <tr>
+        <th scope="col">Ambitionsniveau</th>
+        <th class="text-center" scope="col">Count</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for level in stats.level %}
+      <tr>
+        <td>{{ level.level.name }}</td>
+        <td class="text-center text-secondary">
+          <small><i class="bu bi-{{ level.level.icon }}" style="color:{{ level.level.color }}"></i> {{ level.count }}×</small>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
 <div class="container my-5">
   <h3>Beliebtheit Projekte</h3>
   <table class="table w-auto align-middle">
@@ -53,6 +76,7 @@
         <th class="text-center" scope="col">PID</th>
         <th class="text-center" scope="col">Use</th>
         <th scope="col">Name</th>
+        <th scope="col">Counts</th>
       </tr>
     </thead>
     <tbody>
@@ -64,6 +88,15 @@
         <td class="text-center text-secondary"><small>{{ project.instances_used }}/{{ project.instances }}</small></td>
         <td>
           {{ project.name }}
+        </td>
+        <td class="text-secondary">
+          <small>
+            {% for score_count in project.score_counts %}
+            <span class="d-inline-block ms-1" style="min-width:3.5em">
+            <i class="bu bi-{{ score_count.score.icon }}-fill" style="color:{{ score_count.score.color }}" title="{{ score_count.score.name }}"></i> {{ score_count.count }}×
+            </span>
+            {% endfor %}
+          </small>
         </td>
       </tr>
     {% endfor %}

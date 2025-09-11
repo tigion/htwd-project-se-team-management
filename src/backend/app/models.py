@@ -178,11 +178,6 @@ class Settings(Singleton):
         verbose_name="Wings für SE II in den Teams ausblenden",
         help_text="Wenn aktiv, werden die Wirtschaftsingenieure (Wings) für Software Engineering II in den Teams nicht mehr angezeigt. Sie nehmen nur an SE I teil.",
     )
-    use_random_poll_defaults = models.BooleanField(
-        default=False,
-        verbose_name="Zufällige Anworten für leere Fragebögen generieren",
-        help_text="Wenn aktiv, werden leere Fragebögen nicht mit neutralen Antworten (3), sondern mit zufälligen Anworten (1-5) ausgefüllt.",
-    )
 
 
 class Info(Singleton):
@@ -195,4 +190,58 @@ class Info(Singleton):
         blank=True,
         null=True,
         verbose_name="Zeitpunkt der letzten Umfrageänderung",
+    )
+    result_info = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Info zum Ergebnis der Teamgenerierung",
+    )
+
+
+class DevSettings(Singleton):
+    level_variant = models.IntegerField(
+        default=1,
+        choices=[
+            (1, "Variante 1: Projektpräferenz"),
+            (2, "Variante 2: Projektpräferenz mit Gruppierung nach Ambitionsniveau"),
+            (3, "Variante 3: Projektpräferenz mit Einfluss des Ambitionsniveaus"),
+        ],
+        verbose_name="Teamgenerierungsvariante",
+        help_text="Variante 1: Die Teams werden mit einer möglichst hohen Zufriedenheit über alle Projektpräferenzen generiert.<br />"
+        + "Variante 2: Wie Variante 1, jedoch mit einer höher priorisierten Gruppierung nach Ambitionsniveau.<br />"
+        + "Variante 3: Wie Variante 1, jedoch mit Einfluss des Ambitionsniveaus auf die Projektpräferenzen.",
+    )
+    use_random_poll_defaults = models.BooleanField(
+        default=False,
+        verbose_name="Zufällige Anworten für leere Fragebögen generieren",
+        help_text="Wenn aktiv, werden leere Fragebögen nicht mit neutralen Antworten (3), sondern mit zufälligen Anworten (1-5) ausgefüllt.",
+    )
+    max_runtime = models.PositiveIntegerField(
+        default=300,  # 300 seconds = 5 minutes
+        verbose_name="OR-Tools: Maximale Laufzeit der Teamgenerierung in Sekunden",
+        help_text="Muss zwischen 1 und 3600 Sekunden liegen.<br />"
+        + "Dauert die Laufzeit länger als die angegeben Zeit, wird die Teamgenerierung abgebrochen.",
+        validators=[MinValueValidator(1), MaxValueValidator(3600)],
+    )
+    relative_gap_limit = models.FloatField(
+        default=0.0,
+        verbose_name="OR-Tools: Akzeptierte Lösungsqualität/Verhältnis zwischen `objective_value` and `best_objective_bound`",
+        help_text="Muss zwischen 0 und 1 liegen.<br />"
+        + "Ist die Lösung nahe genug am optimalen Wert, wird die Teamgenerierung abgebrochen.",
+        validators=[MinValueValidator(0), MaxValueValidator(1)],
+    )
+    num_workers = models.PositiveIntegerField(
+        default=0,
+        verbose_name="OR-Tools: Anzahl der parallelen Suchprozesse",
+        help_text="Muss zwischen 0 und 64 liegen.<br />"
+        + "- A value of 0 means the solver will try to use all cores on the machine.<br />"
+        + "- A number of 1 means no parallelism.<br />"
+        + "Specify the number of parallel workers (i.e. threads) to use during search.<br />"
+        + "This should usually be lower than your number of available cpus + hyperthread in your machine.",
+        validators=[MinValueValidator(0), MaxValueValidator(64)],
+    )
+    show_debug_info = models.BooleanField(
+        default=False,
+        verbose_name="Debug-Informationen anzeigen",
+        help_text="Wenn aktiv, werden Debug-Informationen angezeigt.",
     )

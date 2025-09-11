@@ -59,38 +59,30 @@
         </div>
       </div>
 
-      {% comment %}
       <div class="accordion-item">
         <h2 class="accordion-header" id="accordion-header-poll-3">
           <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-poll-3" aria-expanded="false" aria-controls="accordion-collapse-poll-4">
-            Qualifikationen (deaktiviert)
+            Angestrebtes Ergebnis / Ambitionsniveau
           </button>
         </h2>
         <div id="accordion-collapse-poll-3" class="accordion-collapse collapse" aria-labelledby="accordion-header-poll-3">
           <div class="accordion-body">
-            Bitte geben Sie an, welche Qualifikationen (oder gleichwertig) Sie bereits erworben haben:
+            Bitte geben Sie an, was Ihr angestrebtes Ergebnis bzw. Ambitionsniveau ist:
 
             <fieldset class="list-group list-group-flush hmt-3 mt-3"{% if not settings.poll_is_writable %} disabled{% endif %}>
               <div class="list-group-item">
+                {% for key, level in poll_levels.choices.items %}
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="qualification_1_check" id="id_qualification_1_check" value="" disabled>
-                  <label class="form-check-label" for="id_qualification_1_check">
-                    Aus- oder Weiterbildung in Richtung Fachinformatik
-                  </label>
+                  <input class="form-check-input" type="radio" name="level" id="id_level_{{ level.id }}" value="{{ level.value }}" {% if form_poll_data.level == level.value %}checked="checked"{% endif %} >
+                  <label class="form-check-label" for="id_level_{{ level.id }}">{{ level.name }}</label>
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="qualification_2_check" id="id_qualification_2_check" value="" disabled>
-                  <label class="form-check-label" for="id_qualification_2_check">
-                    Implementierung an Softwareprojekten in Nebentätigkeiten oder Freizeit
-                  </label>
-                </div>
+                {% endfor %}
               </div>
             </fieldset>
 
           </div>
         </div>
       </div>
-      {% endcomment %}
 
       {% comment %}
       <div class="accordion-item">

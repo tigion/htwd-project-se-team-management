@@ -217,36 +217,87 @@ LOGGING_DIR = BASE_DIR / "logs"
 if not LOGGING_DIR.is_dir():
     LOGGING_DIR.mkdir()
 LOGGING_FILE = LOGGING_DIR / "django.log"
+LOGGING_FILE_INFO = LOGGING_DIR / "django.info.log"
+LOGGING_FILE_DEBUG = LOGGING_DIR / "django.debug.log"
+
+
+def is_level_debug(record):
+    return record.levelno == 10
+
+
+def is_level_info(record):
+    return record.levelno == 20
+
+
+def is_level_ge_warn(record):
+    return record.levelno >= 30
+
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        "level_debug": {"()": "django.utils.log.CallbackFilter", "callback": is_level_debug},
+        "level_info": {"()": "django.utils.log.CallbackFilter", "callback": is_level_info},
+        "level_ge_warn": {"()": "django.utils.log.CallbackFilter", "callback": is_level_ge_warn},
+    },
     # "root": {
     #     "level": "WARNING",
     #     "handlers": ["file"],
     # },
     "handlers": {
-        "file": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "short",
+        },
+        "file_warning": {
             "level": "WARNING",
-            # "class": "logging.FileHandler",
-            # for maxBytes, backupCount
             "class": "logging.handlers.RotatingFileHandler",
-            # 'logs' folder is required
             "filename": LOGGING_FILE,
             "maxBytes": 1 * 1024 * 1024,
             "backupCount": 10,
-            "formatter": "app",
+            "formatter": "long",
+        },
+        "file_info": {
+            "level": "INFO",
+            "filters": ["level_info"],
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGGING_FILE_INFO,
+            "maxBytes": 1 * 1024 * 1024,
+            "backupCount": 10,
+            "formatter": "short",
+        },
+        "file_debug": {
+            "level": "DEBUG",
+            "filters": ["level_debug"],
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGGING_FILE_DEBUG,
+            "maxBytes": 1 * 1024 * 1024,
+            "backupCount": 10,
+            "formatter": "short",
         },
     },
     "loggers": {
         "": {
-            "handlers": ["file"],
-            "level": "WARNING",
+            "handlers": ["console", "file_debug", "file_info", "file_warning"],
+            "level": "DEBUG",
+            # "handlers": ["file_warning"],
+            # "level": "WARNING",
             "propagate": True,
+        },
+        "django.server": {
+            "handlers": ["console", "file_info"],
+            "level": "INFO",
+            "propagate": False,
         },
     },
     "formatters": {
-        "app": {
+        "short": {
+            "format": ("%(asctime)s [%(levelname)-8s] %(message)s"),
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+        "long": {
             "format": ("%(asctime)s [%(levelname)-8s] (%(module)s.%(funcName)s) %(message)s"),
             "datefmt": "%Y-%m-%d %H:%M:%S",
         },
