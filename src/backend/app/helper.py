@@ -9,7 +9,7 @@ from poll.models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnsw
 from poll.helper import get_project_ids_ordered_by_score
 from team.models import Team, ProjectInstance
 
-from .models import STUDY_PROGRAM_CHOICES, Project, Settings, Student
+from .models import STUDY_PROGRAM_CHOICES, Project, Settings, Student, Info
 
 
 def get_free_project_pids() -> list:
@@ -129,6 +129,7 @@ def reset_data_in_db(delete_only_polls_and_teams=False):
         ProjectInstance.objects.all().delete()
         Poll.objects.all().delete()
         ProjectAnswer.objects.all().delete()
+        Info.objects.all().delete()
         return
 
     # Deletes all data
@@ -136,6 +137,7 @@ def reset_data_in_db(delete_only_polls_and_teams=False):
     Project.objects.all().delete()
     Student.objects.all().delete()
     Settings.objects.all().delete()
+    Info.objects.all().delete()
 
     # Deletes possible lost table entries.
     Poll.objects.all().delete()

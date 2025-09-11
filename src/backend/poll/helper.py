@@ -151,12 +151,21 @@ def generate_poll_data_for_students_without_poll():
                     )
                 ),
             )
+        random_level = 3
+        x = random.randint(1, 20)
+        if x < 10:
+            random_level = 3
+        elif x < 15:
+            random_level = 2
+        elif x < 19:
+            random_level = 1
+        else:
+            random_level = 4
         LevelAnswer.objects.create(
             poll=poll,
             level=(
-                POLL_LEVELS["default"]
-                if not dev_settings.use_random_poll_defaults
-                else random.randint(POLL_LEVELS["min"], POLL_LEVELS["max"])
+                POLL_LEVELS["default"] if not dev_settings.use_random_poll_defaults else random_level
+                # else random.randint(POLL_LEVELS["min"], POLL_LEVELS["max"])
             ),
         )
 

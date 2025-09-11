@@ -353,7 +353,7 @@ class AssignmentAlgorithm:
                 soft_constraints.append(
                     0
                     # The negative combinations.
-                    + -7 * factor * 2 * has_level_24  # Doubles the factor for higher impact.
+                    + -7 * factor * 5 * has_level_24  # Doubles the factor for higher impact.
                 )
 
         # Maximizes the soft constraints.
