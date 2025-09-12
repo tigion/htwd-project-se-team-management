@@ -199,17 +199,19 @@ class Info(Singleton):
 
 
 class DevSettings(Singleton):
-    level_variant = models.IntegerField(
+    assignment_variant = models.IntegerField(
         default=1,
         choices=[
             (1, "Variante 1: Projektpräferenz"),
-            (2, "Variante 2: Projektpräferenz mit Gruppierung nach Ambitionsniveau"),
-            (3, "Variante 3: Projektpräferenz mit Einfluss des Ambitionsniveaus"),
+            (2, "Variante 2: Ambitionsniveau (wip)"),
+            (3, "Variante 3: Ambitionsniveau und Projektpräferenz (wip)"),
+            (4, "Variante 4: Projektpräferenz mit Einfluss des Ambitionsniveaus (wip)"),
         ],
         verbose_name="Teamgenerierungsvariante",
         help_text="Variante 1: Die Teams werden mit einer möglichst hohen Zufriedenheit über alle Projektpräferenzen generiert.<br />"
-        + "Variante 2: Wie Variante 1, jedoch mit einer höher priorisierten Gruppierung nach Ambitionsniveau.<br />"
-        + "Variante 3: Wie Variante 1, jedoch mit Einfluss des Ambitionsniveaus auf die Projektpräferenzen.",
+        + "Variante 2: Die Teams werden nach dem Ambitionsniveau gruppiert.<br />"
+        + "Variante 3: Wie Variante 1, jedoch mit einer höher priorisierten Gruppierung nach Ambitionsniveau.<br />"
+        + "Variante 4: Wie Variante 1, jedoch mit Einfluss des Ambitionsniveaus auf die Projektpräferenzen.<br />",
     )
     use_random_poll_defaults = models.BooleanField(
         default=False,

@@ -247,7 +247,7 @@ def generate_teams_with_algorithm() -> dict:
     opts = {
         "max_project_score": POLL_SCORES["max"],
         "min_students_per_project": settings.team_min_member,
-        "level_variant": dev_settings.level_variant,
+        "assignment_variant": dev_settings.assignment_variant,
         "max_runtime": dev_settings.max_runtime,
         "relative_gap_limit": dev_settings.relative_gap_limit,
         "num_workers": dev_settings.num_workers,
