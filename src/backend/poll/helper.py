@@ -182,6 +182,18 @@ def generate_poll_data_for_students_without_poll():
             )
 
 
+def get_number_of_students_per_level() -> dict:
+    """
+    Returns the number of students per level.
+    """
+
+    n_students_per_level = {}
+    for level in POLL_LEVELS["choices"]:
+        n_students_per_level[level] = LevelAnswer.objects.filter(level=level).count()
+
+    return n_students_per_level
+
+
 def get_project_ids_ordered_by_score():
     """
     Returns a list of project ids with the total score and

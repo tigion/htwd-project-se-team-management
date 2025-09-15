@@ -5,6 +5,7 @@ from django.db.models import F, Sum
 from app.models import Project, Student, Settings, DevSettings, Info
 from poll.models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
 from poll.helper import (
+    get_number_of_students_per_level,
     get_poll_stats_for_student,
     get_happiness_icon,
 )
@@ -243,10 +244,15 @@ def generate_teams_with_algorithm() -> dict:
     # Creates the data for the algorithm.
     data = create_data_for_algorithm()
 
-    # Sets the needed options.
-    opts = {
+    # Sets the needed limits.
+    limits = {
         "max_project_score": POLL_SCORES["max"],
         "min_students_per_project": settings.team_min_member,
+        "n_students_per_level": get_number_of_students_per_level(),
+    }
+
+    # Sets the needed options.
+    opts = {
         "assignment_variant": dev_settings.assignment_variant,
         "max_runtime": dev_settings.max_runtime,
         "relative_gap_limit": dev_settings.relative_gap_limit,
@@ -259,7 +265,7 @@ def generate_teams_with_algorithm() -> dict:
     }
     if not AssignmentAlgorithm.get_is_running():
         # Creates and initializes the algorithm with the given data and options.
-        algorithm = AssignmentAlgorithm(data, opts)
+        algorithm = AssignmentAlgorithm(data, limits, opts)
         # Runs the algorithm to find an optimal assignment of students to projects.
         algorithm.run()
         # Gets the results.

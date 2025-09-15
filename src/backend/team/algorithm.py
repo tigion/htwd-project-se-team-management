@@ -38,25 +38,35 @@ class AssignmentAlgorithm:
     # Indicates whether the algorithm is running.
     __is_running = False
 
-    def __init__(self, data: dict[int, dict], opts: dict):
+    def __init__(self, data: dict[int, dict], limits: dict, opts: dict):
         """
         The constructor of the assignment algorithm.
 
         Args:
             data: The data per student. Includes the wing flag and project answers.
+            limits: The limits for the algorithm.
             opts: The options for the algorithm.
 
-        The options are:
+        The limits are:
             `max_project_score`: The maximum project score.
             `min_students_per_project`: The minimum number of students per project.
+            `n_students_per_level`: The number of students per level.
+
+        The options are:
+            `assignment_variant`: The assignment variant.
+            `max_runtime`: The maximum runtime of the solver in seconds.
+            `relative_gap_limit`: The relative gap limit for the solver.
+            `num_workers`: The number of workers for the solver.
         """
 
         # Sets the given data.
         self.__data_per_student = data
         # Sets the maximum project score.
-        self.__max_project_score = opts["max_project_score"]
+        self.__max_project_score = limits["max_project_score"]
         # Sets the initial minimum number of students per project.
-        self.__initial_min_students_per_project = opts["min_students_per_project"]
+        self.__initial_min_students_per_project = limits["min_students_per_project"]
+        # Sets the number of students per level.
+        self.__n_students_per_level = limits["n_students_per_level"]
         # Sets the assignment variant.
         self.__assignment_variant = opts["assignment_variant"]
         # The maximum runtime of the solver in seconds.
@@ -108,6 +118,16 @@ class AssignmentAlgorithm:
         # Sets the limit (min and max) of wings per project.
         self.__min_wings_per_project = math.floor(self.__n_wing_students / self.__n_projects_required)
         self.__max_wings_per_project = math.ceil(self.__n_wing_students / self.__n_projects_required)
+
+        # Only use rule `no_level_24` if there are enough students with level 1 and 3 left
+        # to form two teams with separate levels 2 and 4.
+        x = (
+            self.__n_students_per_level[1]
+            + self.__n_students_per_level[3]
+            + self.__n_students_per_level[2] % self.__min_students_per_project
+            + self.__n_students_per_level[4] % self.__min_students_per_project
+        )
+        self.__use_hc_no_level_24 = False if x < 2 * self.__min_students_per_project else True
 
         # Creates the model.
         self.__model = cp_model.CpModel()
@@ -214,7 +234,17 @@ class AssignmentAlgorithm:
         self.__model.add(used_projects_count == self.__n_projects_required)
 
     def __add_hc_no_level_24(self):
-        # FIX: Add fallback if one project with level 2 and level 4 must be existing.
+        """
+        Adds the following hard constraints to the model:
+        - No students with level 2 and 4 in the same project.
+
+        If there are not enough students to separate levels 2 and 4,
+        the hard constraint is ignored.
+        """
+
+        # Fallback, if there are not enough students to separate levels 2 and 4.
+        if not self.__use_hc_no_level_24:
+            return
 
         for p_id in self.__project_ids:
             students_per_level = {1: [], 2: [], 3: [], 4: []}
@@ -342,15 +372,13 @@ class AssignmentAlgorithm:
                 soft_constraints.append(
                     0
                     # The positive combinations.
-                    + 1 * factor * has_level_2
-                    # FIX: Full level 2 or 4 is not working. Two teams with 14 and 24 instead one 14.
-                    + 1 * factor * has_level_4
+                    + 4 * factor * has_level_2
                     + 1 * factor * has_level_3
+                    + 4 * factor * has_level_4
                     # The negative combinations.
-                    - 1 * factor * sum(used_projects_per_student_level[2])
+                    - 4 * factor * sum(used_projects_per_student_level[2])
                     - 1 * factor * sum(used_projects_per_student_level[3])
-                    # FIX: Is a higher factor a fix for the level 4 problem (line 360)?
-                    - 1 * factor * sum(used_projects_per_student_level[4])
+                    - 8 * factor * sum(used_projects_per_student_level[4])
                 )
 
         # Maximizes the soft constraints.
@@ -523,7 +551,13 @@ class AssignmentAlgorithm:
                 "min_students_per_project": f"{self.__min_students_per_project} ({self.__initial_min_students_per_project})",
                 "max_students_per_project": self.__max_students_per_project,
                 "min_wings_per_project": self.__min_wings_per_project,
-                "max_wings_per_project": f"{self.__max_wings_per_project}\n",
+                "max_wings_per_project": self.__max_wings_per_project,
+                "use_score": self.__use_score,
+                "use_level": self.__use_level,
+                "use_hc_no_level_24": f"{self.__use_hc_no_level_24}\n",
+                "max_time_in_seconds": solver.parameters.max_time_in_seconds,
+                "num_workers": solver.parameters.num_workers,
+                "relative_gap_limit": f"{solver.parameters.relative_gap_limit}\n",
                 # "status_name": solver.status_name(),
                 # "solution_count": solution_printer.solution_count(),
                 # "num_branches": solver.num_branches,
@@ -534,9 +568,6 @@ class AssignmentAlgorithm:
                 # "best_objective_bound": solver.best_objective_bound,
                 # "objective_value": solver.objective_value,
                 "response_stats": "\n---\n" + solver.response_stats() + "---\n",
-                "max_time_in_seconds": solver.parameters.max_time_in_seconds,
-                "num_workers": solver.parameters.num_workers,
-                "relative_gap_limit": solver.parameters.relative_gap_limit,
                 "solution_gap": abs(1 - solver.objective_value / solver.best_objective_bound)
                 if solver.best_objective_bound != 0
                 else -0,

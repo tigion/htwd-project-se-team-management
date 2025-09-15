@@ -164,8 +164,8 @@ class Settings(Singleton):
     team_min_member = models.PositiveIntegerField(
         default=6,
         verbose_name="Mindestanzahl der Studenten je Team",
-        help_text="Anzahl muss zwischen 1 und 20 liegen.",
-        validators=[MinValueValidator(1), MaxValueValidator(20)],
+        help_text="Anzahl muss zwischen 1 und 99 liegen.",
+        validators=[MinValueValidator(1), MaxValueValidator(99)],
     )
     project_instances = models.PositiveIntegerField(
         default=4,
