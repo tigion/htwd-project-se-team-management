@@ -43,21 +43,20 @@
   </p>
 </div>
 
-{# TODO: Add statistics for the level answers. #}
 <div class="container my-5">
   <h3>Angestrebtes Ergebnis</h3>
   <table class="table w-auto align-middle">
     <thead>
       <tr>
         <th scope="col">Ambitionsniveau</th>
-        <th class="text-center" scope="col">Count</th>
+        <th scope="col">Count</th>
       </tr>
     </thead>
     <tbody>
     {% for level in stats.level %}
       <tr>
         <td>{{ level.level.name }}</td>
-        <td class="text-center text-secondary">
+        <td class="text-secondary">
           <small><i class="bu bi-{{ level.level.icon }}" style="color:{{ level.level.color }}"></i> {{ level.count }}×</small>
         </td>
       </tr>
