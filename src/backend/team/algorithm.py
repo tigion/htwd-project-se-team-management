@@ -265,16 +265,32 @@ class AssignmentAlgorithm:
     def __add_sc_maximize_project_score(self):
         """
         Adds the following soft constraints to the model:
-        - Maximizes the assignment scores of the students.
-        - TODO: Testing variants of level impact.
+        - Maximizes the project score per student.
+        - Priorizes the wanted and unwanted level combinations.
 
-        The higher the value, the better the match with the student's preferences.
+        The higher the assignment scores, the better the matches.
+
+        The use of the project score or the student level is configurable.
         """
 
+        # Min and max number of students per project.
+        min = self.__min_students_per_project
+        max = self.__max_students_per_project
+
+        # Sets the factor for the level impact of the project score.
+        #
+        # - Projects have a score of 0, 25, 50, 75 or 100 points.
+        # - If the level * factor is lower than the score, the score is stronger.
+        # - If the level * factor is higher than the score, the level is stronger.
+        #
+        # factor = 100
+        factor = 25
+        # factor = 1
+
         soft_constraints = []
+        assignments_per_level = {1: [], 2: [], 3: [], 4: []}
         for p_id in self.__project_ids:
-            used_projects_per_student_level = {1: [], 2: [], 3: [], 4: []}
-            p_levels = {1: [], 2: [], 3: [], 4: []}  # Variant 1: The students per level.
+            p_level = {1: [], 2: [], 3: [], 4: []}
             p_students = []
             for s_id in self.__student_ids:
                 if self.__use_score:
@@ -294,92 +310,61 @@ class AssignmentAlgorithm:
                     soft_constraints.append(score * self.__model_x[(p_id, s_id)])
 
                 if self.__use_level:
+                    # Collects the students of the current project.
+                    p_students.append(self.__model_x[(p_id, s_id)])
                     # Collects the students per level of the current project.
                     level = self.__data_per_student[s_id]["level_answer"]
-                    p_levels[level].append(self.__model_x[(p_id, s_id)])
-                    p_students.append(self.__model_x[(p_id, s_id)])
+                    p_level[level].append(self.__model_x[(p_id, s_id)])
 
             if self.__use_level:
-                # Weights the level combinations.
-                #
-                #  7: ************ 2     ------------ 4
-                #  6: ******++++++ 23
-                #  5: ++++++++++++ 3
-                #  4: ******...... 12    ......------ 14
-                #  3: ****++++.... 123
-                #  2: ++++++...... 13
-                #  1: ............ 1
-                #
-                #  0: ++++....----       ++++....----
-                #  0: ***+++...---       ***+++...---
-                #
-                # -1: ***??????---
-
-                # Min and max number of students per project.
-
-                min = self.__min_students_per_project
-                max = self.__max_students_per_project
-
+                # Sets the number of students in the current project.
                 has_max_students = self.__model.new_bool_var("has_max_students")
                 self.__model.add(sum(p_students) < max).only_enforce_if(has_max_students.Not())
                 self.__model.add(sum(p_students) >= max).only_enforce_if(has_max_students)
-
                 min_max = min + has_max_students
 
-                # Number of projects per student level.
-
-                has_s_level = {
-                    # 1: self.__model.new_bool_var("has_students_level_1"),
-                    2: self.__model.new_bool_var("has_students_level_2"),
-                    3: self.__model.new_bool_var("has_students_level_3"),
-                    4: self.__model.new_bool_var("has_students_level_4"),
+                # Collects the presence of levels in the current project.
+                has_level = {
+                    # 1: self.__model.new_bool_var("p_{p_id}_has_students_level_1"),
+                    2: self.__model.new_bool_var(f"p_{p_id}_has_level_2"),
+                    3: self.__model.new_bool_var(f"p_{p_id}_has_level_3"),
+                    4: self.__model.new_bool_var(f"p_{p_id}_has_level_4"),
                 }
+                for level in has_level:
+                    self.__model.add(sum(p_level[level]) < 1).only_enforce_if(has_level[level].Not())
+                    self.__model.add(sum(p_level[level]) >= 1).only_enforce_if(has_level[level])
+                    assignments_per_level[level].append(has_level[level])
 
-                for s_level in has_s_level:
-                    self.__model.add(sum(p_levels[s_level]) < 1).only_enforce_if(has_s_level[s_level].Not())
-                    self.__model.add(sum(p_levels[s_level]) >= 1).only_enforce_if(has_s_level[s_level])
-                    used_projects_per_student_level[s_level].append(has_s_level[s_level])
-
-                # Wanted level combinations.
-
-                has_level_2 = self.__model.new_bool_var("has_level_2")
-                self.__model.add(sum(p_levels[2]) < min_max).only_enforce_if(has_level_2.Not())
-                self.__model.add(sum(p_levels[2]) >= min_max).only_enforce_if(has_level_2)
-
-                has_level_3 = self.__model.new_bool_var("has_level_3")
-                self.__model.add(sum(p_levels[3]) < min_max).only_enforce_if(has_level_3.Not())
-                self.__model.add(sum(p_levels[3]) >= min_max).only_enforce_if(has_level_3)
-
-                has_level_4 = self.__model.new_bool_var("has_level_4")
-                self.__model.add(sum(p_levels[4]) < min_max).only_enforce_if(has_level_4.Not())
-                self.__model.add(sum(p_levels[4]) >= min_max).only_enforce_if(has_level_4)
+                # Sets the wanted level combinations.
+                has_only_level = {
+                    2: self.__model.new_bool_var("p_has_only_level_2"),
+                    3: self.__model.new_bool_var("p_has_only_level_3"),
+                    4: self.__model.new_bool_var("p_has_only_level_4"),
+                }
+                for level in has_only_level:
+                    self.__model.add(sum(p_level[level]) < min_max).only_enforce_if(has_only_level[level].Not())
+                    self.__model.add(sum(p_level[level]) >= min_max).only_enforce_if(has_only_level[level])
 
                 # Adds the weighted level combinations to the soft constraints.
                 #
                 # TODO: Optimize the results.
                 #       - [ ] factor vs score impact
-
-                # NOTE: A higher factor increases the weight of the level over the score.
                 #
-                # - Projects have a score of 0, 25, 50, 75 or 100 points.
-                # - If the level * factor is lower than the score, the score is stronger.
-                # - If the level * factor is higher than the score, the level is stronger.
-                #
-                # factor = 100
-                factor = 25
-                # factor = 1
-
                 soft_constraints.append(
                     0
-                    # The positive combinations.
-                    + 4 * factor * has_level_2
-                    + 1 * factor * has_level_3
-                    + 4 * factor * has_level_4
-                    # The negative combinations.
-                    - 4 * factor * sum(used_projects_per_student_level[2])
-                    - 1 * factor * sum(used_projects_per_student_level[3])
-                    - 8 * factor * sum(used_projects_per_student_level[4])
+                    # Positive combinations:
+                    + 4 * factor * has_only_level[2]
+                    + 1 * factor * has_only_level[3]
+                    + 4 * factor * has_only_level[4]
                 )
+
+        soft_constraints.append(
+            0
+            # Negative combinations:
+            - 4 * factor * sum(assignments_per_level[2])
+            - 1 * factor * sum(assignments_per_level[3])
+            - 4 * factor * sum(assignments_per_level[4])
+        )
 
         # Maximizes the soft constraints.
         self.__model.maximize(sum(soft_constraints))
