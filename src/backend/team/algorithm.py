@@ -55,6 +55,8 @@ class AssignmentAlgorithm:
         self.__data_per_student = data
         # Sets the maximum project score.
         self.__max_project_score = opts["max_project_score"]
+        # Sets the initial minimum number of students per project.
+        self.__initial_min_students_per_project = opts["min_students_per_project"]
         # Sets the assignment variant.
         self.__assignment_variant = opts["assignment_variant"]
         # The maximum runtime of the solver in seconds.
@@ -63,6 +65,14 @@ class AssignmentAlgorithm:
         self.__relative_gap_limit = opts["relative_gap_limit"]
         # Sets the number of workers.
         self.__num_workers = opts["num_workers"]
+
+        # Sets if the score, level or both are used in the assignment.
+        # Variants:
+        # 1: [S ] Score, no level impact.
+        # 2: [ L] Level, no score impact.
+        # 3: [SL] Level and score impact.
+        self.__use_score = True if self.__assignment_variant in [1, 3, 4] else False
+        self.__use_level = True if self.__assignment_variant in [2, 3, 4] else False
 
         # Extracts the project and student ids.
         self.__student_ids = list(self.__data_per_student.keys())
@@ -77,7 +87,7 @@ class AssignmentAlgorithm:
         self.__n_wing_students = len(dict(filter(lambda x: x[1]["is_wing"], self.__data_per_student.items())))
 
         # Sets the min number of students per project.
-        self.__min_students_per_project = opts["min_students_per_project"]
+        self.__min_students_per_project = self.__initial_min_students_per_project
 
         # Sets the number of projects required.
         self.__n_projects_required = math.floor(self.__n_students / self.__min_students_per_project)
@@ -86,8 +96,9 @@ class AssignmentAlgorithm:
         if self.__n_projects_required > self.__n_projects:
             # Corrects the number of projects required.
             self.__n_projects_required = self.__n_projects
-            # Corrects the min number of students per project.
-            self.__min_students_per_project = math.floor(self.__n_students / self.__n_projects_required)
+
+        # Corrects the min number of students per project.
+        self.__min_students_per_project = math.floor(self.__n_students / self.__n_projects_required)
 
         # Sets the max number of students per project.
         self.__max_students_per_project = self.__min_students_per_project
@@ -152,13 +163,13 @@ class AssignmentAlgorithm:
                 project_students.append(self.__model_x[(p_id, s_id)])
 
             # Number of students should be 0 or between min and max.
-            project_hast_students1 = self.__model.new_bool_var("project_hast_students1")
-            self.__model.add(sum(project_students) == 0).only_enforce_if(project_hast_students1.Not())
+            project_has_students1 = self.__model.new_bool_var("project_has_students1")
+            self.__model.add(sum(project_students) == 0).only_enforce_if(project_has_students1.Not())
             self.__model.add(sum(project_students) >= self.__min_students_per_project).only_enforce_if(
-                project_hast_students1
+                project_has_students1
             )
             self.__model.add(sum(project_students) <= self.__max_students_per_project).only_enforce_if(
-                project_hast_students1
+                project_has_students1
             )
 
     def __add_hc_wing_students_assigned_equally(self):
@@ -173,18 +184,15 @@ class AssignmentAlgorithm:
                 if self.__data_per_student[s_id]["is_wing"]:
                     project_wing_students.append(self.__model_x[(p_id, s_id)])
 
-            # Number of wings should be between min and max.
-            if self.__min_wings_per_project == self.__max_wings_per_project:
-                # FIX: Error with min team members eqals to max team members.
-
-                # self.__model.add(sum(project_wing_students) == 1)
-                # self.__model.add(sum(project_wing_students) == self.__min_wings_per_project)
-                # self.__model.add(sum(project_wing_students) >= self.__min_wings_per_project)
-                # self.__model.add(sum(project_wing_students) <= self.__max_wings_per_project + 1)
-                pass
-            else:
-                self.__model.add(sum(project_wing_students) >= self.__min_wings_per_project)
-                self.__model.add(sum(project_wing_students) <= self.__max_wings_per_project)
+            # Number of wings should be 0 or between min and max.
+            project_has_wing_students = self.__model.new_bool_var("project_has_wing_students")
+            self.__model.add(sum(project_wing_students) == 0).only_enforce_if(project_has_wing_students.Not())
+            self.__model.add(sum(project_wing_students) >= self.__min_wings_per_project).only_enforce_if(
+                project_has_wing_students
+            )
+            self.__model.add(sum(project_wing_students) <= self.__max_wings_per_project).only_enforce_if(
+                project_has_wing_students
+            )
 
     def __add_hc_number_used_projects_equals_number_required(self):
         """
@@ -239,31 +247,11 @@ class AssignmentAlgorithm:
             p_levels = {1: [], 2: [], 3: [], 4: []}  # Variant 1: The students per level.
             p_students = []
             for s_id in self.__student_ids:
-                # Gets the score (poll wish) for the given project and student.
-                # score = self.__get_total_score(p_id, s_id)
-                score = self.__get_total_score(p_id, s_id)
+                if self.__use_score:
+                    # Gets the score (poll wish) for the given project and student.
+                    # score = self.__get_total_score(p_id, s_id)
+                    score = self.__get_total_score(p_id, s_id)
 
-                # TODO: Testing variants of level impact.
-                #
-                # Variants:
-                # 1: [S ] Score, no level impact.
-                # 2: [ L] Level, no score impact.
-                # 3: [SL] Level and score impact.
-                # 4: [SL] Score with level impact.
-                #         Raises/lowers the higher scores and lowers/raises the lower scores.
-
-                # Variant 4:
-                if self.__assignment_variant == 3:
-                    factors = {1: 0, 2: 1, 3: 0, 4: -1}
-                    level = self.__data_per_student[s_id]["level_answer"]
-                    factor = factors[level]
-                    if score > 50 and factor != 0:
-                        score += factor
-                    elif score < 50 and factor != 0:
-                        score -= factor
-
-                # Variant 1, 3, 4:
-                if self.__assignment_variant in [1, 3, 4]:
                     # Adds the score per project and student to the soft constraints,
                     # if the student is assigned to the project, otherwise adds 0.
                     #
@@ -275,15 +263,13 @@ class AssignmentAlgorithm:
                     #
                     soft_constraints.append(score * self.__model_x[(p_id, s_id)])
 
-                # Variant 2, 3:
-                if self.__assignment_variant in [2, 3]:
+                if self.__use_level:
                     # Collects the students per level of the current project.
                     level = self.__data_per_student[s_id]["level_answer"]
                     p_levels[level].append(self.__model_x[(p_id, s_id)])
                     p_students.append(self.__model_x[(p_id, s_id)])
 
-            # Variant 2, 3:
-            if self.__assignment_variant in [2, 3]:
+            if self.__use_level:
                 # Weights the level combinations.
                 #
                 #  7: ************ 2     ------------ 4
@@ -340,7 +326,7 @@ class AssignmentAlgorithm:
 
                 # Adds the weighted level combinations to the soft constraints.
                 #
-                # TODO: Results are not good.
+                # TODO: Optimize the results.
                 #       - [ ] factor vs score impact
 
                 # NOTE: A higher factor increases the weight of the level over the score.
@@ -486,10 +472,11 @@ class AssignmentAlgorithm:
 
         # Adds the hard constraints.
         self.__add_hc_one_project_per_student()
+        self.__add_hc_number_used_projects_equals_number_required()
         self.__add_hc_students_assigned_equally()
         self.__add_hc_wing_students_assigned_equally()
-        self.__add_hc_number_used_projects_equals_number_required()
-        self.__add_hc_no_level_24()
+        if self.__use_level:
+            self.__add_hc_no_level_24()
 
         # Adds the soft constraints.
         self.__add_sc_maximize_project_score()
@@ -529,6 +516,14 @@ class AssignmentAlgorithm:
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
             # Sets the result info.
             self.__result_info = {
+                "n_students": self.__n_students,
+                "n_projects": self.__n_projects,
+                "n_wing_students": self.__n_wing_students,
+                "n_projects_required": self.__n_projects_required,
+                "min_students_per_project": f"{self.__min_students_per_project} ({self.__initial_min_students_per_project})",
+                "max_students_per_project": self.__max_students_per_project,
+                "min_wings_per_project": self.__min_wings_per_project,
+                "max_wings_per_project": f"{self.__max_wings_per_project}\n",
                 # "status_name": solver.status_name(),
                 # "solution_count": solution_printer.solution_count(),
                 # "num_branches": solver.num_branches,
