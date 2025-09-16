@@ -266,12 +266,23 @@ class AssignmentAlgorithm:
         """
         Adds the following soft constraints to the model:
         - Maximizes the project score per student.
-        - Priorizes the wanted and unwanted level combinations.
+        - Priorizes students of the same level with wanted and
+          unwanted level combinations.
 
-        The higher the assignment scores, the better the matches.
+        Project score:
+        - The project score is a student's poll rating for a project
+          on a scale of 1 to 5, normalized to a scale of 0 to 100.
 
-        The use of the project score or the student level is configurable.
+        Level combination score:
+        - Prefer projects that only have a student level of 2, 3 or 4.
+        - Use students with Level 2, 3 or 4 in as few projects as possible.
+
+        The higher the assignment scores (project + level), the better the matches.
         """
+
+        # TODO: Optimize the results.
+        #       - [ ] factor vs score impact
+        #
 
         # Min and max number of students per project.
         min = self.__min_students_per_project
@@ -283,23 +294,21 @@ class AssignmentAlgorithm:
         # - If the level * factor is lower than the score, the score is stronger.
         # - If the level * factor is higher than the score, the level is stronger.
         #
-        # factor = 100
         factor = 25
-        # factor = 1
 
+        # Adds the soft constraints over all project+student combinations.
         soft_constraints = []
         assignments_per_level = {1: [], 2: [], 3: [], 4: []}
+        projects_with_only_level = {1: [], 2: [], 3: [], 4: []}
+        # Iterates over all projects.
         for p_id in self.__project_ids:
             p_level = {1: [], 2: [], 3: [], 4: []}
             p_students = []
+            # Iterates over all students.
             for s_id in self.__student_ids:
                 if self.__use_score:
-                    # Gets the score (poll wish) for the given project and student.
-                    # score = self.__get_total_score(p_id, s_id)
-                    score = self.__get_total_score(p_id, s_id)
-
-                    # Adds the score per project and student to the soft constraints,
-                    # if the student is assigned to the project, otherwise adds 0.
+                    # Gets the score (poll wish) for the current project+student and
+                    # adds it to the soft constraints. If the student is not assigned adds 0.
                     #
                     # - `score * (p_id, s_id)`, where
                     #   `(p_id, s_id)` gives a boolean with 0 or 1
@@ -307,6 +316,7 @@ class AssignmentAlgorithm:
                     #   not assigned: 0|25|50|75|100 * 0 = 0
                     #   assigned:     0|25|50|75|100 * 1 = 0|25|50|75|100
                     #
+                    score = self.__get_total_score(p_id, s_id)
                     soft_constraints.append(score * self.__model_x[(p_id, s_id)])
 
                 if self.__use_level:
@@ -317,13 +327,14 @@ class AssignmentAlgorithm:
                     p_level[level].append(self.__model_x[(p_id, s_id)])
 
             if self.__use_level:
-                # Sets the number of students in the current project.
+                # Identifies the number of students in the current project.
                 has_max_students = self.__model.new_bool_var("has_max_students")
                 self.__model.add(sum(p_students) < max).only_enforce_if(has_max_students.Not())
                 self.__model.add(sum(p_students) >= max).only_enforce_if(has_max_students)
                 min_max = min + has_max_students
 
-                # Collects the presence of levels in the current project.
+                # Identifies the existing student levels of the current project
+                # and collects the presence of them.
                 has_level = {
                     # 1: self.__model.new_bool_var("p_{p_id}_has_students_level_1"),
                     2: self.__model.new_bool_var(f"p_{p_id}_has_level_2"),
@@ -335,36 +346,33 @@ class AssignmentAlgorithm:
                     self.__model.add(sum(p_level[level]) >= 1).only_enforce_if(has_level[level])
                     assignments_per_level[level].append(has_level[level])
 
-                # Sets the wanted level combinations.
+                # Identifies whether the current project only has students
+                # from a certain level and collects the result.
                 has_only_level = {
-                    2: self.__model.new_bool_var("p_has_only_level_2"),
-                    3: self.__model.new_bool_var("p_has_only_level_3"),
-                    4: self.__model.new_bool_var("p_has_only_level_4"),
+                    2: self.__model.new_bool_var(f"p_{p_id}_has_only_level_2"),
+                    3: self.__model.new_bool_var(f"p_{p_id}_has_only_level_3"),
+                    4: self.__model.new_bool_var(f"p_{p_id}_has_only_level_4"),
                 }
                 for level in has_only_level:
                     self.__model.add(sum(p_level[level]) < min_max).only_enforce_if(has_only_level[level].Not())
                     self.__model.add(sum(p_level[level]) >= min_max).only_enforce_if(has_only_level[level])
+                    projects_with_only_level[level].append(has_only_level[level])
 
-                # Adds the weighted level combinations to the soft constraints.
-                #
-                # TODO: Optimize the results.
-                #       - [ ] factor vs score impact
-                #
-                soft_constraints.append(
-                    0
-                    # Positive combinations:
-                    + 4 * factor * has_only_level[2]
-                    + 1 * factor * has_only_level[3]
-                    + 4 * factor * has_only_level[4]
-                )
-
-        soft_constraints.append(
-            0
-            # Negative combinations:
-            - 4 * factor * sum(assignments_per_level[2])
-            - 1 * factor * sum(assignments_per_level[3])
-            - 4 * factor * sum(assignments_per_level[4])
-        )
+        if self.__use_level:
+            # Adds the weighted level combinations to the soft constraints.
+            soft_constraints.append(
+                0
+                # Positive combinations:
+                # Prefer projects that only have a student level of 2, 3 or 4.
+                + 4 * factor * sum(projects_with_only_level[2])
+                + 1 * factor * sum(projects_with_only_level[3])
+                + 4 * factor * sum(projects_with_only_level[4])
+                # Negative combinations:
+                # Use students with Level 2, 3 or 4 in as few projects as possible.
+                - 4 * factor * sum(assignments_per_level[2])
+                - 1 * factor * sum(assignments_per_level[3])
+                - 4 * factor * sum(assignments_per_level[4])
+            )
 
         # Maximizes the soft constraints.
         self.__model.maximize(sum(soft_constraints))
@@ -376,6 +384,10 @@ class AssignmentAlgorithm:
         Args:
             answer_score: The score to normalize.
         """
+
+        # Limits the score to the maximum and minimum possible scores.
+        score = max(1, min(answer_score, self.__max_project_score))
+
         # Decreases the score by 1 to start with 0.
         score = answer_score - 1
         max_score = self.__max_project_score - 1
@@ -428,17 +440,12 @@ class AssignmentAlgorithm:
                 ...
             ],
             "info": {
-                "status_name": str,
-                "solution_count": int,
-                "wall_time": float,
-                "best_objective_bound": float,
-                "objective_value": float,
-                "total_score": int,
+                ...,
             }
         }
         ```
 
-        Successful assignments are those where the result is `1` (`True`).
+        Successful assignments are those where the boolean value of `(p_id, s_id)` is `1` (`True`).
 
         Args:
             solver: The constraint solver.
@@ -576,14 +583,10 @@ class AssignmentAlgorithm:
         {
             "assignments": [
                 (project_id, student_id, score),
-                ...
+                ...,
             ],
             "info": {
-                "response_stats": str,
-                "max_time_in_seconds": int,
-                "num_workers": int,
-                "relative_gap_limit": float,
-                "total_score": int,
+                ...,
             }
         }
         ```
