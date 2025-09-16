@@ -21,8 +21,9 @@ backlog = 2048
 workers = max_workers()
 worker_class = "sync"
 worker_connections = 1000
-timeout = 30  # 300
-graceful_timeout = 30  # 60
+# The timeout depends on the duration of team generation.
+timeout = 300
+graceful_timeout = 30
 keepalive = 2  # 5
 
 # SSL
