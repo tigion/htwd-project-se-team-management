@@ -67,9 +67,19 @@
   {% endwith %}
   <div class="text-muted small">Teamgenerierung: <strong>{{ info.teams_last_update }}</strong><br />Fragebogenänderung: <strong>{{ info.polls_last_update }}</strong></div>
   {% if dev_settings.show_debug_info and info.result_info %}
-  <div class="alert alert-light small font-monospace mt-3" role="alert">
-    {{ info.result_info|linebreaksbr }}
+
+  <div class="text-muted small mt-3">
+    <i class="bi bi-cup-hot-fill"></i>
+    <a class="" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+      Show/hide debug information
+    </a>
   </div>
+  <div class="collapse mt-2" id="collapseExample">
+    <div class="card card-body small font-monospace text-muted" style="font-size: 0.6em">
+      {{ info.result_info|linebreaksbr }}
+    </div>
+  </div>
+
   {% endif %}
 
 </div>
