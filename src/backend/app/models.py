@@ -220,7 +220,8 @@ class DevSettings(Singleton):
         default=300,  # 300 seconds = 5 minutes
         verbose_name="OR-Tools: Maximale Laufzeit der Teamgenerierung in Sekunden",
         help_text="Muss zwischen 1 und 3600 Sekunden liegen.<br />"
-        + "Dauert die Laufzeit länger als die angegeben Zeit, wird die Teamgenerierung abgebrochen.",
+        + "Dauert die Laufzeit länger als die angegeben Zeit, wird die Teamgenerierung abgebrochen.<br />"
+        + '<span class="text-danger">Achtung: In der Dockerumgebung ist die maximale Laufzeit auf unter 300 Sekunden limitiert.</span>',
         validators=[MinValueValidator(1), MaxValueValidator(3600)],
     )
     relative_gap_limit = models.FloatField(
