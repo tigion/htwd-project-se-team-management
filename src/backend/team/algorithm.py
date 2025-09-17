@@ -4,7 +4,6 @@ to projects as optimally as possible based on their survey responses.
 """
 
 import math
-import datetime
 import logging
 
 from ortools.sat.python import cp_model
@@ -428,28 +427,61 @@ class AssignmentAlgorithm:
 
         return score
 
-    def __extract_solution(self, solver: cp_model.CpSolver):
+    def __extract_result_info(self, solver: cp_model.CpSolver):
+        """
+        Extracts the data info, settings, response statistics and result info of the solver.
+
+        Args:
+            solver: The constraint solver.
+        """
+
+        # The descriptions of the solver statuses.
+        SOLVER_STATUS = {
+            "OPTIMAL": "An optimal feasible solution was found.",
+            "FEASIBLE": "A feasible solution was found, but we don't know if it's optimal.",
+            "INFEASIBLE": "The problem was proven infeasible.",
+            "MODEL_INVALID": "The given CpModelProto didn't pass the validation step.",
+            "UNKNOWN": "The status of the model is unknown.",
+        }
+
+        self.__result_info = {
+            # Sets the data info.
+            "n_students": self.__n_students,
+            "n_projects": self.__n_projects,
+            "n_wing_students": self.__n_wing_students,
+            "n_projects_required": self.__n_projects_required,
+            "min_students_per_project": f"{self.__min_students_per_project} ({self.__initial_min_students_per_project})",
+            "max_students_per_project": self.__max_students_per_project,
+            "min_wings_per_project": self.__min_wings_per_project,
+            "max_wings_per_project": self.__max_wings_per_project,
+            # Sets the settings info.
+            "use_score": self.__use_score,
+            "use_level": self.__use_level,
+            "use_hc_no_level_24": f"{self.__use_hc_no_level_24}\n",
+            # Sets the solver parameters info.
+            "max_time_in_seconds": solver.parameters.max_time_in_seconds,
+            "num_workers": solver.parameters.num_workers,
+            "relative_gap_limit": f"{solver.parameters.relative_gap_limit}\n",
+            # Sets the response statistics info.
+            "response_stats": "\n---\n" + solver.response_stats() + "---\n",
+            # Sets some more result info.
+            "status_name": solver.status_name(),
+            "status_description": SOLVER_STATUS[solver.status_name()] or "-",
+            "solution_gap": abs(1 - solver.objective_value / solver.best_objective_bound)
+            if solver.best_objective_bound != 0
+            else "-",
+            "total_score": "-",
+        }
+
+    def __extract_result(self, solver: cp_model.CpSolver):
         """
         Extracts all successful assignments between projects and students,
         including their scores in the `self.__result` list.
-
-        ```python
-        {
-            "results": [
-                (project_id, student_id, score),
-                ...
-            ],
-            "info": {
-                ...,
-            }
-        }
-        ```
 
         Successful assignments are those where the boolean value of `(p_id, s_id)` is `1` (`True`).
 
         Args:
             solver: The constraint solver.
-            result_info: The result info.
         """
 
         total_score = 0
@@ -466,18 +498,15 @@ class AssignmentAlgorithm:
     def run(self):
         """
         Initializes needed variables, adds the hard and soft constraints,
-        starts the solver and extracts the results.
+        starts the solver and extracts the result.
 
         The function blocks until the calculation is finished or aborted.
 
         The calculation is stopped if
         - an optimal result was found,
-        - the given task/function is not solvable or
+        - the given data or constraints are not solvable or
         - the max runtime was exceeded. In this case, the best solution
           found will be used.
-
-        Raises:
-            AssignmentAlgoException: If the equation cannot be solved for the given data, or the time has expired.
         """
 
         # Checks if the algorithm is already running.
@@ -513,12 +542,10 @@ class AssignmentAlgorithm:
 
         # TODO: Testing different parameters.
         solver.parameters.log_search_progress = False
-        # solver.parameters.num_workers = 0
-        # solver.parameters.num_workers = 8
-        # solver.parameters.num_workers = 16
 
         # Solves the equation.
         self.__results = []
+        self.__result_info = {}
         self.__has_result = False
 
         if settings.DEBUG:
@@ -532,52 +559,27 @@ class AssignmentAlgorithm:
         # Sets the algorithm as not running.
         AssignmentAlgorithm.__is_running = False
 
-        # TODO: Catch the exceptions ...
+        # Sets the result info.
+        self.__extract_result_info(solver)
+
+        # Logs the result info.
+        logging.debug(f"OR-Tools: Result info: {self.__result_info}")
+
+        # The status of the solver:
+        # OPTIMAL 	    An optimal feasible solution was found.
+        # FEASIBLE 	    A feasible solution was found, but we don't know if it's optimal.
+        # INFEASIBLE 	The problem was proven infeasible.
+        # MODEL_INVALID The given CpModelProto didn't pass the validation step.
+        # UNKNOWN       The status of the model is unknown.
+
+        # Extracts the solution of the assignments, if the solver is feasible.
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-            # Sets the result info.
-            self.__result_info = {
-                "n_students": self.__n_students,
-                "n_projects": self.__n_projects,
-                "n_wing_students": self.__n_wing_students,
-                "n_projects_required": self.__n_projects_required,
-                "min_students_per_project": f"{self.__min_students_per_project} ({self.__initial_min_students_per_project})",
-                "max_students_per_project": self.__max_students_per_project,
-                "min_wings_per_project": self.__min_wings_per_project,
-                "max_wings_per_project": self.__max_wings_per_project,
-                "use_score": self.__use_score,
-                "use_level": self.__use_level,
-                "use_hc_no_level_24": f"{self.__use_hc_no_level_24}\n",
-                "max_time_in_seconds": solver.parameters.max_time_in_seconds,
-                "num_workers": solver.parameters.num_workers,
-                "relative_gap_limit": f"{solver.parameters.relative_gap_limit}\n",
-                # "status_name": solver.status_name(),
-                # "solution_count": solution_printer.solution_count(),
-                # "num_branches": solver.num_branches,
-                # "num_booleans": solver.num_booleans,
-                # "num_conflicts": solver.num_conflicts,
-                # "num_integer_propagations": solution_printer.num_integer_propagations,
-                # "wall_time": solver.wall_time,
-                # "best_objective_bound": solver.best_objective_bound,
-                # "objective_value": solver.objective_value,
-                "response_stats": "\n---\n" + solver.response_stats() + "---\n",
-                "solution_gap": abs(1 - solver.objective_value / solver.best_objective_bound)
-                if solver.best_objective_bound != 0
-                else -0,
-            }
-            # Logs the result info.
-            logging.debug(f"OR-Tools: Result info: {self.__result_info}")
-            # Extracts the solution.
-            self.__extract_solution(solver)
+            self.__extract_result(solver)
             self.__has_result = True
-        else:
-            raise AssignmentAlgorithmException(
-                "The equation cannot be solved for the given data, or the time has expired."
-            )
 
     def get_result(self) -> dict:  # -> list[tuple[int, int, int]]:
         """
-        Returns the assignments as a list of tuples `(project_id, student_id, score)` and
-        the solver info if the algorithm has already been executed.
+        Returns the assignments and the solver info.
 
         ```python
         {
@@ -590,18 +592,12 @@ class AssignmentAlgorithm:
             }
         }
         ```
-
-        Raises:
-            AssignmentAlgoException: If the result is accessed before the algorithm has been executed.
         """
 
-        if not self.__has_result:
-            raise AssignmentAlgorithmException("Tried to access result before it was run.")
-        else:
-            return {
-                "assignments": self.__results,
-                "info": self.__result_info,
-            }
+        return {
+            "assignments": self.__results if self.__has_result else [],
+            "info": self.__result_info,
+        }
 
     def force_run(self):
         """
