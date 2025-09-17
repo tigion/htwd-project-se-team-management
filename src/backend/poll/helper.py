@@ -27,22 +27,16 @@ def prepare_poll_data_from_post(student, POST, projects):
             "score": POLL_SCORES["default"],
         }
 
-    # TODO: Refactor the following two for loops to a single loop.
-
-    # Sets the new poll scores.
+    # Sets the selected project scores and the selected student level.
     for post in POST:
         parts = post.split("_")
-        if len(parts) == 3 and parts[2] == "score":
-            object_name = str(parts[0])
-            object_id = str(parts[1])
-            object_score = int(POST.get(post, POLL_SCORES["default"]))
-            if object_name in ["project"]:  # There was also a "role" originally.
-                if object_id in poll_data[object_name]:
-                    poll_data[object_name][object_id]["score"] = object_score
-
-    # Sets the new level.
-    for post in POST:
-        if str(post) == "level":
+        # Sets the project score.
+        if parts[0] == "project":
+            id = str(parts[1])
+            if id in poll_data["project"]:
+                poll_data["project"][id]["score"] = int(POST.get(post, POLL_SCORES["default"]))
+        # Sets the student level.
+        elif parts[0] == "student" and parts[1] == "level":
             poll_data["level"] = int(POST.get(post, POLL_LEVELS["default"]))
 
     return poll_data
@@ -110,12 +104,15 @@ def load_poll_data_for_form(student, projects):
         for answer in project_answers:
             poll_data["projects"].append({"project": answer.project, "score": answer.score})
         # Uses the level answer from the database.
-        poll_data["level"] = LevelAnswer.objects.filter(poll=poll)
+        student_level_answer = LevelAnswer.objects.filter(poll=poll).first()
+        if student_level_answer is not None:
+            poll_data["level"] = student_level_answer.level
     else:
         # Uses the default project answer scores. if no poll exists.
         for project in projects:
             poll_data["projects"].append({"project": project, "score": POLL_SCORES["default"]})
 
+    print(poll_data)
     return poll_data
 
 

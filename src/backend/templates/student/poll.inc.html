@@ -73,8 +73,14 @@
               <div class="list-group-item">
                 {% for key, level in poll_levels.choices.items %}
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="level" id="id_level_{{ level.id }}" value="{{ level.value }}" {% if form_poll_data.level == level.value %}checked="checked"{% endif %} >
-                  <label class="form-check-label" for="id_level_{{ level.id }}">{{ level.name }}</label>
+                  <input class="form-check-input"
+                         type="radio"
+                         name="student_level"
+                         id="id_student_level_{{ level.id }}"
+                         value="{{ level.value }}"
+                         {% if form_poll_data.level == level.value %}checked="checked"{% endif %}
+                         >
+                  <label class="form-check-label" for="id_student_level_{{ level.id }}">{{ level.name }}</label>
                 </div>
                 {% endfor %}
               </div>
