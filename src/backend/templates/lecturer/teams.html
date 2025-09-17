@@ -60,8 +60,11 @@
   </div>
   {% with max_runtime_str=dev_settings.max_runtime|stringformat:"d" %}
   {% with my_style="width: 100%;--bs-progress-bar-transition: width "|add:max_runtime_str|add:"s ease" %}
-  <div id="calculation-progress" class="progress d-none">
-    <div id="calculation-progress-bar" class="progress-bar bg-secondary" role="progressbar" style="{{ my_style }}" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+  <div id="calculation-progress" class="mb-2 d-none">
+    <div class="small text-muted">Generierungsdauer maximal <strong>{{ dev_settings.max_runtime }}s</strong></div>
+    <div class="progress">
+      <div id="calculation-progress-bar" class="progress-bar bg-secondary" role="progressbar" style="{{ my_style }}" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
   </div>
   {% endwith %}
   {% endwith %}
