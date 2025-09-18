@@ -18,10 +18,10 @@
           <div class="accordion-body">
             Bitte geben Sie an, wie gern Sie welche Projekte im Beleg bearbeiten würden:
 
-            <fieldset class="list-group list-group-flush hmt-3 mt-3"{% if not settings.poll_is_writable %} disabled{% endif %}>
-            {% if not projects %}Keine Projekte vorhanden!{% endif %}
-            {% for project in projects %}
-            <input type="hidden" id="id_project_{{ project.id }}_id" name="project_{{ project.id }}_id" value="{{ project.id }}">
+            <fieldset class="list-group list-group-flush hmt-3 mt-3" {% if not settings.poll_is_writable %} disabled{% endif %}>
+              {% if not projects %}Keine Projekte vorhanden!{% endif %}
+              {% for project in projects %}
+              <input type="hidden" id="id_project_{{ project.id }}_id" name="project_{{ project.id }}_id" value="{{ project.id }}">
               <div class="list-group-item">
 
                 <div class="d-flex flex-row justify-content-between my-1">
@@ -32,7 +32,7 @@
                     <label class="form-label fw-bold m-0">{{ project.pid_name }}</label>
                   </div>
                   <div class="ms-2 flex-shrink-0" required="" id="id_project_{{ project.id }}_score">
-                  {% for score in poll_scores.choices %}
+                    {% for score in poll_scores.choices %}
                     <div class="form-check form-check-inline">
 
                       <input class="form-check-input"
@@ -42,17 +42,16 @@
                              value="{{ score.value }}"
                              title="{{ score.name }}"
                              {% for fp in form_poll_data.projects %}
-                               {% if fp.project.id == project.id and fp.score == score.value %}checked="checked"{% endif %}
-                             {% endfor %}
-                             >
+                             {% if fp.project.id==project.id and fp.score==score.value %}checked="checked" {% endif %}
+                             {% endfor %}>
                       <label class="form-check-label" for="id_project_{{ project.id }}_score_{{ score.id }}" title="{{ score.name }}"><i class="bu bi-{{ score.icon }}-fill" style="color:{{ score.color }}"></i></label>
                     </div>
-                  {% endfor %}
+                    {% endfor %}
                   </div>
                 </div>
 
               </div>
-            {% endfor %}
+              {% endfor %}
             </fieldset>
 
           </div>
@@ -69,7 +68,7 @@
           <div class="accordion-body">
             Bitte geben Sie an, was Ihr angestrebtes Ergebnis bzw. Ambitionsniveau ist:
 
-            <fieldset class="list-group list-group-flush hmt-3 mt-3"{% if not settings.poll_is_writable %} disabled{% endif %}>
+            <fieldset class="list-group list-group-flush hmt-3 mt-3" {% if not settings.poll_is_writable %} disabled{% endif %}>
               <div class="list-group-item">
                 {% for key, level in poll_levels.choices.items %}
                 <div class="form-check">
@@ -78,8 +77,7 @@
                          name="student_level"
                          id="id_student_level_{{ level.id }}"
                          value="{{ level.value }}"
-                         {% if form_poll_data.level == level.value %}checked="checked"{% endif %}
-                         >
+                         {% if form_poll_data.level==level.value %}checked="checked" {% endif %}>
                   <label class="form-check-label" for="id_student_level_{{ level.id }}">{{ level.name }}</label>
                 </div>
                 {% endfor %}
@@ -89,6 +87,7 @@
           </div>
         </div>
       </div>
+
 
       {% comment %}
       <div class="accordion-item">
@@ -107,9 +106,9 @@
     </div>
 
     <div class="mt-3">
-    {% if settings.poll_is_writable %}
-      <button class="btn btn-primary" type="submit"{% if not is_student %} disabled{% endif %}>Antworten absenden</button>
-    {% endif %}
+      {% if settings.poll_is_writable %}
+      <button class="btn btn-primary" type="submit" {% if not is_student %} disabled{% endif %}>Antworten absenden</button>
+      {% endif %}
     </div>
   </form>
 

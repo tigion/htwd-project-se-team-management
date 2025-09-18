@@ -61,7 +61,9 @@
           <li>
             <a class="dropdown-item" href="/settings"><i class="bi bi-sliders me-1"></i> Einstellungen</a>
           </li>
-          <li><hr class="dropdown-divider"></li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
           <li>
             <a class="dropdown-item d-flex" href="/projects">
               <div class="me-auto"><i class="bi bi-box me-1"></i> Projekte</div>
@@ -74,18 +76,24 @@
               <div><span class="badge text-bg-light rounded-pill ms-3">{{ COUNTS.student }}</span></div>
             </a>
           </li>
-          <li><hr class="dropdown-divider"></li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
           <li>
             <a class="dropdown-item d-flex" href="/teams">
               <div class="me-auto"><i class="bi bi-people-fill me-1"></i> Teams</div>
               <div><span class="badge text-bg-light rounded-pill ms-3">{{ COUNTS.team }}</span></div>
             </a>
           </li>
-          <li><hr class="dropdown-divider"></li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
           <li>
             <a class="dropdown-item" href="/stats"><i class="bi bi-bar-chart me-1"></i> Statistiken</a>
           </li>
-          <li><hr class="dropdown-divider"></li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
           <li>
             <a class="dropdown-item" href="/admin"><i class="bi bi-database-exclamation me-1"></i> Django Admin</a>
           </li>
@@ -112,12 +120,12 @@
   </header>
 
   {% if user.is_superuser %}
-    {#% include "notes-development.inc.html" %#}
-    {% include "notes-development.inc.html" %}
+  {#% include "notes-development.inc.html" %#}
+  {% include "notes-development.inc.html" %}
   {% endif %}
 
   <div class="container my-5">
-  {% bootstrap_messages %}
+    {% bootstrap_messages %}
   </div>
 
   {% block content %}

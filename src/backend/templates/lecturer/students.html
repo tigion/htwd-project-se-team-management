@@ -56,37 +56,37 @@
 </div>
 
 <div class="container my-5">
-<h3>Importieren</h3>
-<form id="formImportStudents" method="post" class="form" enctype="multipart/form-data">
-  {% csrf_token %}
-  {% bootstrap_form UploadStudentsForm %}
-  <button id="buttonImportStudents" class="btn {% if students %}btn-warning{% else %}btn-success{% endif %}" type="submit"><i class="bi bi-file-earmark-arrow-up me-2"></i>Importieren</button>
-</form>
+  <h3>Importieren</h3>
+  <form id="formImportStudents" method="post" class="form" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% bootstrap_form UploadStudentsForm %}
+    <button id="buttonImportStudents" class="btn {% if students %}btn-warning{% else %}btn-success{% endif %}" type="submit"><i class="bi bi-file-earmark-arrow-up me-2"></i>Importieren</button>
+  </form>
 </div>
 
 <script>
-// if the import button is clicked:
-// - disable the button and replace the icon with a spinner (bootstrap)
-document.querySelector('#buttonImportStudents').addEventListener('click', (e) => {
-  // only if a file is selected
-  if (document.querySelector('#id_file').value) {
-    e.target.disabled = true
-    const span1 = document.createElement("span")
-    span1.setAttribute('class', 'spinner-border spinner-border-sm me-2')
-    span1.setAttribute('aria-hidden', 'true')
-    const span2 = document.createElement("span")
-    span2.setAttribute('class', 'visually-hidden')
-    span2.setAttribute('role', 'status')
-    span2.textContent = 'Importing...'
-    e.target.getElementsByTagName('i')[0].replaceWith(span1, span2)
+  // if the import button is clicked:
+  // - disable the button and replace the icon with a spinner (bootstrap)
+  document.querySelector('#buttonImportStudents').addEventListener('click', (e) => {
+    // only if a file is selected
+    if (document.querySelector('#id_file').value) {
+      e.target.disabled = true
+      const span1 = document.createElement("span")
+      span1.setAttribute('class', 'spinner-border spinner-border-sm me-2')
+      span1.setAttribute('aria-hidden', 'true')
+      const span2 = document.createElement("span")
+      span2.setAttribute('class', 'visually-hidden')
+      span2.setAttribute('role', 'status')
+      span2.textContent = 'Importing...'
+      e.target.getElementsByTagName('i')[0].replaceWith(span1, span2)
 
-    // Workaround to trigger submit in some browsers
-    window.setTimeout(() => {
-      var form = document.getElementById('formImportStudents');
-      form.submit();
-    }, 500);
-  }
-})
+      // Workaround to trigger submit in some browsers
+      window.setTimeout(() => {
+        var form = document.getElementById('formImportStudents');
+        form.submit();
+      }, 500);
+    }
+  })
 </script>
 
 {% endblock content %}

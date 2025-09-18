@@ -10,11 +10,11 @@
     <i class="bi bi-box me-1"></i> Projekte: <strong>{{ stats.count.project }}</strong>, <small class="text-secondary">verwendet werden <strong>{{ stats.count.project_used }}</strong></small><br />
     <i class="bi bi-boxes me-1"></i> Projektinstanzen: <strong>{{ stats.count.project_instance }}</strong>, <small class="text-secondary">benötigt werden <strong>{{ stats.count.project_instance_used }}</strong> bei mindestens <strong>{{ settings.team_min_member }}</strong> Studenten pro Team</small><br />
     <i class="bi bi-person-fill me-1"></i> Studenten: <strong>{{ stats.count.student }}</strong>, <small class="text-secondary">davon <strong>{{ stats.count.student_out }}</strong> ausgeschieden, pro Studiengang
-    {% for study_program in stats.count.study_programs %}
+      {% for study_program in stats.count.study_programs %}
       {{ study_program.study_program }}: <strong>{{ study_program.total }}</strong>{% if not forloop.last %}, {% endif %}
-    {% empty %}
+      {% empty %}
       0
-    {% endfor %}</small><br />
+      {% endfor %}</small><br />
     <i class="bi bi-people-fill me-1"></i> Teams: <strong>{{ stats.count.team }}</strong><br />
   </p>
 </div>
@@ -53,14 +53,14 @@
       </tr>
     </thead>
     <tbody>
-    {% for level in stats.level %}
+      {% for level in stats.level %}
       <tr>
         <td>{{ level.level.name }}</td>
         <td class="text-secondary">
           <small><i class="bu bi-{{ level.level.icon }}" style="color:{{ level.level.color }}"></i> {{ level.count }}×</small>
         </td>
       </tr>
-    {% endfor %}
+      {% endfor %}
     </tbody>
   </table>
 </div>
@@ -79,7 +79,7 @@
       </tr>
     </thead>
     <tbody>
-    {% for project in stats.projects %}
+      {% for project in stats.projects %}
       <tr>
         <td class="text-center {{ project.color }}"><strong>{{ project.score }}</strong></td>
         <td class="text-center text-secondary"><small>{{ project.score_avg|stringformat:".2f" }}</small></td>
@@ -92,13 +92,13 @@
           <small>
             {% for score_count in project.score_counts %}
             <span class="d-inline-block ms-1" style="min-width:3.5em">
-            <i class="bu bi-{{ score_count.score.icon }}-fill" style="color:{{ score_count.score.color }}" title="{{ score_count.score.name }}"></i> {{ score_count.count }}×
+              <i class="bu bi-{{ score_count.score.icon }}-fill" style="color:{{ score_count.score.color }}" title="{{ score_count.score.name }}"></i> {{ score_count.count }}×
             </span>
             {% endfor %}
           </small>
         </td>
       </tr>
-    {% endfor %}
+      {% endfor %}
     </tbody>
   </table>
 </div>

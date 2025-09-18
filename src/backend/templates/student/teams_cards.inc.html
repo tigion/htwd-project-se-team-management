@@ -1,53 +1,53 @@
-  {% if teams %}
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4">
-    {% for team in teams %}
-    <div class="col">
-      <div class="card overflow-hidden">
-        <div class="card-header text-break" style="min-height: 6.75em">
-          <div>
-            <span class="float-start"><i class="bi bi-people-fill me-1"></i> <strong>{{ team.project_instance.piid }}</strong></span>
-            <span class="float-end text-muted small">{% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %} <i class="bi bi-person-fill ms-3 me-1"></i>{% if team.student_active_count != team.students|length %}{{ team.student_active_count }}/{% endif %}{{ team.students|length }} <a href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope ms-3 text-muted"></i></a></span><br>
-          </div>
-          <div class="clearfix mt-1 lh-sm">
-            <small>{{ team.project_instance.project.name }}</small>
-          </div>
+{% if teams %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4">
+  {% for team in teams %}
+  <div class="col">
+    <div class="card overflow-hidden">
+      <div class="card-header text-break" style="min-height: 6.75em">
+        <div>
+          <span class="float-start"><i class="bi bi-people-fill me-1"></i> <strong>{{ team.project_instance.piid }}</strong></span>
+          <span class="float-end text-muted small">{% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %} <i class="bi bi-person-fill ms-3 me-1"></i>{% if team.student_active_count != team.students|length %}{{ team.student_active_count }}/{% endif %}{{ team.students|length }} <a href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope ms-3 text-muted"></i></a></span><br>
         </div>
-        <div class="card-body p-0">
-          <ul class="list-group list-group-flush">
-            {% for student in team.students %}
-            {% if student.is_visible or is_management_view %}
-            <li class="list-group-item text-break">
+        <div class="clearfix mt-1 lh-sm">
+          <small>{{ team.project_instance.project.name }}</small>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for student in team.students %}
+          {% if student.is_visible or is_management_view %}
+          <li class="list-group-item text-break">
+            <div class="d-flex">
+              <div class="{{ student.css_classes|join:' ' }}">
+                {{ student.name }}
+              </div>
+              <div class="ms-auto flex-shrink-0">
+                {% if student.is_initial_contact %}<span class="badge rounded-pill text-bg-primary ms-1">AP</span>{% endif %}
+                <span class="badge rounded-pill text-muted text-bg-light ms-0">{{ student.study_program_short }}</span>
+              </div>
+              {% if is_management_view %}
+            </div>
+            <div class="fw-normal text-muted mt-1" style="font-size: .6em;">
               <div class="d-flex">
-                <div class="{{ student.css_classes|join:' ' }}">
-                  {{ student.name }}
+                <div>
+                  <span title="Happiness Score">{{ student.stats.summary|safe }}</span>
                 </div>
                 <div class="ms-auto flex-shrink-0">
-                  {% if student.is_initial_contact %}<span class="badge rounded-pill text-bg-primary ms-1">AP</span>{% endif %}
-                  <span class="badge rounded-pill text-muted text-bg-light ms-0">{{ student.study_program_short }}</span>
-                </div>
-              {% if is_management_view %}
-              </div>
-              <div class="fw-normal text-muted mt-1" style="font-size: .6em;">
-                <div class="d-flex">
-                  <div>
-                     <span title="Happiness Score">{{ student.stats.summary|safe }}</span>
-                  </div>
-                  <div class="ms-auto flex-shrink-0">
-                    <i class="bi bi-{{ student.stats.level.icon }}" style="color:{{ student.stats.level.color }}"></i>
-                  </div>
+                  <i class="bi bi-{{ student.stats.level.icon }}" style="color:{{ student.stats.level.color }}"></i>
                 </div>
               </div>
-              {% endif %}
-            </li>
+            </div>
             {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-        <!-- <div class="card-footer text-center"></div> -->
+          </li>
+          {% endif %}
+          {% endfor %}
+        </ul>
       </div>
+      <!-- <div class="card-footer text-center"></div> -->
     </div>
-    {% endfor %}
   </div>
-  {% else %}
-  <div>Keine Teams vorhanden!</div>
-  {% endif %}
+  {% endfor %}
+</div>
+{% else %}
+<div>Keine Teams vorhanden!</div>
+{% endif %}

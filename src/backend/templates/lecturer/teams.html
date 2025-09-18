@@ -23,14 +23,14 @@
     <div class="bd-highlight">
       <form id="formGenerateTeams" action="{% url 'teams-generate' %}" method="POST">
         {% csrf_token %}
-        <button id="buttonGenerateTeams" class="btn {% if teams %}btn-warning{% else %}btn-success{% endif %}" type="submit"{% if settings.teams_is_visible or is_team_generation_running %} disabled{% endif %}><i class="bi bi-play-circle me-2"></i>Teams {% if teams %}erneut {% endif %}generieren</button>
+        <button id="buttonGenerateTeams" class="btn {% if teams %}btn-warning{% else %}btn-success{% endif %}" type="submit" {% if settings.teams_is_visible or is_team_generation_running %} disabled{% endif %}><i class="bi bi-play-circle me-2"></i>Teams {% if teams %}erneut {% endif %}generieren</button>
       </form>
     </div>
     <div class="ms-3 bd-highlight">
       <form action="{% url 'teams-delete' %}" method="POST">
         {% csrf_token %}
         <!-- <button id="buttonDeleteTeams" class="btn btn-danger" type="submit"><i class="bi bi-trash3 me-2"></i>Teams löschen</button> -->
-        <button id="buttonDeleteTeams" class="btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal-teams"{% if not teams or settings.teams_is_visible %} disabled{% endif %}><i class="bi bi-trash3 me-2"></i>Teams löschen</button>
+        <button id="buttonDeleteTeams" class="btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal-teams" {% if not teams or settings.teams_is_visible %} disabled{% endif %}><i class="bi bi-trash3 me-2"></i>Teams löschen</button>
         <!-- Modal: for delete confirmation dialog-->
         <div class="modal fade" id="deleteConfirmationModal-teams" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel-teams" aria-hidden="true">
           <div class="modal-dialog">
@@ -88,35 +88,35 @@
 </div>
 
 <script>
-// if the team generation button is clicked:
-// - disable the buttons and replace the icon with a spinner (bootstrap)
-document.querySelector('#buttonGenerateTeams').addEventListener('click', async (e) => {
-  e.preventDefault();
+  // if the team generation button is clicked:
+  // - disable the buttons and replace the icon with a spinner (bootstrap)
+  document.querySelector('#buttonGenerateTeams').addEventListener('click', async (e) => {
+    e.preventDefault();
 
-  const span1 = document.createElement("span")
-  span1.setAttribute('class', 'spinner-border spinner-border-sm me-2')
-  span1.setAttribute('aria-hidden', 'true')
-  const span2 = document.createElement("span")
-  span2.setAttribute('class', 'visually-hidden')
-  span2.setAttribute('role', 'status')
-  span2.textContent = 'Generating...'
-  e.target.getElementsByTagName('i')[0].replaceWith(span1, span2)
+    const span1 = document.createElement("span")
+    span1.setAttribute('class', 'spinner-border spinner-border-sm me-2')
+    span1.setAttribute('aria-hidden', 'true')
+    const span2 = document.createElement("span")
+    span2.setAttribute('class', 'visually-hidden')
+    span2.setAttribute('role', 'status')
+    span2.textContent = 'Generating...'
+    e.target.getElementsByTagName('i')[0].replaceWith(span1, span2)
 
-  const progress = document.getElementById('calculation-progress')
-  progress.classList.remove('d-none')
+    const progress = document.getElementById('calculation-progress')
+    progress.classList.remove('d-none')
 
-  e.target.disabled = true  // buttonGenerateTeams
-  document.querySelector('#buttonDeleteTeams').disabled = true // buttonDeleteTeams
+    e.target.disabled = true  // buttonGenerateTeams
+    document.querySelector('#buttonDeleteTeams').disabled = true // buttonDeleteTeams
 
-  // Workaround to trigger submit in some browsers
-  window.setTimeout(() => {
-    const progressBar = document.getElementById('calculation-progress-bar')
-    progressBar.setAttribute('aria-valuenow', '0')
-    progressBar.style.width = '0%'
-    var form = document.getElementById('formGenerateTeams');
-    form.submit();
-  }, 500);
-})
+    // Workaround to trigger submit in some browsers
+    window.setTimeout(() => {
+      const progressBar = document.getElementById('calculation-progress-bar')
+      progressBar.setAttribute('aria-valuenow', '0')
+      progressBar.style.width = '0%'
+      var form = document.getElementById('formGenerateTeams');
+      form.submit();
+    }, 500);
+  })
 </script>
 
 <div id="teams" class="container my-5">
