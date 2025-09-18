@@ -112,7 +112,6 @@ def load_poll_data_for_form(student, projects):
         for project in projects:
             poll_data["projects"].append({"project": project, "score": POLL_SCORES["default"]})
 
-    print(poll_data)
     return poll_data
 
 
