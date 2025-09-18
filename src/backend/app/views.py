@@ -156,9 +156,6 @@ def project_edit(request, id=None):
 @permission_required("app.delete_project")
 # @permission_required("team.delete_projectinstance")
 def project_delete(request, id=None):
-    # TODO: ?
-    # - https://www.pythontutorial.net/django-tutorial/django-delete-form/
-
     if request.method == "POST":
         project = get_object_or_404(Project, id=id)
         try:

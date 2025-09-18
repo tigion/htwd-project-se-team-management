@@ -279,9 +279,8 @@ class AssignmentAlgorithm:
         The higher the assignment scores (project + level), the better the matches.
         """
 
-        # TODO: Optimize the results.
-        #       - [ ] factor vs score impact
-        #
+        # TODO:
+        # - [ ] Optimize the results (factor vs score impact)
 
         # Min and max number of students per project.
         min = self.__min_students_per_project
@@ -540,7 +539,7 @@ class AssignmentAlgorithm:
         # Sets the number of workers for the solver.
         solver.parameters.num_workers = self.__num_workers
 
-        # TODO: Testing different parameters.
+        # Set only for testing/debugging purposes to `True`.
         solver.parameters.log_search_progress = False
 
         # Solves the equation.

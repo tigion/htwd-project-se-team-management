@@ -104,7 +104,7 @@ def create_id_idx_mappings(students: list, project_instances: list):
     to the algorithm indexes and vice versa.
     """
 
-    # TODO: Use the IDs directly instead of the indexes. So no need to map.
+    # NOTE: Idea: Use the IDs directly instead of the indexes. So no need to map.
 
     # Sets the mappings of student IDs.
     id_idx_mappings["student"]["db2algo"].clear()
