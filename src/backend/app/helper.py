@@ -251,7 +251,7 @@ def get_statistics_for_view() -> dict:
         # Sets the score counts.
         score_counts = []
 
-        for x_poll_score in sorted(POLL_SCORES["choices"], key=lambda x: x["value"], reverse=True):
+        for _, x_poll_score in sorted(POLL_SCORES["choices"].items(), key=lambda x: x[1]["value"], reverse=True):
             score_counts.append({
                 "score": x_poll_score,
                 "count": ProjectAnswer.objects.filter(

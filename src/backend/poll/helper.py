@@ -344,15 +344,16 @@ def get_happiness_icon(score: float) -> str:
     """
 
     # Gets the poll score infos.
-    poll_score = POLL_SCORES["choices"][0]  # very bad
     if score > 0.8:
-        poll_score = POLL_SCORES["choices"][4]  # very good
+        poll_score = POLL_SCORES["choices"][5]  # very good
     elif score > 0.6:
-        poll_score = POLL_SCORES["choices"][3]  # good
+        poll_score = POLL_SCORES["choices"][4]  # good
     elif score > 0.4:
-        poll_score = POLL_SCORES["choices"][2]  # neutral
+        poll_score = POLL_SCORES["choices"][3]  # neutral
     elif score > 0.2:
-        poll_score = POLL_SCORES["choices"][1]  # bad
+        poll_score = POLL_SCORES["choices"][2]  # bad
+    else:
+        poll_score = POLL_SCORES["choices"][1]  # very bad
 
     # Sets the icon with color as HTML string.
     icon = '<i class="bu bi-' + poll_score["icon"] + '-fill" style="color:' + poll_score["color"] + '"></i>'

@@ -7,43 +7,38 @@ POLL_SCORES = {
     "default": 3,
     "min": 1,
     "max": 5,
-    "choices": [
-        {
-            "id": 1,
+    "choices": {
+        1: {
             "value": 1,
             "name": "very bad",
             "icon": "emoji-angry",
             "color": "red",
         },
-        {
-            "id": 2,
+        2: {
             "value": 2,
             "name": "bad",
             "icon": "emoji-frown",
             "color": "orange",
         },
-        {
-            "id": 3,
+        3: {
             "value": 3,
             "name": "neutral",
             "icon": "emoji-neutral",
             "color": "#FFD801",
         },
-        {
-            "id": 4,
+        4: {
             "value": 4,
             "name": "good",
             "icon": "emoji-smile",
             "color": "#9ACD32",
         },
-        {
-            "id": 5,
+        5: {
             "value": 5,
             "name": "very good",
             "icon": "emoji-heart-eyes",
             "color": "green",
         },
-    ],
+    },
 }
 
 POLL_LEVELS = {
@@ -99,10 +94,8 @@ class ProjectAnswer(models.Model):
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
-    # TODO: use POLL_SCORES choices, validation
     score = models.PositiveIntegerField(
         default=POLL_SCORES["default"],
-        # choices=SCORE_CHOICES,
         validators=[MinValueValidator(POLL_SCORES["min"]), MaxValueValidator(POLL_SCORES["max"])],
     )
 

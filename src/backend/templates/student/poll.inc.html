@@ -16,7 +16,15 @@
         </h2>
         <div id="accordion-collapse-poll-1" class="accordion-collapse collapse" aria-labelledby="accordion-header-poll-1">
           <div class="accordion-body">
-            Bitte geben Sie an, wie gern Sie welche Projekte im Beleg bearbeiten würden:
+            Wie gern würden Sie auf einer Skala von 1 bis 5 ein Projekt im Beleg bearbeiten?<br />
+            <!-- <small class="text-muted">In der Skala von 1 bis 5 wird die 1 als "sehr gern" und 5 als "sehr ungern" angesehen.</small><br /> -->
+            <small class="text-muted">
+              <strong>1</strong>: <i class="bu bi-{{ poll_scores.choices.1.icon }}-fill" style="color:{{ poll_scores.choices.1.color }}"></i> sehr ungern,
+              <strong>2</strong>: <i class="bu bi-{{ poll_scores.choices.2.icon }}-fill" style="color:{{ poll_scores.choices.2.color }}"></i> ungern,
+              <strong>3</strong>: <i class="bu bi-{{ poll_scores.choices.3.icon }}-fill" style="color:{{ poll_scores.choices.3.color }}"></i> neutral,
+              <strong>4</strong>: <i class="bu bi-{{ poll_scores.choices.4.icon }}-fill" style="color:{{ poll_scores.choices.4.color }}"></i> gern,
+              <strong>5</strong>: <i class="bu bi-{{ poll_scores.choices.5.icon }}-fill" style="color:{{ poll_scores.choices.5.color }}"></i> sehr gern
+            </small>
 
             <fieldset class="list-group list-group-flush hmt-3 mt-3" {% if not settings.poll_is_writable %} disabled{% endif %}>
               {% if not projects %}Keine Projekte vorhanden!{% endif %}
@@ -32,19 +40,19 @@
                     <label class="form-label fw-bold m-0">{{ project.pid_name }}</label>
                   </div>
                   <div class="ms-2 flex-shrink-0" required="" id="id_project_{{ project.id }}_score">
-                    {% for score in poll_scores.choices %}
+                    {% for key, score in poll_scores.choices.items %}
                     <div class="form-check form-check-inline">
 
                       <input class="form-check-input"
                              type="radio"
-                             name="project_{{ project.id }}_score"
+                             name=" project_{{ project.id }}_score"
                              id="id_project_{{ project.id }}_score_{{ score.id }}"
                              value="{{ score.value }}"
                              title="{{ score.name }}"
                              {% for fp in form_poll_data.projects %}
-                             {% if fp.project.id==project.id and fp.score==score.value %}checked="checked" {% endif %}
+                             {% if fp.project.id == project.id and fp.score == score.value %}checked="checked" {% endif %}
                              {% endfor %}>
-                      <label class="form-check-label" for="id_project_{{ project.id }}_score_{{ score.id }}" title="{{ score.name }}"><i class="bu bi-{{ score.icon }}-fill" style="color:{{ score.color }}"></i></label>
+                      <label class="form-check-label" for="id_project_{{ project.id }}_score_{{ score.id }}" title="{{ score.name }}">{{ score.value }} <i class="bu bi-{{ score.icon }}-fill" style="color:{{ score.color }}"></i></label>
                     </div>
                     {% endfor %}
                   </div>
@@ -66,7 +74,8 @@
         </h2>
         <div id="accordion-collapse-poll-3" class="accordion-collapse collapse" aria-labelledby="accordion-header-poll-3">
           <div class="accordion-body">
-            Bitte geben Sie an, was Ihr angestrebtes Ergebnis bzw. Ambitionsniveau ist:
+            <!-- Bitte geben Sie an, was Ihr angestrebtes Ergebnis bzw. Ambitionsniveau ist: -->
+            Wie würden Sie ihr angestrebtes Ergebnis bzw. Ambitionsniveau einschätzen?
 
             <fieldset class="list-group list-group-flush hmt-3 mt-3" {% if not settings.poll_is_writable %} disabled{% endif %}>
               <div class="list-group-item">
@@ -77,7 +86,7 @@
                          name="student_level"
                          id="id_student_level_{{ level.id }}"
                          value="{{ level.value }}"
-                         {% if form_poll_data.level==level.value %}checked="checked" {% endif %}>
+                         {% if form_poll_data.level == level.value %}checked="checked" {% endif %}>
                   <label class="form-check-label" for="id_student_level_{{ level.id }}">{{ level.name }}</label>
                 </div>
                 {% endfor %}
