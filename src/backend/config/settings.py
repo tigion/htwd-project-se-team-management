@@ -163,44 +163,45 @@ AUTHENTICATION_BACKENDS = [
 # --- LDAP Settings ---------------------------------------------------
 
 if os.getenv("DJANGO_LDAP", "False") == "True":
-    # Add LDAP authentucation backend
+    # Adds the LDAP authentication backend.
     AUTHENTICATION_BACKENDS.append("django_auth_ldap.backend.LDAPBackend")
 
-    # timeout if LDAP server is not available
-    ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 3)
-    # ldap.set_option(ldap.OPT_TIMEOUT, 1)
-    # ldap.protocol_version = ldap.VERSION3
-    # ldap.network_timeout = 1
-    # ldap.timelimit = 1
-
-    # LDAP-server
+    # Sets the LDAP-server data:
     AUTH_LDAP_SERVER_URI = os.environ.get("DJANGO_LDAP_SERVER_URI")
     AUTH_LDAP_BIND_DN = os.environ.get("DJANGO_AUTH_LDAP_BIND_DN")
     AUTH_LDAP_BIND_PASSWORD = os.environ.get("DJANGO_AUTH_LDAP_BIND_PASSWORD")
     AUTH_LDAP_USER_SEARCH = LDAPSearch(
         os.environ.get("DJANGO_AUTH_LDAP_USER_SEARCH_BASE_DN"),
-        ldap.SCOPE_SUBTREE,
+        ldap.SCOPE_SUBTREE,  # pyright:ignore[reportAttributeAccessIssue]
         os.getenv("DJANGO_AUTH_LDAP_USER_SEARCH_FILTER", ""),
     )
 
+    # Enables TLS encryption over the standard LDAP port
+    # - https://django-auth-ldap.readthedocs.io/en/stable/reference.html#auth-ldap-start-tls
     AUTH_LDAP_START_TLS = True
 
-    # without LDAP CA
+    # A dictionary of options to pass to ldap.set_option(). Keys are ldap.OPT_* constants.
+    # Variante: LDAP CA (Certificate Authority) without certificate verification
     AUTH_LDAP_GLOBAL_OPTIONS = {
-        ldap.OPT_REFERRALS: 0,
-        ldap.OPT_DEBUG_LEVEL: 0,  # 1,
-        ldap.OPT_X_TLS_REQUIRE_CERT: ldap.OPT_X_TLS_NEVER,
-        ldap.OPT_X_TLS_NEWCTX: 0,
+        # ldap.OPT_PROTOCOL_VERSION: ldap.VERSION3,
+        ldap.OPT_NETWORK_TIMEOUT: 3,  # The timeout in seconds if the LDAP server is not available.  # pyright:ignore[reportAttributeAccessIssue]
+        # ldap.OPT_TIMEOUT: 1,
+        ldap.OPT_REFERRALS: 0,  # pyright:ignore[reportAttributeAccessIssue]
+        ldap.OPT_DEBUG_LEVEL: 0,  # pyright:ignore[reportAttributeAccessIssue]
+        ldap.OPT_X_TLS_REQUIRE_CERT: ldap.OPT_X_TLS_NEVER,  # pyright:ignore[reportAttributeAccessIssue]
+        ldap.OPT_X_TLS_NEWCTX: 0,  # pyright:ignore[reportAttributeAccessIssue]
     }
-    # with LDAP CA
-    # LDAP_CA_FILE_PATH = "/var/www/ssl/htw_ldap_ca.crt"
+    # Variante: LDAP CA (Certificate Authority) with certificate verification
+    # LDAP_CA_FILE_PATH = "/var/www/ssl/my_ldap_ca.crt"
     # AUTH_LDAP_CONNECTION_OPTIONS = {
+    #     ...
     #     ldap.OPT_X_TLS_CACERTFILE: LDAP_CA_FILE_PATH,
     #     ldap.OPT_X_TLS_REQUIRE_CERT: ldap.OPT_X_TLS_ALLOW,
-    #     ldap.OPT_X_TLS_NEWCTX: 0,
+    #     ...
     # }
 
-    # seconds, a user’s group memberships and distinguished name are cached
+    # The value determines the amount of time, in seconds,
+    # a user’s group memberships and distinguished name are cached.
     AUTH_LDAP_CACHE_TIMEOUT = 3600
 
     # Populate the Django user from the LDAP directory.
