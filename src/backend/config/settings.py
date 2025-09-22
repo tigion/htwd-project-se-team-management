@@ -181,7 +181,7 @@ if os.getenv("DJANGO_LDAP", "False") == "True":
     AUTH_LDAP_START_TLS = True
 
     # A dictionary of options to pass to ldap.set_option(). Keys are ldap.OPT_* constants.
-    # Variante: LDAP CA (Certificate Authority) without certificate verification
+    # Variant: LDAP CA (Certificate Authority) without certificate verification
     AUTH_LDAP_GLOBAL_OPTIONS = {
         # ldap.OPT_PROTOCOL_VERSION: ldap.VERSION3,
         ldap.OPT_NETWORK_TIMEOUT: 3,  # The timeout in seconds if the LDAP server is not available.  # pyright:ignore[reportAttributeAccessIssue]
@@ -191,7 +191,7 @@ if os.getenv("DJANGO_LDAP", "False") == "True":
         ldap.OPT_X_TLS_REQUIRE_CERT: ldap.OPT_X_TLS_NEVER,  # pyright:ignore[reportAttributeAccessIssue]
         ldap.OPT_X_TLS_NEWCTX: 0,  # pyright:ignore[reportAttributeAccessIssue]
     }
-    # Variante: LDAP CA (Certificate Authority) with certificate verification
+    # Variant: LDAP CA (Certificate Authority) with certificate verification
     # LDAP_CA_FILE_PATH = "/var/www/ssl/my_ldap_ca.crt"
     # AUTH_LDAP_CONNECTION_OPTIONS = {
     #     ...
