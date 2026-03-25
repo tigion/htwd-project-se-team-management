@@ -2,7 +2,10 @@ django
 django-auth-ldap
 django-bootstrap5
 python-dotenv
-ortools
+# FIX: Version 9.15 has an bug, will be fixed in the coming 9.16,
+#      see: https://github.com/google/or-tools/issues/4985
+ortools==9.14.6206 # Needs python 3.13 no 3.14
+# ortools
 gunicorn
 reportlab
 

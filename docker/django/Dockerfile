@@ -1,7 +1,7 @@
 # Set base image
 #FROM python:3-slim-bookworm
 #FROM python:3.11-slim-bookworm
-FROM python:3.11-bookworm
+FROM python:3.13-bookworm
 
 # Update package index and install needed ones
 # - needed for `pip install python-ldap`
