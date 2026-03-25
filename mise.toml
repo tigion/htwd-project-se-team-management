@@ -1,0 +1,16 @@
+# Mise configuration for the entire project.
+
+[tools]
+python = "3.13" # Needed for ortools 9.14.6206
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.install]
+description = "Install dependencies"
+run = "pip install -r src/backend/requirements.txt"
+
+[tasks.dev]
+description = "Start Django development server"
+dir = "src/backend"
+run = "python manage.py runserver 0.0.0.0:8000"
