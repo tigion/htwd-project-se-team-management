@@ -80,7 +80,7 @@ class Project(models.Model):
 
 
 class Student(models.Model):
-    s_number = models.CharField(max_length=8, unique=True, verbose_name="Matrikelnummer")
+    s_number = models.CharField(max_length=8, unique=True, verbose_name="s-Nummer")
     # title = models.CharField(max_length=1, choices=TITLE_CHOICES)
     first_name = models.CharField(max_length=255, verbose_name="Vorname")
     last_name = models.CharField(max_length=255, verbose_name="Nachname")
