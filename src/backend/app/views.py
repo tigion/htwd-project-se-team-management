@@ -1,43 +1,45 @@
 import logging
 from datetime import datetime
 
+# Django
 from django.contrib import messages
-from django.core.files import File
-from django.db.models import ProtectedError
-from django.http import FileResponse
-from django.shortcuts import get_object_or_404, render, redirect
-from django.utils.html import format_html
-
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.forms import AuthenticationForm
-# from django.contrib.auth.models import User
+from django.core.files import File
+from django.db.models import ProtectedError
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.html import format_html
 
-from poll.models import POLL_SCORES, POLL_LEVELS
+# Project
 from poll.helper import (
-    save_poll_data_to_db,
+    delete_poll_data_for_student,
+    generate_missing_poll_data,
+    generate_missing_poll_data_for_student,
     load_poll_data_for_form,
-    generate_poll_data_for_students_without_poll,
+    save_poll_data_to_db,
 )
-
-from team.models import ProjectInstance, Team
-from team.helper import generate_teams, get_teams_for_view
+from poll.models import POLL_LEVELS, POLL_SCORES
 from team.algorithm import AssignmentAlgorithm
+from team.helper import delete_team_data_for_student, generate_teams, get_teams_for_view
+from team.models import ProjectInstance, Team
 
-from .models import Project, Settings, Student, Info, DevSettings
 from .forms import (
+    DevSettingsForm,
     ProjectForm,
+    SettingsForm,
+    SettingsResetForm,
     StudentForm,
     UploadStudentsForm,
-    SettingsForm,
-    DevSettingsForm,
-    SettingsResetForm,
 )
 from .helper import (
+    get_statistics_for_view,
+    get_students_for_view,
     read_students_from_file_to_db,
     reset_data_in_db,
-    get_statistics_for_view,
 )
+from .models import DevSettings, Info, Project, Settings, Student
 from .pdf import generate_teams_pdf
 
 # Creates the logger.
@@ -179,7 +181,8 @@ def students(request):
 
     context = {}
     context["settings"] = settings
-    context["students"] = Student.objects.all().order_by("last_name", "first_name", "s_number")
+    context["students"] = get_students_for_view()
+    context["project_instances"] = ProjectInstance.objects.all()
 
     form = UploadStudentsForm(request.POST or None, request.FILES or None)
     if request.method == "POST":
@@ -236,13 +239,76 @@ def student_edit(request, id=None):
 def student_delete(request, id=None):
     if request.method == "POST":
         student = get_object_or_404(Student, id=id)
+
+        # Do not allow deletion of student, if he is assigned to a team with a project instance.
+        if Team.objects.filter(student=student, project_instance__isnull=False).exists():
+            messages.error(
+                request,
+                f'Achtung: Student "{student.name2}" kann nicht gelöscht werden, da er einem Team zugeordnet ist!',
+            )
+            return redirect("students")
+
         try:
+            delete_poll_data_for_student(student.id)
+            delete_team_data_for_student(student.id)
             student.delete()
+            messages.success(request, f'Student "{student.name2}" wurde gelöscht!')
         except ProtectedError:
             messages.error(
                 request,
-                f'Achtung: Student "{student.name2}" kann nicht gelöscht werden, da er einem Team zugeteilt ist!',
+                f'Achtung: Student "{student.name2}" kann nicht gelöscht werden, es bestehen noch Abhängigkeiten in der Datenbank!',
             )
+
+    return redirect("students")
+
+
+@login_required
+@permission_required("app.view_student")
+def student_set_team(request, id=None):
+    if request.method == "POST":
+        student = get_object_or_404(Student, id=id)
+        project_instance_id = request.POST.get("project_instance_id")
+
+        # Remove team assignment if project_instance_id is "0".
+        if project_instance_id == "0":
+            team = Team.objects.filter(student=student).first()
+            if team:
+                old_piid = team.project_instance.piid
+                team.project_instance = None
+                team.save()
+                messages.success(request, f'Student "{student.name2}" wurde aus Team {old_piid} entfernt!')
+            return redirect("students")
+
+        project_instance = (
+            ProjectInstance.objects.filter(id=project_instance_id).first() if project_instance_id else None
+        )
+
+        # Do not allow setting team, if no project instance is found for the given id.
+        if not project_instance:
+            messages.error(
+                request, "Achtung: Teamzuweisung fehlgeschlagen! Es muss eine gültige Projektinstanz ausgewählt werden."
+            )
+            return redirect("students")
+
+        # Set new team assignment for the student. If no team exists yet, create a new one.
+        team = Team.objects.filter(student=student).first()
+        if team and team.project_instance != project_instance:
+            old_piid = team.project_instance.piid if team.project_instance else None
+            team.project_instance = project_instance
+            team.save()
+            msg = (
+                f'Student "{student.name2}" wurde von Team {old_piid} in Team {team.project_instance.piid} verschoben!'
+            )
+            if not old_piid:
+                msg = f'Student "{student.name2}" wurde Team {team.project_instance.piid} zugewiesen!'
+            messages.success(request, msg)
+
+        else:
+            generate_missing_poll_data_for_student(student)
+            team = Team.objects.create(
+                student=student, project=project_instance.project, project_instance=project_instance, score=50
+            )
+            messages.success(request, f'Student "{student.name2}" wurde Team {team.project_instance.piid} zugewiesen!')
 
     return redirect("students")
 
@@ -289,7 +355,7 @@ def teams_generate(request):
                 )
                 return redirect("teams")
 
-        generate_poll_data_for_students_without_poll()
+        generate_missing_poll_data()
         generate_teams()
 
     return redirect("teams")

@@ -18,7 +18,38 @@
         {{ student.name }} ({{ student.study_program }})
       </div>
       <div class="d-grid gap-2 d-md-flex justify-content-md-end ms-3">
+
+        <form action="{% url 'student-set-team' student.id %}" method="POST">
+          {% csrf_token %}
+          <button class="btn btn-{% if student.project_instance %}outline-success{% else %}warning{% endif %} btn-sm me-md-1" type="button" data-bs-toggle="modal" data-bs-target="#setTeamConfirmationModal-student-{{ student.id }}" style="min-width:70px"><i class="bi bi-people-fill me-1"></i> {{ student.project_instance | default:"-" }}</button>
+          <!-- Modal: for set team dialog-->
+          <div class="modal fade" id="setTeamConfirmationModal-student-{{ student.id }}" tabindex="-1" aria-labelledby="setTeamConfirmationModalLabel-student-{{ student.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="setTeamConfirmationModalLabel-student-{{ student.id }}">Projektteam zuordnen</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  Hiermit wird <strong>{{ student.name2 }}</strong> folgendem Projekt zugeordnet:
+                  <select class="form-select mt-3" name="project_instance_id" required>
+                    <option value="0" {% if not student.project_instance %}selected{% endif %}>- Kein Projekt -</option>
+                    {% for project_instance in project_instances %}
+                    <option value="{{ project_instance.id }}" {% if project_instance.id == student.project_instance.id %}selected{% endif %}>{{ project_instance.piid }} - {{ project_instance.project.name|truncatechars:47 }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn btn-warning" type="submit"><i class="bi bi-person-plus-fill me-1"></i></i>Zuweisen</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
         <a href="{% url 'student-update' student.id %}" class="btn btn-primary btn-sm me-md-1" type="button"><i class="bi bi-pencil-square"></i></a>
+
         <form action="{% url 'student-delete' student.id %}" method="POST">
           {% csrf_token %}
           <button class="btn btn-danger btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal-student-{{ student.id }}"><i class="bi bi-trash3"></i></button>
@@ -41,6 +72,7 @@
             </div>
           </div>
         </form>
+
       </div>
     </li>
     {% endfor %}

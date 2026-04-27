@@ -1,6 +1,6 @@
 from itertools import groupby
 from django.utils import timezone
-from django.db.models import F, Sum
+from django.db.models import F, ProtectedError, Sum
 
 from app.models import Project, Student, Settings, DevSettings, Info
 from poll.models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
@@ -482,3 +482,17 @@ def get_teams_for_view() -> dict:
     }
 
     return data
+
+
+def delete_team_data_for_student(student_id: int):
+    """
+    Deletes the team for the given student ID.
+
+    Args:
+        student_id: The ID of the student.
+    """
+
+    try:
+        Team.objects.filter(student_id=student_id).delete()
+    except ProtectedError as e:
+        print(f"Error deleting team data for student ID {student_id}: {e}")
