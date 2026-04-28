@@ -73,7 +73,7 @@ def generate_teams_pdf():
             student_name = student["name"]
             styles["student_name"].textColor = "#000000"
             if student["is_initial_contact"]:
-                student_name = f"<b>{student_name}</b> <i>(PL)</i>"
+                student_name = f"<b>{student_name}</b> <i>(AP)</i>"
             student_name = f"{student_name} <i>({student['study_program_short']})</i>"
             # if student["is_wing"]:
             #     student_name = f"{student_name} <i>(Wing)</i>"
