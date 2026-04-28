@@ -13,7 +13,7 @@ from .models import (
 class ProjectForm(ModelForm):
     class Meta:
         model = Project
-        fields = ["pid", "name", "description", "technologies", "company", "contact", "url", "instances"]
+        fields = ("pid", "name", "description", "technologies", "company", "contact", "url", "instances")
         # fields = "__all__"
 
     def get_pid_choices(self, project):
@@ -24,11 +24,11 @@ class ProjectForm(ModelForm):
             free_pids.append(project.pid)
             free_pids.sort()
         # Creates a list of tuples. 'A' -> ('A', 'A')
-        pid_choices = list((pid, pid) for pid in free_pids)
+        pid_choices = [(pid, pid) for pid in free_pids]
         return pid_choices
 
     def __init__(self, *args, **kwargs):
-        super(ProjectForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["pid"] = forms.ChoiceField(
             label="Projekt-ID",
             choices=self.get_pid_choices(kwargs.get("instance")),
@@ -43,10 +43,10 @@ class StudentForm(ModelForm):
 
 
 class UploadStudentsForm(forms.Form):
-    MODE_CHOICES = [
+    MODE_CHOICES = (
         ("add", "Anfügen von neuen Studenten"),
         ("new", "Ersetzen der vorhandenen Studenten"),
-    ]
+    )
     file = forms.FileField(
         widget=forms.FileInput(attrs={"accept": ".csv"}),
         help_text="Studentenliste (aus Opal exportiert xls -> csv) als Komma separierte CSV-Datei mit Vorname, Nachname, E-Mail, Studiengruppe<br>bspw.: <code>Max,Mustermann,s00000@htw-dresden.de,21-041-01</code>",

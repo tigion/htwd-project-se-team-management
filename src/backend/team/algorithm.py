@@ -79,8 +79,8 @@ class AssignmentAlgorithm:
         # 1: [S ] Score, no level impact.
         # 2: [ L] Level, no score impact.
         # 3: [SL] Level and score impact.
-        self.__use_score = True if self.__assignment_variant in [1, 3, 4] else False
-        self.__use_level = True if self.__assignment_variant in [2, 3, 4] else False
+        self.__use_score = self.__assignment_variant in [1, 3, 4]
+        self.__use_level = self.__assignment_variant in [2, 3, 4]
 
         # Extracts the project and student ids.
         self.__student_ids = list(self.__data_per_student.keys())
@@ -100,10 +100,8 @@ class AssignmentAlgorithm:
         # Sets the number of projects required.
         self.__n_projects_required = math.floor(self.__n_students / self.__min_students_per_project)
 
-        # Checks if the number of projects required is greater than the number of possible projects.
-        if self.__n_projects_required > self.__n_projects:
-            # Corrects the number of projects required.
-            self.__n_projects_required = self.__n_projects
+        # Corrects the number of projects required if it is higher than the number of possible projects.
+        self.__n_projects_required = min(self.__n_projects_required, self.__n_projects)
 
         # Corrects the min number of students per project.
         self.__min_students_per_project = math.floor(self.__n_students / self.__n_projects_required)
@@ -125,7 +123,7 @@ class AssignmentAlgorithm:
             + self.__n_students_per_level[2] % self.__min_students_per_project
             + self.__n_students_per_level[4] % self.__min_students_per_project
         )
-        self.__use_hc_no_level_24 = False if x < 2 * self.__min_students_per_project else True
+        self.__use_hc_no_level_24 = not x < 2 * self.__min_students_per_project
 
         # Creates the model.
         self.__model = cp_model.CpModel()
@@ -264,7 +262,7 @@ class AssignmentAlgorithm:
         """
         Adds the following soft constraints to the model:
         - Maximizes the project score per student.
-        - Priorizes students of the same level with wanted and
+        - Prioritizes students of the same level with wanted and
           unwanted level combinations.
 
         Project score:
@@ -338,10 +336,14 @@ class AssignmentAlgorithm:
                     3: self.__model.new_bool_var(f"p_{p_id}_has_level_3"),
                     4: self.__model.new_bool_var(f"p_{p_id}_has_level_4"),
                 }
-                for level in has_level:
-                    self.__model.add(sum(p_level[level]) < 1).only_enforce_if(has_level[level].Not())
-                    self.__model.add(sum(p_level[level]) >= 1).only_enforce_if(has_level[level])
-                    assignments_per_level[level].append(has_level[level])
+                # for level in has_level:
+                #     self.__model.add(sum(p_level[level]) < 1).only_enforce_if(has_level[level].Not())
+                #     self.__model.add(sum(p_level[level]) >= 1).only_enforce_if(has_level[level])
+                #     assignments_per_level[level].append(has_level[level])
+                for level, has_only_level_value in has_level.items():
+                    self.__model.add(sum(p_level[level]) < 1).only_enforce_if(has_only_level_value.Not())
+                    self.__model.add(sum(p_level[level]) >= 1).only_enforce_if(has_only_level_value)
+                    assignments_per_level[level].append(has_only_level_value)
 
                 # Identifies whether the current project only has students
                 # from a certain level and collects the result.
@@ -350,10 +352,14 @@ class AssignmentAlgorithm:
                     3: self.__model.new_bool_var(f"p_{p_id}_has_only_level_3"),
                     4: self.__model.new_bool_var(f"p_{p_id}_has_only_level_4"),
                 }
-                for level in has_only_level:
-                    self.__model.add(sum(p_level[level]) < min_max).only_enforce_if(has_only_level[level].Not())
-                    self.__model.add(sum(p_level[level]) >= min_max).only_enforce_if(has_only_level[level])
-                    projects_with_only_level[level].append(has_only_level[level])
+                # for level in has_only_level:
+                #     self.__model.add(sum(p_level[level]) < min_max).only_enforce_if(has_only_level[level].Not())
+                #     self.__model.add(sum(p_level[level]) >= min_max).only_enforce_if(has_only_level[level])
+                #     projects_with_only_level[level].append(has_only_level[level])
+                for level, has_only_level_value in has_only_level.items():
+                    self.__model.add(sum(p_level[level]) < min_max).only_enforce_if(has_only_level_value.Not())
+                    self.__model.add(sum(p_level[level]) >= min_max).only_enforce_if(has_only_level_value)
+                    assignments_per_level[level].append(has_only_level_value)
 
         if self.__use_level:
             # Adds the weighted level combinations to the soft constraints.
@@ -561,7 +567,8 @@ class AssignmentAlgorithm:
         self.__extract_result_info(solver)
 
         # Logs the result info.
-        logging.debug(f"OR-Tools: Result info: {self.__result_info}")
+        logger = logging.getLogger(__name__)
+        logger.debug(f"OR-Tools: Result info: {self.__result_info}")
 
         # The status of the solver:
         # OPTIMAL 	    An optimal feasible solution was found.
@@ -615,5 +622,3 @@ class AssignmentAlgorithm:
 
 class AssignmentAlgorithmException(Exception):
     """Exception, which is thrown by the *AssignmentAlgo* class."""
-
-    pass

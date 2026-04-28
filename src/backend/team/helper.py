@@ -1,7 +1,7 @@
 from itertools import groupby
 
 from app.models import DevSettings, Info, Project, Settings, Student
-from django.db.models import F, ProtectedError, Sum
+from django.db.models import F, ProtectedError
 from django.utils import timezone
 from poll.helper import (
     get_happiness_icon,
@@ -308,11 +308,11 @@ def save_teams_to_db(result):
         ).pk
 
         # Creates the team objects per project instance.
-        for result in assignments_per_instance_idx:
+        for assignment in assignments_per_instance_idx:
             # Gets the student ID.
-            student_id = id_idx_mappings["student"]["algo2db"].get(result[1])
+            student_id = id_idx_mappings["student"]["algo2db"].get(assignment[1])
             # Gets the score.
-            score = result[2]
+            score = assignment[2]
             # Creates the team object.
             team = Team(
                 project_id=project_id,
@@ -421,7 +421,7 @@ def get_teams_for_view() -> dict:
                 "is_out": team.student.is_out,
                 "score": team.score,  # score from algorithm
                 "stats": get_poll_stats_for_student(team),
-                "is_visible": False if team.student.is_out or team.student.is_wing and settings.wings_are_out else True,
+                "is_visible": not (team.student.is_out or team.student.is_wing and settings.wings_are_out),
                 "css_classes": [],
             }
 

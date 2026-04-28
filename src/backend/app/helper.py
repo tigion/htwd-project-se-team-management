@@ -22,7 +22,7 @@ def get_free_project_pids() -> list:
 
     allowed_pids = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     used_pids = list(Project.objects.values_list("pid", flat=True))
-    free_pids = list(pid for pid in allowed_pids if pid not in used_pids)
+    free_pids = [pid for pid in allowed_pids if pid not in used_pids]
 
     return free_pids
 
@@ -252,7 +252,7 @@ def get_statistics_for_view() -> dict:
 
     # Fill the "level" part.
     level_counts = []
-    for key, poll_level in POLL_LEVELS["choices"].items():
+    for poll_level in POLL_LEVELS["choices"].values():
         level_count = LevelAnswer.objects.filter(level=poll_level["value"]).count()
         level_counts.append({
             "level": poll_level,

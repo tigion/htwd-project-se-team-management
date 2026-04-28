@@ -99,7 +99,7 @@ class ProjectAnswer(models.Model):
     )
 
     class Meta:
-        unique_together = ["poll", "project"]
+        unique_together = ("poll", "project")
 
     def __str__(self) -> str:
         return f"{self.poll.student.name2} - {self.project.pid}"
