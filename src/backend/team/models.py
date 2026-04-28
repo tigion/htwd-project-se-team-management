@@ -1,6 +1,5 @@
-from django.db import models
 from app.models import Project, Student
-
+from django.db import models
 
 # Create your models here.
 
@@ -10,10 +9,8 @@ class ProjectInstance(models.Model):
     number = models.IntegerField()
 
     class Meta:
-        # unique_together = ["project", "number"]  # may be deprecated in the future
-        constraints = [
-            models.UniqueConstraint(fields=["project", "number"], name="unique_project_number"),
-        ]
+        # unique_together = ("project", "number")  # may be deprecated in the future
+        constraints = (models.UniqueConstraint(fields=["project", "number"], name="unique_project_number"),)
         ordering = (
             "project",
             "number",

@@ -1,18 +1,17 @@
 from itertools import groupby
-from django.utils import timezone
-from django.db.models import F, Sum
 
-from app.models import Project, Student, Settings, DevSettings, Info
-from poll.models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
+from app.models import DevSettings, Info, Project, Settings, Student
+from django.db.models import F, ProtectedError
+from django.utils import timezone
 from poll.helper import (
+    get_happiness_icon,
     get_number_of_students_per_level,
     get_poll_stats_for_student,
-    get_happiness_icon,
 )
+from poll.models import POLL_LEVELS, POLL_SCORES, LevelAnswer, Poll, ProjectAnswer
 
-from .models import ProjectInstance, Team
 from .algorithm import AssignmentAlgorithm
-
+from .models import ProjectInstance, Team
 
 # Stores the ID to index mappings between database (model) and algorithm.
 id_idx_mappings = {
@@ -309,11 +308,11 @@ def save_teams_to_db(result):
         ).pk
 
         # Creates the team objects per project instance.
-        for result in assignments_per_instance_idx:
+        for assignment in assignments_per_instance_idx:
             # Gets the student ID.
-            student_id = id_idx_mappings["student"]["algo2db"].get(result[1])
+            student_id = id_idx_mappings["student"]["algo2db"].get(assignment[1])
             # Gets the score.
-            score = result[2]
+            score = assignment[2]
             # Creates the team object.
             team = Team(
                 project_id=project_id,
@@ -422,7 +421,7 @@ def get_teams_for_view() -> dict:
                 "is_out": team.student.is_out,
                 "score": team.score,  # score from algorithm
                 "stats": get_poll_stats_for_student(team),
-                "is_visible": False if team.student.is_out or team.student.is_wing and settings.wings_are_out else True,
+                "is_visible": not (team.student.is_out or team.student.is_wing and settings.wings_are_out),
                 "css_classes": [],
             }
 
@@ -482,3 +481,17 @@ def get_teams_for_view() -> dict:
     }
 
     return data
+
+
+def delete_team_data_for_student(student_id: int):
+    """
+    Deletes the team for the given student ID.
+
+    Args:
+        student_id: The ID of the student.
+    """
+
+    try:
+        Team.objects.filter(student_id=student_id).delete()
+    except ProtectedError as e:
+        print(f"Error deleting team data for student ID {student_id}: {e}")

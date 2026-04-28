@@ -1,11 +1,10 @@
+import random
+
+from app.models import DevSettings, Info, Project, Student
+from django.db.models import Avg, Max, Min, ProtectedError, Sum
 from django.utils import timezone
 
-from django.db.models import Sum, Avg, Min, Max
-
-from app.models import Student, Project, Info, DevSettings
-from .models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
-
-import random
+from .models import POLL_LEVELS, POLL_SCORES, LevelAnswer, Poll, ProjectAnswer
 
 
 def prepare_poll_data_from_post(student, POST, projects):
@@ -115,9 +114,68 @@ def load_poll_data_for_form(student, projects):
     return poll_data
 
 
-def generate_poll_data_for_students_without_poll():
+def generate_poll_data(student, projects, dev_settings):
     """
-    Generates the poll data for all students without a poll.
+    Generates the poll data for the given student and projects.
+
+    Uses for the project answers the default score or optionally
+    random scores.
+    """
+
+    poll = Poll.objects.create(
+        student=student,
+        is_generated=True,
+    )
+    for project in projects:
+        ProjectAnswer.objects.create(
+            poll=poll,
+            project=project,
+            score=(
+                POLL_SCORES["default"]
+                if not dev_settings.use_random_poll_defaults
+                else random.randint(
+                    POLL_SCORES["min"] if project.pid != "A" else POLL_SCORES["min"] + 2,
+                    POLL_SCORES["max"] if project.pid != "B" else POLL_SCORES["max"] - 2,
+                )
+            ),
+        )
+    random_level = 3
+    x = random.randint(1, 20)
+    if x < 10:
+        random_level = 3
+    elif x < 15:
+        random_level = 2
+    elif x < 19:
+        random_level = 1
+    else:
+        random_level = 4
+    LevelAnswer.objects.create(
+        poll=poll,
+        level=(
+            POLL_LEVELS["default"] if not dev_settings.use_random_poll_defaults else random_level
+            # else random.randint(POLL_LEVELS["min"], POLL_LEVELS["max"])
+        ),
+    )
+
+
+def generate_missing_poll_data_for_student(student):
+    """
+    Generates the poll data for the given student if the student has no poll.
+    """
+
+    # Check if the student has a poll already. If yes, do nothing.
+    if Poll.objects.filter(student=student).exists():
+        return
+
+    dev_settings = DevSettings.load()
+    projects = Project.objects.all()
+    generate_poll_data(student, projects, dev_settings)
+
+
+def generate_missing_poll_data():
+    """
+    Generates the poll data for all students without a poll or
+    projects without a project answer.
 
     Uses for the project answers the default score or optionally
     random scores.
@@ -130,40 +188,7 @@ def generate_poll_data_for_students_without_poll():
     projects_without_answers = Project.objects.filter(projectanswer__isnull=True)
 
     for student in students_without_answers:
-        poll = Poll.objects.create(
-            student=student,
-            is_generated=True,
-        )
-        for project in projects:
-            ProjectAnswer.objects.create(
-                poll=poll,
-                project=project,
-                score=(
-                    POLL_SCORES["default"]
-                    if not dev_settings.use_random_poll_defaults
-                    else random.randint(
-                        POLL_SCORES["min"] if project.pid != "A" else POLL_SCORES["min"] + 2,
-                        POLL_SCORES["max"] if project.pid != "B" else POLL_SCORES["max"] - 2,
-                    )
-                ),
-            )
-        random_level = 3
-        x = random.randint(1, 20)
-        if x < 10:
-            random_level = 3
-        elif x < 15:
-            random_level = 2
-        elif x < 19:
-            random_level = 1
-        else:
-            random_level = 4
-        LevelAnswer.objects.create(
-            poll=poll,
-            level=(
-                POLL_LEVELS["default"] if not dev_settings.use_random_poll_defaults else random_level
-                # else random.randint(POLL_LEVELS["min"], POLL_LEVELS["max"])
-            ),
-        )
+        generate_poll_data(student, projects, dev_settings)
 
     for project in projects_without_answers:
         for poll in polls:
@@ -197,7 +222,8 @@ def get_project_ids_ordered_by_score():
     """
 
     project_ids = (
-        ProjectAnswer.objects.values("project")
+        ProjectAnswer.objects
+        .values("project")
         .annotate(total_score=Sum("score"), avg_score=Avg("score"))
         .order_by("-total_score")
     )
@@ -358,3 +384,19 @@ def get_happiness_icon(score: float) -> str:
     icon = '<i class="bu bi-' + poll_score["icon"] + '-fill" style="color:' + poll_score["color"] + '"></i>'
 
     return icon
+
+
+def delete_poll_data_for_student(student_id: int):
+    """
+    Deletes the poll data for the given student.
+
+    Args:
+        student_id: The ID of the student.
+    """
+
+    try:
+        ProjectAnswer.objects.filter(poll__student__id=student_id).delete()
+        LevelAnswer.objects.filter(poll__student__id=student_id).delete()
+        Poll.objects.filter(student=student_id).delete()
+    except ProtectedError as e:
+        print(f"Error deleting poll data for student ID {student_id}: {e}")

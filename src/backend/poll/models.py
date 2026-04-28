@@ -1,7 +1,6 @@
-from django.db import models
+from app.models import Project, Student
 from django.core.validators import MaxValueValidator, MinValueValidator
-from app.models import Student, Project
-
+from django.db import models
 
 POLL_SCORES = {
     "default": 3,
@@ -100,7 +99,7 @@ class ProjectAnswer(models.Model):
     )
 
     class Meta:
-        unique_together = ["poll", "project"]
+        unique_together = ("poll", "project")
 
     def __str__(self) -> str:
         return f"{self.poll.student.name2} - {self.project.pid}"

@@ -1,43 +1,42 @@
 import logging
-from datetime import datetime
 
 from django.contrib import messages
-from django.core.files import File
-from django.db.models import ProtectedError
-from django.http import FileResponse
-from django.shortcuts import get_object_or_404, render, redirect
-from django.utils.html import format_html
-
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.forms import AuthenticationForm
-# from django.contrib.auth.models import User
-
-from poll.models import POLL_SCORES, POLL_LEVELS
+from django.db.models import ProtectedError
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from poll.helper import (
-    save_poll_data_to_db,
+    delete_poll_data_for_student,
+    generate_missing_poll_data,
+    generate_missing_poll_data_for_student,
     load_poll_data_for_form,
-    generate_poll_data_for_students_without_poll,
+    save_poll_data_to_db,
 )
-
-from team.models import ProjectInstance, Team
-from team.helper import generate_teams, get_teams_for_view
+from poll.models import POLL_LEVELS, POLL_SCORES
 from team.algorithm import AssignmentAlgorithm
+from team.helper import delete_team_data_for_student, generate_teams, get_teams_for_view
+from team.models import ProjectInstance, Team
 
-from .models import Project, Settings, Student, Info, DevSettings
 from .forms import (
+    DevSettingsForm,
     ProjectForm,
+    SettingsForm,
+    SettingsResetForm,
     StudentForm,
     UploadStudentsForm,
-    SettingsForm,
-    DevSettingsForm,
-    SettingsResetForm,
 )
 from .helper import (
+    get_statistics_for_view,
+    get_students_for_view,
     read_students_from_file_to_db,
     reset_data_in_db,
-    get_statistics_for_view,
 )
+from .models import DevSettings, Info, Project, Settings, Student
 from .pdf import generate_teams_pdf
 
 # Creates the logger.
@@ -98,12 +97,14 @@ def student_home(request):
     context["poll_levels"] = POLL_LEVELS
     context["teams"] = get_teams_for_view().get("teams", [])
 
-    if request.method == "POST" and is_student:
-        # Check: Do only allow saving, if polls are writable
-        if settings.poll_is_writable:
-            # save poll data
-            save_poll_data_to_db(student, request.POST, projects)
-            return redirect("home")
+    if request.method == "POST" and is_student and settings.poll_is_writable:
+        # save poll data
+        save_poll_data_to_db(student, request.POST, projects)
+        messages.success(
+            request,
+            "Antworten gespeichert. Änderungen sind möglich, solange der Fragebogen nicht gesperrt ist.",
+        )
+        return redirect("home")
 
     # load poll data to context for prefilled form
     form_poll_data = load_poll_data_for_form(student, projects)
@@ -142,10 +143,9 @@ def project_edit(request, id=None):
         form = ProjectForm(request.POST or None, instance=project)
         context["project"] = Project.objects.get(id=id)
 
-    if request.method == "POST":
-        if form.is_valid():
-            form.save()
-            return redirect("projects")
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect("projects")
 
     context["ProjectForm"] = form
     return render(request, "lecturer/project.html", context)
@@ -179,25 +179,21 @@ def students(request):
 
     context = {}
     context["settings"] = settings
-    context["students"] = Student.objects.all().order_by("last_name", "first_name", "s_number")
+    context["students"] = get_students_for_view()
+    context["project_instances"] = ProjectInstance.objects.all()
 
     form = UploadStudentsForm(request.POST or None, request.FILES or None)
-    if request.method == "POST":
-        # file = request.FILES["file"]
-        # if not file.name.endswith("csv"):
-        #     messages.info(request, "Please Upload the CSV File only")
-        #     return ...
-        if form.is_valid():
-            try:
-                read_students_from_file_to_db(request.FILES.get("file"), request.POST.get("mode", 1))
-            except ProtectedError:
-                messages.error(
-                    request,
-                    format_html(
-                        'Achtung: Import von Studenten fehlgeschlagen!<br /><ul class="mb-0"><li>Studenten können nicht ersetzend importiert werden, solange vorhandene Studenten Teams zugeteilt sind</li></ul>',
-                    ),
-                )
-            return redirect("students")
+    if request.method == "POST" and form.is_valid():
+        try:
+            read_students_from_file_to_db(request.FILES.get("file"), request.POST.get("mode", 1))
+        except ProtectedError:
+            messages.error(
+                request,
+                mark_safe(
+                    'Achtung: Import von Studenten fehlgeschlagen!<br /><ul class="mb-0"><li>Studenten können nicht ersetzend importiert werden, solange vorhandene Studenten Teams zugeteilt sind</li></ul>',
+                ),
+            )
+        return redirect("students")
 
     context["UploadStudentsForm"] = form
     return render(request, "lecturer/students.html", context)
@@ -221,10 +217,9 @@ def student_edit(request, id=None):
         form = StudentForm(request.POST or None, instance=student)
         context["student"] = Student.objects.get(id=id)
 
-    if request.method == "POST":
-        if form.is_valid():
-            form.save()
-            return redirect("students")
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect("students")
 
     context["StudentForm"] = form
     return render(request, "lecturer/student.html", context)
@@ -236,13 +231,76 @@ def student_edit(request, id=None):
 def student_delete(request, id=None):
     if request.method == "POST":
         student = get_object_or_404(Student, id=id)
+
+        # Do not allow deletion of student, if he is assigned to a team with a project instance.
+        if Team.objects.filter(student=student, project_instance__isnull=False).exists():
+            messages.error(
+                request,
+                f'Achtung: Student "{student.name2}" kann nicht gelöscht werden, da er einem Team zugeordnet ist!',
+            )
+            return redirect("students")
+
         try:
+            delete_poll_data_for_student(student.pk)
+            delete_team_data_for_student(student.pk)
             student.delete()
+            messages.success(request, f'Student "{student.name2}" wurde gelöscht!')
         except ProtectedError:
             messages.error(
                 request,
-                f'Achtung: Student "{student.name2}" kann nicht gelöscht werden, da er einem Team zugeteilt ist!',
+                f'Achtung: Student "{student.name2}" kann nicht gelöscht werden, es bestehen noch Abhängigkeiten in der Datenbank!',
             )
+
+    return redirect("students")
+
+
+@login_required
+@permission_required("app.view_student")
+def student_set_team(request, id=None):
+    if request.method == "POST":
+        student = get_object_or_404(Student, id=id)
+        project_instance_id = request.POST.get("project_instance_id")
+
+        # Remove team assignment if project_instance_id is "0".
+        if project_instance_id == "0":
+            team = Team.objects.filter(student=student).first()
+            if team:
+                old_piid = team.project_instance.piid
+                team.project_instance = None
+                team.save()
+                messages.success(request, f'Student "{student.name2}" wurde aus Team {old_piid} entfernt!')
+            return redirect("students")
+
+        project_instance = (
+            ProjectInstance.objects.filter(id=project_instance_id).first() if project_instance_id else None
+        )
+
+        # Do not allow setting team, if no project instance is found for the given id.
+        if not project_instance:
+            messages.error(
+                request, "Achtung: Teamzuweisung fehlgeschlagen! Es muss eine gültige Projektinstanz ausgewählt werden."
+            )
+            return redirect("students")
+
+        # Set new team assignment for the student. If no team exists yet, create a new one.
+        team = Team.objects.filter(student=student).first()
+        if team and team.project_instance != project_instance:
+            old_piid = team.project_instance.piid if team.project_instance else None
+            team.project_instance = project_instance
+            team.save()
+            msg = (
+                f'Student "{student.name2}" wurde von Team {old_piid} in Team {team.project_instance.piid} verschoben!'
+            )
+            if not old_piid:
+                msg = f'Student "{student.name2}" wurde Team {team.project_instance.piid} zugewiesen!'
+            messages.success(request, msg)
+
+        else:
+            generate_missing_poll_data_for_student(student)
+            team = Team.objects.create(
+                student=student, project=project_instance.project, project_instance=project_instance, score=50
+            )
+            messages.success(request, f'Student "{student.name2}" wurde Team {team.project_instance.piid} zugewiesen!')
 
     return redirect("students")
 
@@ -275,21 +333,19 @@ def teams_generate(request):
     settings = Settings.load()
 
     if request.method == "POST":
-        # Check: Do not allow generation, if teams are visible
-        if not settings.teams_is_visible:
-            # Check: Needed data
-            if not Project.objects.exists() or not Student.objects.exists():
-                messages.error(
-                    request,
-                    format_html(
-                        'Achtung: Teamgenerierung fehlgeschlagen!<br /><ul class="mb-0"><li>Es müssen mindestens ein Projekte ({}) und ein Student ({}) vorhanden sein.</li></ul>',
-                        Project.objects.count(),
-                        Student.objects.count(),
-                    ),
-                )
-                return redirect("teams")
+        # Check: Do not allow generation, if teams are visible or if there are no projects or students.
+        if not settings.teams_is_visible and (not Project.objects.exists() or not Student.objects.exists()):
+            messages.error(
+                request,
+                format_html(
+                    'Achtung: Teamgenerierung fehlgeschlagen!<br /><ul class="mb-0"><li>Es müssen mindestens ein Projekte ({}) und ein Student ({}) vorhanden sein.</li></ul>',
+                    Project.objects.count(),
+                    Student.objects.count(),
+                ),
+            )
+            return redirect("teams")
 
-        generate_poll_data_for_students_without_poll()
+        generate_missing_poll_data()
         generate_teams()
 
     return redirect("teams")
@@ -309,7 +365,7 @@ def teams_delete(request):
 @permission_required("team.view_team")
 def teams_print(request):
     if request.method == "POST":
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        timestamp = timezone.localtime(timezone.now()).strftime("%Y%m%d-%H%M%S")
         filename = f"teams_{timestamp}.pdf"
         response = FileResponse(generate_teams_pdf(), as_attachment=True, filename=filename)
 
@@ -344,10 +400,9 @@ def settings(request):
 
     form = SettingsForm(request.POST or None, instance=settings)
 
-    if request.method == "POST":
-        if form.is_valid():
-            form.save()
-            return redirect("settings")
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect("settings")
 
     context["SettingsForm"] = form
     context["SettingsResetForm"] = SettingsResetForm()
@@ -385,16 +440,20 @@ def settings_backup(request):
         return redirect("settings")
 
     # Sets the backup file name.
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    timestamp = timezone.localtime(timezone.now()).strftime("%Y%m%d-%H%M%S")
     filename = f"db_backup_{timestamp}.sqlite3"
 
     # Opens the database file.
-    db_file = File(open(settings.DATABASES["default"]["NAME"], "rb"))
+    response = FileResponse(
+        open(settings.DATABASES["default"]["NAME"], "rb"),  # noqa: SIM115 (Django FileResponse context)
+        as_attachment=True,
+        filename=filename,
+    )
 
     # Variant 1: FileResponse
     # - content type (application/vnd.sqlite3) and length are set automatically
-    response = FileResponse(db_file, as_attachment=True, filename=filename)
-
+    # response = FileResponse(db_file, as_attachment=True, filename=filename)
+    #
     # Variant 2: HttpResponse
     # response = HttpResponse(db_file, content_type="application/x-sqlite3")
     # response["Content-Disposition"] = f"attachment; filename={filename}"
@@ -418,10 +477,9 @@ def dev_settings(request):
 
     form = DevSettingsForm(request.POST or None, instance=dev_settings)
 
-    if request.method == "POST":
-        if form.is_valid():
-            form.save()
-            return redirect("dev")
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect("dev")
 
     context["DevSettingsForm"] = form
     return render(request, "lecturer/dev-settings.html", context)

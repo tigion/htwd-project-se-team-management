@@ -1,15 +1,13 @@
 import csv
 import re
-
 from io import StringIO
 
 from django.db.models import Count
-
-from poll.models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
 from poll.helper import get_project_ids_ordered_by_score
-from team.models import Team, ProjectInstance
+from poll.models import POLL_LEVELS, POLL_SCORES, LevelAnswer, Poll, ProjectAnswer
+from team.models import ProjectInstance, Team
 
-from .models import STUDY_PROGRAM_CHOICES, Project, Settings, Student, Info
+from .models import STUDY_PROGRAM_CHOICES, Info, Project, Settings, Student
 
 
 def get_free_project_pids() -> list:
@@ -24,7 +22,7 @@ def get_free_project_pids() -> list:
 
     allowed_pids = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     used_pids = list(Project.objects.values_list("pid", flat=True))
-    free_pids = list(pid for pid in allowed_pids if pid not in used_pids)
+    free_pids = [pid for pid in allowed_pids if pid not in used_pids]
 
     return free_pids
 
@@ -144,6 +142,31 @@ def reset_data_in_db(delete_only_polls_and_teams=False):
     ProjectAnswer.objects.all().delete()
 
 
+def get_students_for_view() -> list:
+    """
+    Returns the students for the view.
+    """
+
+    view_students = []
+
+    students = Student.objects.all().order_by("last_name", "first_name", "s_number")
+    for student in students:
+        team = Team.objects.filter(student=student).first()
+        project_instance = team.project_instance if team and team.project_instance else None
+        view_students.append({
+            "is_active": student.is_active,
+            "s_number": student.s_number,
+            "is_out": student.is_out,
+            "name": student.name,
+            "study_program": student.study_program,
+            "id": student.id,  # type: ignore
+            "name2": student.name2,
+            "project_instance": project_instance,
+        })
+
+    return view_students
+
+
 def get_counts_for_view() -> dict:
     """
     Returns the number of projects, students and teams.
@@ -229,7 +252,7 @@ def get_statistics_for_view() -> dict:
 
     # Fill the "level" part.
     level_counts = []
-    for key, poll_level in POLL_LEVELS["choices"].items():
+    for poll_level in POLL_LEVELS["choices"].values():
         level_count = LevelAnswer.objects.filter(level=poll_level["value"]).count()
         level_counts.append({
             "level": poll_level,

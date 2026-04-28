@@ -1,6 +1,5 @@
-from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
-
+from django.db import models
 
 # choices
 
@@ -109,7 +108,7 @@ class Student(models.Model):
 
     @property
     def is_wing(self):
-        return True if self.study_program == "072" else False
+        return self.study_program == "072"
 
     @property
     def is_out(self):
@@ -129,7 +128,7 @@ class Singleton(models.Model):
 
     def save(self, *args, **kwargs):
         self.pk = 1
-        super(Singleton, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):  # pyright: ignore[reportIncompatibleMethodOverride]
         pass

@@ -1,13 +1,12 @@
-import datetime
 from io import BytesIO
 
+from django.utils import timezone
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph, Table, TableStyle
-
 from team.helper import get_teams_for_view
 
 
@@ -44,8 +43,9 @@ def generate_teams_pdf():
     # Draws the header.
     title = "Teamzusammenstellung - Software Engineering"
     c.drawCentredString(width / 2, height - margin - 12, title)
-    now = datetime.datetime.now()
+    now = timezone.localtime(timezone.now())
     timestamp = f"Stand: {now.strftime('%d.%m.%Y %H:%M:%S')}"
+    # timestamp = f"Stand: {timezone.localtime(timezone.now()).strftime("%d.%m.%Y %H:%M:%S")}"
     c.setFontSize(8)
     c.drawCentredString(width / 2, height - margin - 25, timestamp)
 
@@ -73,7 +73,7 @@ def generate_teams_pdf():
             student_name = student["name"]
             styles["student_name"].textColor = "#000000"
             if student["is_initial_contact"]:
-                student_name = f"<b>{student_name}</b> <i>(PL)</i>"
+                student_name = f"<b>{student_name}</b> <i>(AP)</i>"
             student_name = f"{student_name} <i>({student['study_program_short']})</i>"
             # if student["is_wing"]:
             #     student_name = f"{student_name} <i>(Wing)</i>"
