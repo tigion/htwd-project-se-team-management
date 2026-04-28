@@ -1,15 +1,13 @@
 import csv
 import re
-
 from io import StringIO
 
 from django.db.models import Count
-
-from poll.models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
 from poll.helper import get_project_ids_ordered_by_score
-from team.models import Team, ProjectInstance
+from poll.models import POLL_LEVELS, POLL_SCORES, LevelAnswer, Poll, ProjectAnswer
+from team.models import ProjectInstance, Team
 
-from .models import STUDY_PROGRAM_CHOICES, Project, Settings, Student, Info
+from .models import STUDY_PROGRAM_CHOICES, Info, Project, Settings, Student
 
 
 def get_free_project_pids() -> list:

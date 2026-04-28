@@ -1,11 +1,10 @@
+import random
+
+from app.models import DevSettings, Info, Project, Student
+from django.db.models import Avg, Max, Min, ProtectedError, Sum
 from django.utils import timezone
 
-from django.db.models import ProtectedError, Sum, Avg, Min, Max
-
-from app.models import Student, Project, Info, DevSettings
-from .models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
-
-import random
+from .models import POLL_LEVELS, POLL_SCORES, LevelAnswer, Poll, ProjectAnswer
 
 
 def prepare_poll_data_from_post(student, POST, projects):

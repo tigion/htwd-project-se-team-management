@@ -10,11 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+
 import ldap
 from django_auth_ldap.config import LDAPSearch
 from dotenv import load_dotenv
-import os
 
 # Loads the environment variables from .env (if exist for local tests) in django root.
 # - don't overwrites environment variables from docker (compose.yaml)

@@ -1,12 +1,13 @@
 from django import forms
 from django.forms import ModelForm
-from .models import (
-    Project,
-    Student,
-    Settings,
-    DevSettings,
-)
+
 from .helper import get_free_project_pids
+from .models import (
+    DevSettings,
+    Project,
+    Settings,
+    Student,
+)
 
 
 class ProjectForm(ModelForm):

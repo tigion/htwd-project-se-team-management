@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 
-# Django
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, permission_required
@@ -11,8 +10,6 @@ from django.db.models import ProtectedError
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.html import format_html
-
-# Project
 from poll.helper import (
     delete_poll_data_for_student,
     generate_missing_poll_data,

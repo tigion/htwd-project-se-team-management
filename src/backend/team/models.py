@@ -1,6 +1,5 @@
-from django.db import models
 from app.models import Project, Student
-
+from django.db import models
 
 # Create your models here.
 

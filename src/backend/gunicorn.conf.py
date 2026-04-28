@@ -1,7 +1,8 @@
 # source: https://github.com/benoitc/gunicorn/blob/master/examples/example_config.py
 from multiprocessing import cpu_count
-from dotenv import load_dotenv
 from os import environ
+
+from dotenv import load_dotenv
 
 # load environment variables
 load_dotenv()

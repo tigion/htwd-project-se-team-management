@@ -1,18 +1,17 @@
 from itertools import groupby
-from django.utils import timezone
-from django.db.models import F, ProtectedError, Sum
 
-from app.models import Project, Student, Settings, DevSettings, Info
-from poll.models import POLL_SCORES, POLL_LEVELS, Poll, ProjectAnswer, LevelAnswer
+from app.models import DevSettings, Info, Project, Settings, Student
+from django.db.models import F, ProtectedError, Sum
+from django.utils import timezone
 from poll.helper import (
+    get_happiness_icon,
     get_number_of_students_per_level,
     get_poll_stats_for_student,
-    get_happiness_icon,
 )
+from poll.models import POLL_LEVELS, POLL_SCORES, LevelAnswer, Poll, ProjectAnswer
 
-from .models import ProjectInstance, Team
 from .algorithm import AssignmentAlgorithm
-
+from .models import ProjectInstance, Team
 
 # Stores the ID to index mappings between database (model) and algorithm.
 id_idx_mappings = {

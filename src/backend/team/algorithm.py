@@ -3,12 +3,11 @@ This module implements the assignment algorithm that assigns students
 to projects as optimally as possible based on their survey responses.
 """
 
-import math
 import logging
-
-from ortools.sat.python import cp_model
+import math
 
 from django.conf import settings
+from ortools.sat.python import cp_model
 
 
 class AssignmentAlgorithm:

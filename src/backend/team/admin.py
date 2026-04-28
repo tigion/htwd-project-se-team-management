@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import ProjectInstance, Team
 
 # Register your models here.

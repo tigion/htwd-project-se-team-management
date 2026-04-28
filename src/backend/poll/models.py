@@ -1,7 +1,6 @@
-from django.db import models
+from app.models import Project, Student
 from django.core.validators import MaxValueValidator, MinValueValidator
-from app.models import Student, Project
-
+from django.db import models
 
 POLL_SCORES = {
     "default": 3,
