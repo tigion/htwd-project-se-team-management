@@ -6,7 +6,17 @@
       <div class="card-header text-break" style="min-height: 6.75em">
         <div>
           <span class="float-start"><i class="bi bi-people-fill me-1"></i> <strong>{{ team.project_instance.piid }}</strong></span>
-          <span class="float-end text-muted small">{% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %} <i class="bi bi-person-fill ms-3 me-1"></i>{% if team.student_active_count != team.students|length %}{{ team.student_active_count }}/{% endif %}{{ team.students|length }} <a href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope ms-3 text-muted"></i></a></span><br>
+          <span class="float-end text-muted small">
+            {% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %}
+            <i class="bi bi-person-fill ms-3 me-1"></i>{% if team.student_active_count != team.students|length %}{{ team.student_active_count }}/{% endif %}{{ team.students|length }}
+            <div class="dropdown d-inline-block">
+              <a class="" href="#" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-envelope ms-3 text-muted"></i></a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item small" href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope-heart me-2 text-muted"></i>Standard</a></li>
+                <li><a class="dropdown-item small" href="mailto:{{ team.emails|join:';' }}"><i class="bi bi-envelope me-2 text-muted"></i>Outlook</a></li>
+              </ul>
+            </div>
+          </span><br>
         </div>
         <div class="clearfix mt-1 lh-sm">
           <small>{{ team.project_instance.project.name }}</small>
