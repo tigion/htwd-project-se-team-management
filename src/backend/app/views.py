@@ -100,6 +100,10 @@ def student_home(request):
     if request.method == "POST" and is_student and settings.poll_is_writable:
         # save poll data
         save_poll_data_to_db(student, request.POST, projects)
+        messages.success(
+            request,
+            "Antworten gespeichert. Änderungen sind möglich, solange der Fragebogen nicht gesperrt ist.",
+        )
         return redirect("home")
 
     # load poll data to context for prefilled form
