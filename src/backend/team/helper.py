@@ -415,6 +415,10 @@ def get_teams_for_view() -> dict:
                 "project": team.url_project,
                 "miro": team.url_miro,
             },
+            "coach": {
+                "name": team.coach_name,
+                "email": team.coach_email,
+            },
             "project_instance": team.project_instance,
             "students": [],
             "student_active_count": 0,

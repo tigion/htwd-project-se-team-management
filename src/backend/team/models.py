@@ -26,6 +26,8 @@ class Team(models.Model):
     url_repository = models.URLField(blank=True, null=True, verbose_name="Link zum GitHub Repository")
     url_project = models.URLField(blank=True, null=True, verbose_name="Link zum GitHub Project")
     url_miro = models.URLField(blank=True, null=True, verbose_name="Link zum Miro Board")
+    coach_name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Name des Coaches")
+    coach_email = models.EmailField(blank=True, null=True, verbose_name="E-Mail des Coaches")
 
     class Meta:
         ordering = ("project_instance",)
