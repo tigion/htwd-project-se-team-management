@@ -1,3 +1,5 @@
+{# vim: set ft=htmldjango: #}
+
 {% if teams %}
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4">
   {% for team in teams %}
@@ -9,13 +11,7 @@
           <span class="float-end text-muted small">
             {% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %}
             <i class="bi bi-person-fill ms-3 me-1"></i>{% if team.student_active_count != team.students|length %}{{ team.student_active_count }}/{% endif %}{{ team.students|length }}
-            <div class="dropdown d-inline-block">
-              <a class="" href="#" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-envelope ms-3 text-muted"></i></a>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item small" href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope-heart me-2 text-muted"></i>Standard</a></li>
-                <li><a class="dropdown-item small" href="mailto:{{ team.emails|join:';' }}"><i class="bi bi-envelope me-2 text-muted"></i>Outlook</a></li>
-              </ul>
-            </div>
+            {% include "teams/settings.inc.html" %}
           </span><br>
         </div>
         <div class="clearfix mt-1 lh-sm">
@@ -53,7 +49,7 @@
           {% endfor %}
         </ul>
       </div>
-      <!-- <div class="card-footer text-center"></div> -->
+      {# <div class="card-footer text-center"></div> #}
     </div>
   </div>
   {% endfor %}

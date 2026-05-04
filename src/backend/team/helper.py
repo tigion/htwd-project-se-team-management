@@ -11,7 +11,7 @@ from poll.helper import (
 from poll.models import POLL_LEVELS, POLL_SCORES, LevelAnswer, Poll, ProjectAnswer
 
 from .algorithm import AssignmentAlgorithm
-from .models import ProjectInstance, Team
+from .models import ProjectInstance, Team, TeamMember
 
 # Stores the ID to index mappings between database (model) and algorithm.
 id_idx_mappings = {
@@ -31,6 +31,7 @@ def clean_up():
     Deletes all existing teams and recreates the project instances.
     """
 
+    TeamMember.objects.all().delete()
     Team.objects.all().delete()
     recreate_project_instances()
 
@@ -285,8 +286,9 @@ def save_teams_to_db(result):
     info = result["info"] or {}
     project_instance_counts = {}
     teams = []
+    team_members = []
 
-    # Creates the team objects with project instance numbers in sequential order.
+    # Creates the team member objects with project instance numbers in sequential order.
     for instance_idx, assignments_per_instance_idx in groupby(assignments, lambda x: x[0]):
         assignments_per_instance_idx = list(assignments_per_instance_idx)
 
@@ -307,25 +309,28 @@ def save_teams_to_db(result):
             project=project_id, number=project_instance_counts[project_id]
         ).pk
 
-        # Creates the team objects per project instance.
+        # Creates the team objects per used project instance.
+        teams.append(Team(project_instance_id=new_project_instance_id))
+
+        # Creates the team member objects per used project instance.
         for assignment in assignments_per_instance_idx:
             # Gets the student ID.
             student_id = id_idx_mappings["student"]["algo2db"].get(assignment[1])
             # Gets the score.
             score = assignment[2]
-            # Creates the team object.
-            team = Team(
-                project_id=project_id,
-                project_instance_id=new_project_instance_id,
+            # Creates the team member object.
+            team_member = TeamMember(
+                team=teams[-1],
                 student_id=student_id,
                 student_is_initial_contact=False,
                 score=score,
             )
             # Adds the team object to the list.
-            teams.append(team)
+            team_members.append(team_member)
 
     # Saves the team objects.
     Team.objects.bulk_create(teams)
+    TeamMember.objects.bulk_create(team_members)
 
     # Saves the result info.
     result_infos = []
@@ -339,17 +344,17 @@ def save_teams_to_db(result):
     Info.objects.update_or_create(defaults=values)
 
 
-def set_initial_project_leaders():
+def set_initial_contact_person():
     """
-    Sets a random project leader for each project.
+    Sets a random contact person for each project.
     """
 
-    project_instances = ProjectInstance.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
-    for project_instance in project_instances:
-        teams = Team.objects.filter(project_instance=project_instance).order_by("?")
-        if len(teams) > 0:
-            teams[0].student_is_initial_contact = True
-            teams[0].save()
+    teams = Team.objects.filter(teammember__isnull=False).distinct()
+    for team in teams:
+        team_members = TeamMember.objects.filter(team=team).order_by("?")
+        if len(team_members) > 0:
+            team_members[0].student_is_initial_contact = True
+            team_members[0].save()
 
 
 def generate_teams() -> bool:
@@ -374,8 +379,8 @@ def generate_teams() -> bool:
     # Saves the teams to the database.
     save_teams_to_db(result)
 
-    # Sets the initial project leaders.
-    set_initial_project_leaders()
+    # Sets the initial contact person.
+    set_initial_contact_person()
 
     return True
 
@@ -384,6 +389,8 @@ def get_teams_for_view() -> dict:
     """
     Returns the prepared teams for the view.
     """
+
+    # TODO: Refactor to use Team + TeamMember instead of ProjectInstance + TeamMember.
 
     settings = Settings.load()
 
@@ -398,10 +405,12 @@ def get_teams_for_view() -> dict:
     total_happiness_score = 0
     total_happiness_poll_score = 0
 
-    project_instances = ProjectInstance.objects.filter(team__isnull=False).values_list("id", flat=True).distinct()
-    for project_instance in project_instances:
-        data_set = {
-            "project_instance": ProjectInstance.objects.get(id=project_instance),
+    teams = Team.objects.all()
+    # project_instances = ProjectInstance.objects.filter(teammember__isnull=False).values_list("id", flat=True).distinct()
+    for team in teams:
+        team_data = {
+            "id": team.pk,
+            "project_instance": team.project_instance,
             "students": [],
             "student_active_count": 0,
             "emails": [],
@@ -410,18 +419,20 @@ def get_teams_for_view() -> dict:
         team_happiness_score = 0
         team_happiness_poll_score = 0
 
-        teams = Team.objects.filter(project_instance=project_instance)
-        for team in teams:
+        team_members = TeamMember.objects.filter(team=team)
+        for team_member in team_members:
             student = {
-                "name": team.student.name,
-                "study_program_short": team.student.study_program_short,
-                "is_initial_contact": team.student_is_initial_contact,
-                "is_wing": team.student.is_wing,
-                "is_active": team.student.is_active,
-                "is_out": team.student.is_out,
-                "score": team.score,  # score from algorithm
-                "stats": get_poll_stats_for_student(team),
-                "is_visible": not (team.student.is_out or team.student.is_wing and settings.wings_are_out),
+                "name": team_member.student.name,
+                "study_program_short": team_member.student.study_program_short,
+                "is_initial_contact": team_member.student_is_initial_contact,
+                "is_wing": team_member.student.is_wing,
+                "is_active": team_member.student.is_active,
+                "is_out": team_member.student.is_out,
+                "score": team_member.score,  # score from algorithm (currently unused)
+                "stats": get_poll_stats_for_student(team_member),
+                "is_visible": not (
+                    team_member.student.is_out or team_member.student.is_wing and settings.wings_are_out
+                ),
                 "css_classes": [],
             }
 
@@ -437,18 +448,18 @@ def get_teams_for_view() -> dict:
 
             # Adds the email and increases active count only for active (visible) students.
             if student["is_visible"]:
-                data_set["emails"].append(team.student.email)
-                data_set["student_active_count"] += 1
+                team_data["emails"].append(team_member.student.email)
+                team_data["student_active_count"] += 1
 
             # Adds the student.
-            data_set["students"].append(student)
+            team_data["students"].append(student)
 
             # Summarizes the students happiness scores in the team.
             team_happiness_score += student["stats"]["happiness"]["total"]
             team_happiness_poll_score += student["stats"]["happiness"]["poll"]["total"]
 
         # Sets the number of students in the team.
-        student_count = len(data_set["students"])
+        student_count = len(team_data["students"])
         total_student_count += student_count
 
         # Summarizes the happiness scores of all teams.
@@ -463,12 +474,12 @@ def get_teams_for_view() -> dict:
         happiness_total_icon = get_happiness_icon(team_happiness_score)
 
         # Adds the happiness summary per team.
-        data_set["happiness"] = {
+        team_data["happiness"] = {
             "summary": f"{happiness_total_icon} <strong>{team_happiness_score}</strong> ({team_happiness_poll_score})"
         }
 
         # Adds the data per team.
-        data["teams"].append(data_set)
+        data["teams"].append(team_data)
 
     # Sets the average happiness scores of all teams.
     if total_student_count > 0:
@@ -483,15 +494,15 @@ def get_teams_for_view() -> dict:
     return data
 
 
-def delete_team_data_for_student(student_id: int):
+def delete_team_member_data_for_student(student_id: int):
     """
-    Deletes the team for the given student ID.
+    Deletes the team member for the given student ID.
 
     Args:
         student_id: The ID of the student.
     """
 
     try:
-        Team.objects.filter(student_id=student_id).delete()
+        TeamMember.objects.filter(student_id=student_id).delete()
     except ProtectedError as e:
-        print(f"Error deleting team data for student ID {student_id}: {e}")
+        print(f"Error deleting team member data for student ID {student_id}: {e}")

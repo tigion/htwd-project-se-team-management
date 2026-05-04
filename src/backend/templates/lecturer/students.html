@@ -21,7 +21,7 @@
 
         <form action="{% url 'student-set-team' student.id %}" method="POST">
           {% csrf_token %}
-          <button class="btn btn-{% if student.project_instance %}outline-success{% else %}warning{% endif %} btn-sm me-md-1" type="button" data-bs-toggle="modal" data-bs-target="#setTeamConfirmationModal-student-{{ student.id }}" style="min-width:70px"><i class="bi bi-people-fill me-1"></i> {{ student.project_instance | default:"-" }}</button>
+          <button class="btn btn-{% if student.team_pk %}outline-success{% else %}warning{% endif %} btn-sm me-md-1" type="button" data-bs-toggle="modal" data-bs-target="#setTeamConfirmationModal-student-{{ student.id }}" style="min-width:70px"><i class="bi bi-people-fill me-1"></i> {{ student.team_piid | default:"-" }}</button>
           <!-- Modal: for set team dialog-->
           <div class="modal fade" id="setTeamConfirmationModal-student-{{ student.id }}" tabindex="-1" aria-labelledby="setTeamConfirmationModalLabel-student-{{ student.id }}" aria-hidden="true">
             <div class="modal-dialog">
@@ -31,13 +31,18 @@
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                  Hiermit wird <strong>{{ student.name2 }}</strong> folgendem Projekt zugeordnet:
-                  <select class="form-select mt-3" name="project_instance_id" required>
-                    <option value="0" {% if not student.project_instance %}selected{% endif %}>- Kein Projekt -</option>
-                    {% for project_instance in project_instances %}
-                    <option value="{{ project_instance.id }}" {% if project_instance.id == student.project_instance.id %}selected{% endif %}>{{ project_instance.piid }} - {{ project_instance.project.name|truncatechars:47 }}</option>
+                  Hiermit wird <strong>{{ student.name2 }}</strong> folgendem Teamprojekt zugeordnet:
+                  <select class="form-select mt-3" name="team_id" required>
+                    <option value="0" {% if not student.team %}selected{% endif %}>- Kein Projekt -</option>
+                    {% for team in teams %}
+                    <option value="{{ team.pk }}" {% if team.pk == student.team_pk %}selected{% endif %}>{{ team.project_instance.piid }} - {{ team.project_instance.project.name|truncatechars:47 }}</option>
                     {% endfor %}
                   </select>
+                  <div class="form-text">
+                    {% if not student.team_pk %}
+                    Studenten, die nach der Teamgenerierung einem Team zugeordnet werden, erhalten eine Standardpunktzahl von 0.5 (neutral)!
+                    {% endif %}
+                  </div>
                 </div>
                 <div class="modal-footer">
                   <button class="btn btn-warning" type="submit"><i class="bi bi-person-plus-fill me-1"></i></i>Zuweisen</button>

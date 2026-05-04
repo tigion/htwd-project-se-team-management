@@ -1,0 +1,43 @@
+{# vim: set ft=htmldjango: #}
+
+<div class="dropdown d-inline-block">
+  <a class="" href="#" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-info-circle ms-3 text-muted"></i></a>
+  <ul class="dropdown-menu">
+    <li><a href="{{ team.project_instance.project.url_repo }}" target="_blank" class="dropdown-item small"><i class="bi bi-github me-2 text-muted"></i>Repository</a></li>
+    <li><a href="{{ team.project_instance.project.url_project }}" target="_blank" class="dropdown-item small"><i class="bi bi-kanban me-2 text-muted"></i>Projekt</a></li>
+    <li><a href="{{ team.project_instance.project.url_miro }}" target="_blank" class="dropdown-item small"><i class="bi bi-diagram-3 me-2 text-muted"></i>Miro Board</a></li>
+    <div class="dropdown-divider"></div>
+    <li><a class="dropdown-item small" href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope-heart me-2 text-muted"></i>Standard</a></li>
+    <li><a class="dropdown-item small" href="mailto:{{ team.emails|join:';' }}"><i class="bi bi-envelope me-2 text-muted"></i>Outlook</a></li>
+    <div class="dropdown-divider"></div>
+    <!-- <li><a href="" class="dropdown-item small"><i class="bi bi-gear me-2 text-muted"></i>Einstellungen</a></li> -->
+
+    <li>
+      <!-- <form action="" method="POST"> -->
+      {% csrf_token %}
+      <a href="" class="dropdown-item small" data-bs-toggle="modal" data-bs-target="#setTeamSettingsModal-{{ team.project_instance.piid }}"><i class="bi bi-gear me-2 text-muted"></i>Einstellungen</a>
+      <!-- </form> -->
+    </li>
+
+  </ul>
+
+  {# Modal: for set team settings #}
+  <div class="modal fade" id="setTeamSettingsModal-{{ team.project_instance.piid }}" tabindex="-1" aria-labelledby="setTeamSettingsModalLabel-{{ team.project_instance.piid }}" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="setTeamSettingsModalLabel-{{ team.project_instance.piid }}">Projektteam zuordnen</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Team ID <strong>{{ team.id }}</strong>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</div>

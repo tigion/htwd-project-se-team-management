@@ -5,7 +5,7 @@ from io import StringIO
 from django.db.models import Count
 from poll.helper import get_project_ids_ordered_by_score
 from poll.models import POLL_LEVELS, POLL_SCORES, LevelAnswer, Poll, ProjectAnswer
-from team.models import ProjectInstance, Team
+from team.models import ProjectInstance, Team, TeamMember
 
 from .models import STUDY_PROGRAM_CHOICES, Info, Project, Settings, Student
 
@@ -123,23 +123,32 @@ def reset_data_in_db(delete_only_polls_and_teams=False):
 
     # Deletes only the polls and teams.
     if delete_only_polls_and_teams:
+        # Team
+        TeamMember.objects.all().delete()
         Team.objects.all().delete()
         ProjectInstance.objects.all().delete()
+        # Poll
         Poll.objects.all().delete()
         ProjectAnswer.objects.all().delete()
+        LevelAnswer.objects.all().delete()
+        # App
         Info.objects.all().delete()
         return
 
     # Deletes all data
+    # Team
+    TeamMember.objects.all().delete()
     Team.objects.all().delete()
+    ProjectInstance.objects.all().delete()
+    # Poll
+    ProjectAnswer.objects.all().delete()
+    LevelAnswer.objects.all().delete()
+    Poll.objects.all().delete()
+    # App
     Project.objects.all().delete()
     Student.objects.all().delete()
     Settings.objects.all().delete()
     Info.objects.all().delete()
-
-    # Deletes possible lost table entries.
-    Poll.objects.all().delete()
-    ProjectAnswer.objects.all().delete()
 
 
 def get_students_for_view() -> list:
@@ -151,17 +160,18 @@ def get_students_for_view() -> list:
 
     students = Student.objects.all().order_by("last_name", "first_name", "s_number")
     for student in students:
-        team = Team.objects.filter(student=student).first()
-        project_instance = team.project_instance if team and team.project_instance else None
+        team_member = TeamMember.objects.filter(student=student).first()
+        team = team_member.team if team_member and team_member.team else None
         view_students.append({
             "is_active": student.is_active,
             "s_number": student.s_number,
             "is_out": student.is_out,
             "name": student.name,
             "study_program": student.study_program,
-            "id": student.id,  # type: ignore
+            "id": student.pk,
             "name2": student.name2,
-            "project_instance": project_instance,
+            "team_pk": team.pk if team else None,
+            "team_piid": team.project_instance.piid if team and team.project_instance else None,
         })
 
     return view_students
@@ -175,7 +185,7 @@ def get_counts_for_view() -> dict:
     counts = {
         "project": Project.objects.count(),
         "student": Student.objects.count(),
-        "team": Team.objects.values_list("project_instance").distinct().count(),
+        "team": Team.objects.count(),
     }
 
     return counts
@@ -191,12 +201,12 @@ def get_statistics_for_view() -> dict:
 
     # Gets the number of objects in the database.
     project_count = Project.objects.count()
-    project_used_count = Project.objects.filter(projectinstance__team__isnull=False).distinct().count()
+    project_used_count = Project.objects.filter(projectinstance__teammember__isnull=False).distinct().count()
     project_instance_count = ProjectInstance.objects.count()
     student_count = Student.objects.count()
     student_out_count = Student.objects.filter(is_active=False).count()
     student_counts = Student.objects.values("study_program").annotate(total=Count("id"))
-    team_count = Team.objects.values_list("project_instance").distinct().count()
+    team_count = TeamMember.objects.values_list("project_instance").distinct().count()  # TODO: Use Team.objects.count()
 
     # Sets the number of project instances to use.
     project_instance_used_count = int(student_count / settings.team_min_member)
@@ -264,7 +274,7 @@ def get_statistics_for_view() -> dict:
     project_ids = get_project_ids_ordered_by_score()
 
     # Sets the project information per project.
-    teams_exist = Team.objects.exists()
+    teams_exist = TeamMember.objects.exists()  # TODO: Use Team objects.
     projects = []
     for project_id in project_ids:
         # Sets the score and average score.
@@ -287,12 +297,14 @@ def get_statistics_for_view() -> dict:
         # Gets the project instances.
         project_instances = ProjectInstance.objects.filter(project=project_id["project"])
         project_instances_used_count = (
-            ProjectInstance.objects.filter(project=project_id["project"], team__isnull=False).distinct().count()
+            ProjectInstance.objects.filter(project=project_id["project"], teammember__isnull=False).distinct().count()
         )
         # Sets the color of the project.
         color = "text-primary"
         if teams_exist:
-            project_is_used = Team.objects.filter(project_instance__in=project_instances).exists()
+            project_is_used = TeamMember.objects.filter(
+                project_instance__in=project_instances
+            ).exists()  # TODO: Use Team objects.
             if project_is_used:
                 color = "text-success"
             else:

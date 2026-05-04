@@ -14,13 +14,14 @@ from poll.helper import (
     delete_poll_data_for_student,
     generate_missing_poll_data,
     generate_missing_poll_data_for_student,
+    get_poll_stats_for_student,
     load_poll_data_for_form,
     save_poll_data_to_db,
 )
-from poll.models import POLL_LEVELS, POLL_SCORES
+from poll.models import POLL_LEVELS, POLL_SCORES, ProjectAnswer
 from team.algorithm import AssignmentAlgorithm
-from team.helper import delete_team_data_for_student, generate_teams, get_teams_for_view
-from team.models import ProjectInstance, Team
+from team.helper import delete_team_member_data_for_student, generate_teams, get_teams_for_view
+from team.models import ProjectInstance, Team, TeamMember
 
 from .forms import (
     DevSettingsForm,
@@ -180,7 +181,8 @@ def students(request):
     context = {}
     context["settings"] = settings
     context["students"] = get_students_for_view()
-    context["project_instances"] = ProjectInstance.objects.all()
+    # context["project_instances"] = ProjectInstance.objects.all()
+    context["teams"] = Team.objects.all()
 
     form = UploadStudentsForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
@@ -233,7 +235,9 @@ def student_delete(request, id=None):
         student = get_object_or_404(Student, id=id)
 
         # Do not allow deletion of student, if he is assigned to a team with a project instance.
-        if Team.objects.filter(student=student, project_instance__isnull=False).exists():
+        if TeamMember.objects.filter(
+            student=student, project_instance__isnull=False
+        ).exists():  # TODO: Use Team objects.
             messages.error(
                 request,
                 f'Achtung: Student "{student.name2}" kann nicht gelöscht werden, da er einem Team zugeordnet ist!',
@@ -242,7 +246,7 @@ def student_delete(request, id=None):
 
         try:
             delete_poll_data_for_student(student.pk)
-            delete_team_data_for_student(student.pk)
+            delete_team_member_data_for_student(student.pk)
             student.delete()
             messages.success(request, f'Student "{student.name2}" wurde gelöscht!')
         except ProtectedError:
@@ -256,51 +260,48 @@ def student_delete(request, id=None):
 
 @login_required
 @permission_required("app.view_student")
-def student_set_team(request, id=None):
+def student_set_team(request, id=None):  # TODO: Use Team objects.
     if request.method == "POST":
         student = get_object_or_404(Student, id=id)
-        project_instance_id = request.POST.get("project_instance_id")
+        team_id = request.POST.get("team_id")
 
         # Remove team assignment if project_instance_id is "0".
-        if project_instance_id == "0":
-            team = Team.objects.filter(student=student).first()
-            if team:
-                old_piid = team.project_instance.piid
-                team.project_instance = None
-                team.save()
+        if team_id == "0":
+            team_member = TeamMember.objects.filter(student=student).first()
+            if team_member:
+                old_piid = team_member.team.project_instance.piid
+                team_member.delete()
                 messages.success(request, f'Student "{student.name2}" wurde aus Team {old_piid} entfernt!')
             return redirect("students")
 
-        project_instance = (
-            ProjectInstance.objects.filter(id=project_instance_id).first() if project_instance_id else None
-        )
+        team = Team.objects.filter(pk=team_id).first() if team_id else None
 
-        # Do not allow setting team, if no project instance is found for the given id.
-        if not project_instance:
+        # Do not allow setting team, if no team is found for the given id.
+        if not team:
             messages.error(
-                request, "Achtung: Teamzuweisung fehlgeschlagen! Es muss eine gültige Projektinstanz ausgewählt werden."
+                request, "Achtung: Teamzuweisung fehlgeschlagen! Es muss eine gültiges Team ausgewählt werden."
             )
             return redirect("students")
 
         # Set new team assignment for the student. If no team exists yet, create a new one.
-        team = Team.objects.filter(student=student).first()
-        if team and team.project_instance != project_instance:
-            old_piid = team.project_instance.piid if team.project_instance else None
-            team.project_instance = project_instance
-            team.save()
-            msg = (
-                f'Student "{student.name2}" wurde von Team {old_piid} in Team {team.project_instance.piid} verschoben!'
-            )
-            if not old_piid:
-                msg = f'Student "{student.name2}" wurde Team {team.project_instance.piid} zugewiesen!'
+        team_member = TeamMember.objects.filter(student=student).first()
+        if team_member and team_member.team != team:
+            old_piid = team_member.team.project_instance.piid
+            team_member.team = team
+            team_member.save()
+            msg = f'Student "{student.name2}" wurde von Team {old_piid} in Team {team_member.team.project_instance.piid} verschoben!'
             messages.success(request, msg)
 
         else:
             generate_missing_poll_data_for_student(student)
-            team = Team.objects.create(
-                student=student, project=project_instance.project, project_instance=project_instance, score=50
+            team_member = TeamMember.objects.create(
+                team=team,
+                student=student,
+                score=50,  # default score from algorithm (currently unused)
             )
-            messages.success(request, f'Student "{student.name2}" wurde Team {team.project_instance.piid} zugewiesen!')
+            messages.success(
+                request, f'Student "{student.name2}" wurde Team {team_member.team.project_instance.piid} zugewiesen!'
+            )
 
     return redirect("students")
 
@@ -355,7 +356,7 @@ def teams_generate(request):
 @permission_required("team.delete_team")
 def teams_delete(request):
     if request.method == "POST":
-        Team.objects.all().delete()
+        TeamMember.objects.all().delete()
         ProjectInstance.objects.all().delete()
 
     return redirect("teams")

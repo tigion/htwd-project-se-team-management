@@ -231,19 +231,19 @@ def get_project_ids_ordered_by_score():
     return project_ids
 
 
-def get_poll_stats_for_student(team) -> dict:
+def get_poll_stats_for_student(team_member) -> dict:
     """
-    Returns the poll stats for the given team entry.
+    Returns the poll stats for the given team member entry.
 
-    A team entry is a student and a project.
+    A team member entry is a student and a project.
 
     Args:
-        team: The team entry.
+        team_member: The team member entry.
     """
 
     # Gets the student and project ids.
-    student_id = team.student.id
-    project_id = team.project.id
+    student_id = team_member.student.id
+    project_id = team_member.team.project_instance.project.id
 
     # Uses the project answer scores if the poll for the student exists
     # otherwise uses the default score.
