@@ -11,7 +11,7 @@
           <span class="float-end text-muted small">
             {% if is_management_view %}{{ team.happiness.summary|safe }}{% endif %}
             <i class="bi bi-person-fill ms-3 me-1"></i>{% if team.student_active_count != team.students|length %}{{ team.student_active_count }}/{% endif %}{{ team.students|length }}
-            {% include "teams/settings.inc.html" %}
+            {% include "teams/info.inc.html" %}
           </span><br>
         </div>
         <div class="clearfix mt-1 lh-sm">

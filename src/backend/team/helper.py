@@ -410,6 +410,11 @@ def get_teams_for_view() -> dict:
     for team in teams:
         team_data = {
             "id": team.pk,
+            "url": {
+                "repository": team.url_repository,
+                "project": team.url_project,
+                "miro": team.url_miro,
+            },
             "project_instance": team.project_instance,
             "students": [],
             "student_active_count": 0,

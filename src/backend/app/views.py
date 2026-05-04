@@ -14,12 +14,12 @@ from poll.helper import (
     delete_poll_data_for_student,
     generate_missing_poll_data,
     generate_missing_poll_data_for_student,
-    get_poll_stats_for_student,
     load_poll_data_for_form,
     save_poll_data_to_db,
 )
-from poll.models import POLL_LEVELS, POLL_SCORES, ProjectAnswer
+from poll.models import POLL_LEVELS, POLL_SCORES
 from team.algorithm import AssignmentAlgorithm
+from team.forms import TeamForm
 from team.helper import delete_team_member_data_for_student, generate_teams, get_teams_for_view
 from team.models import ProjectInstance, Team, TeamMember
 
@@ -373,6 +373,31 @@ def teams_print(request):
         return response
 
     return redirect("teams")
+
+
+@login_required
+@permission_required("app.view_team")
+@permission_required("app.add_team")
+@permission_required("app.change_team")
+def team_edit(request, id=None):
+    settings = Settings.load()
+
+    context = {}
+    context["settings"] = settings
+
+    if id is None:
+        form = TeamForm(request.POST or None)
+    else:
+        team = get_object_or_404(Team, pk=id)
+        form = TeamForm(request.POST or None, instance=team)
+        context["team"] = Team.objects.get(pk=id)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect("teams")
+
+    context["TeamForm"] = form
+    return render(request, "lecturer/team.html", context)
 
 
 @login_required

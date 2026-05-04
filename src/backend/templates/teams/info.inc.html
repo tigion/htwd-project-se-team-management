@@ -1,0 +1,15 @@
+{# vim: set ft=htmldjango: #}
+
+<div class="dropdown d-inline-block">
+  <a class="" href="#" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-info-circle ms-3 text-muted"></i></a>
+  <ul class="dropdown-menu">
+    <li><a href="{{ team.url.repository }}" target="_blank" class="dropdown-item small{% if not team.url.repository %} disabled{% endif %}"><i class="bi bi-github me-2 text-muted"></i>Repository</a></li>
+    <li><a href="{{ team.url.project }}" target="_blank" class="dropdown-item small{% if not team.url.project %} disabled{% endif %}"><i class=" bi bi-kanban me-2 text-muted"></i>Projekt</a></li>
+    <li><a href="{{ team.url.miro }}" target="_blank" class="dropdown-item small{% if not team.url.miro %} disabled{% endif %}"><i class="bi bi-diagram-3 me-2 text-muted"></i>Miro Board</a></li>
+    <div class="dropdown-divider"></div>
+    <li><a class="dropdown-item small" href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope-heart me-2 text-muted"></i>Standard</a></li>
+    <li><a class="dropdown-item small" href="mailto:{{ team.emails|join:';' }}"><i class="bi bi-envelope me-2 text-muted"></i>Outlook</a></li>
+    <div class="dropdown-divider"></div>
+    <li><a href="{% url 'team-update' team.id %}" class="dropdown-item small"><i class="bi bi-gear me-2 text-muted"></i>Einstellungen</a></li>
+  </ul>
+</div>
