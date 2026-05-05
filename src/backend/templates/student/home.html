@@ -16,16 +16,16 @@
   {% endif %}
 </div>
 
-{% if settings.projects_is_visible %}
-{% include "student/projects.inc.html" %}
+{% if settings.teams_is_visible %}
+{% include "student/teams.inc.html" %}
 {% endif %}
 
 {% if settings.poll_is_visible %}
 {% include "student/poll.inc.html" %}
 {% endif %}
 
-{% if settings.teams_is_visible %}
-{% include "student/teams.inc.html" %}
+{% if settings.projects_is_visible %}
+{% include "student/projects.inc.html" %}
 {% endif %}
 
 {% endblock content %}

@@ -16,7 +16,9 @@
     <h6 class="dropdown-header">Teammitglieder</h6>
     <li><a class="dropdown-item small" href="mailto:{{ team.emails|join:',' }}"><i class="bi bi-envelope me-2 text-muted"></i>Standard</a></li>
     <li><a class="dropdown-item small" href="mailto:{{ team.emails|join:';' }}"><i class="bi bi-envelope me-2 text-muted"></i>Outlook</a></li>
+    {% if is_management_view %}
     <div class="dropdown-divider"></div>
     <li><a href="{% url 'team-update' team.id %}" class="dropdown-item small"><i class="bi bi-gear me-2 text-muted"></i>Einstellungen</a></li>
+    {% endif %}
   </ul>
 </div>

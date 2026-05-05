@@ -43,14 +43,14 @@
 
     {% if user.is_authenticated %}
     <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
-      {% if settings.projects_is_visible %}
-      <li><a href="/#projects" class="nav-link px-2">Projekte</a></li>
+      {% if settings.teams_is_visible %}
+      <li><a href="/#teams" class="nav-link px-2">Teams</a></li>
       {% endif %}
       {% if settings.poll_is_visible %}
       <li><a href="/#poll" class="nav-link px-2">Fragebogen</a></li>
       {% endif %}
-      {% if settings.teams_is_visible %}
-      <li><a href="/#teams" class="nav-link px-2">Teams</a></li>
+      {% if settings.projects_is_visible %}
+      <li><a href="/#projects" class="nav-link px-2">Projekte</a></li>
       {% endif %}
       {% if user.is_superuser %}
       <div class="dropdown">
