@@ -2,12 +2,13 @@ import csv
 import re
 from io import StringIO
 
-from django.db.models import Count
-from poll.helper import get_project_ids_ordered_by_score
+from django.db.models import Count, ProtectedError
+from poll.helper import delete_poll_data, get_project_ids_ordered_by_score
 from poll.models import POLL_LEVELS, POLL_SCORES, LevelAnswer, Poll, ProjectAnswer
-from team.models import ProjectInstance, Team
+from team.helper import delete_team_data
+from team.models import ProjectInstance, Team, TeamMember
 
-from .models import STUDY_PROGRAM_CHOICES, Info, Project, Settings, Student
+from .models import STUDY_PROGRAM_CHOICES, DevSettings, Info, Project, Settings, Student
 
 
 def get_free_project_pids() -> list:
@@ -121,25 +122,17 @@ def reset_data_in_db(delete_only_polls_and_teams=False):
         delete_only_polls_and_teams: If True, only the polls and teams are deleted.
     """
 
-    # Deletes only the polls and teams.
+    # Deletes only the poll and team data.
     if delete_only_polls_and_teams:
-        Team.objects.all().delete()
-        ProjectInstance.objects.all().delete()
-        Poll.objects.all().delete()
-        ProjectAnswer.objects.all().delete()
+        delete_team_data()
+        delete_poll_data()
         Info.objects.all().delete()
         return
 
-    # Deletes all data
-    Team.objects.all().delete()
-    Project.objects.all().delete()
-    Student.objects.all().delete()
-    Settings.objects.all().delete()
-    Info.objects.all().delete()
-
-    # Deletes possible lost table entries.
-    Poll.objects.all().delete()
-    ProjectAnswer.objects.all().delete()
+    # Deletes all data.
+    delete_team_data()
+    delete_poll_data()
+    delete_app_data()
 
 
 def get_students_for_view() -> list:
@@ -151,17 +144,18 @@ def get_students_for_view() -> list:
 
     students = Student.objects.all().order_by("last_name", "first_name", "s_number")
     for student in students:
-        team = Team.objects.filter(student=student).first()
-        project_instance = team.project_instance if team and team.project_instance else None
+        team_member = TeamMember.objects.filter(student=student).first()
+        team = team_member.team if team_member and team_member.team else None
         view_students.append({
             "is_active": student.is_active,
             "s_number": student.s_number,
             "is_out": student.is_out,
             "name": student.name,
             "study_program": student.study_program,
-            "id": student.id,  # type: ignore
+            "id": student.pk,
             "name2": student.name2,
-            "project_instance": project_instance,
+            "team_pk": team.pk if team else None,
+            "team_piid": team.project_instance.piid if team and team.project_instance else None,
         })
 
     return view_students
@@ -175,7 +169,7 @@ def get_counts_for_view() -> dict:
     counts = {
         "project": Project.objects.count(),
         "student": Student.objects.count(),
-        "team": Team.objects.values_list("project_instance").distinct().count(),
+        "team": Team.objects.count(),
     }
 
     return counts
@@ -196,7 +190,7 @@ def get_statistics_for_view() -> dict:
     student_count = Student.objects.count()
     student_out_count = Student.objects.filter(is_active=False).count()
     student_counts = Student.objects.values("study_program").annotate(total=Count("id"))
-    team_count = Team.objects.values_list("project_instance").distinct().count()
+    team_count = Team.objects.count()
 
     # Sets the number of project instances to use.
     project_instance_used_count = int(student_count / settings.team_min_member)
@@ -264,7 +258,7 @@ def get_statistics_for_view() -> dict:
     project_ids = get_project_ids_ordered_by_score()
 
     # Sets the project information per project.
-    teams_exist = Team.objects.exists()
+    teams_exist = TeamMember.objects.exists()  # TODO: Use Team objects.
     projects = []
     for project_id in project_ids:
         # Sets the score and average score.
@@ -314,3 +308,28 @@ def get_statistics_for_view() -> dict:
     stats["projects"] = projects
 
     return stats
+
+
+def delete_app_data():
+    """
+    Deletes all data of the app.
+    """
+
+    try:
+        Project.objects.all().delete()
+        Student.objects.all().delete()
+        Info.objects.all().delete()
+        Settings.objects.all().delete()
+        DevSettings.objects.all().delete()
+    except ProtectedError as e:
+        print(f"Error deleting app data: {e}")
+
+
+def delete_all_data():
+    """
+    Deletes all data of the app, the poll and the team.
+    """
+
+    delete_team_data()
+    delete_poll_data()
+    delete_app_data()
