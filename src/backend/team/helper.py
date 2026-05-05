@@ -515,3 +515,20 @@ def delete_team_member_data_for_student(student_id: int):
         TeamMember.objects.filter(student_id=student_id).delete()
     except ProtectedError as e:
         print(f"Error deleting team member data for student ID {student_id}: {e}")
+
+
+def delete_team_data():
+    """
+    Deletes all team, team member and project instance data.
+    """
+    try:
+        TeamMember.objects.all().delete()
+        Team.objects.all().delete()
+        ProjectInstance.objects.all().delete()
+
+        # Removes the last update time of the teams generation.
+        info = Info.load()
+        info.teams_last_update = None
+        info.save()
+    except ProtectedError as e:
+        print(f"Error deleting team data: {e}")

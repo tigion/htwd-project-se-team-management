@@ -400,3 +400,16 @@ def delete_poll_data_for_student(student_id: int):
         Poll.objects.filter(student=student_id).delete()
     except ProtectedError as e:
         print(f"Error deleting poll data for student ID {student_id}: {e}")
+
+
+def delete_poll_data():
+    """
+    Deletes all answer and poll data.
+    """
+
+    try:
+        ProjectAnswer.objects.all().delete()
+        LevelAnswer.objects.all().delete()
+        Poll.objects.all().delete()
+    except ProtectedError as e:
+        print(f"Error deleting poll data: {e}")

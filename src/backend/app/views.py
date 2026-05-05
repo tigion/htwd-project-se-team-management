@@ -20,8 +20,8 @@ from poll.helper import (
 from poll.models import POLL_LEVELS, POLL_SCORES
 from team.algorithm import AssignmentAlgorithm
 from team.forms import TeamForm
-from team.helper import delete_team_member_data_for_student, generate_teams, get_teams_for_view
-from team.models import ProjectInstance, Team, TeamMember
+from team.helper import delete_team_data, delete_team_member_data_for_student, generate_teams, get_teams_for_view
+from team.models import Team, TeamMember
 
 from .forms import (
     DevSettingsForm,
@@ -356,8 +356,7 @@ def teams_generate(request):
 @permission_required("team.delete_team")
 def teams_delete(request):
     if request.method == "POST":
-        TeamMember.objects.all().delete()
-        ProjectInstance.objects.all().delete()
+        delete_team_data()
 
     return redirect("teams")
 
