@@ -185,12 +185,12 @@ def get_statistics_for_view() -> dict:
 
     # Gets the number of objects in the database.
     project_count = Project.objects.count()
-    project_used_count = Project.objects.filter(projectinstance__teammember__isnull=False).distinct().count()
+    project_used_count = Project.objects.filter(projectinstance__team__isnull=False).distinct().count()
     project_instance_count = ProjectInstance.objects.count()
     student_count = Student.objects.count()
     student_out_count = Student.objects.filter(is_active=False).count()
     student_counts = Student.objects.values("study_program").annotate(total=Count("id"))
-    team_count = TeamMember.objects.values_list("project_instance").distinct().count()  # TODO: Use Team.objects.count()
+    team_count = Team.objects.count()
 
     # Sets the number of project instances to use.
     project_instance_used_count = int(student_count / settings.team_min_member)
@@ -281,14 +281,12 @@ def get_statistics_for_view() -> dict:
         # Gets the project instances.
         project_instances = ProjectInstance.objects.filter(project=project_id["project"])
         project_instances_used_count = (
-            ProjectInstance.objects.filter(project=project_id["project"], teammember__isnull=False).distinct().count()
+            ProjectInstance.objects.filter(project=project_id["project"], team__isnull=False).distinct().count()
         )
         # Sets the color of the project.
         color = "text-primary"
         if teams_exist:
-            project_is_used = TeamMember.objects.filter(
-                project_instance__in=project_instances
-            ).exists()  # TODO: Use Team objects.
+            project_is_used = Team.objects.filter(project_instance__in=project_instances).exists()
             if project_is_used:
                 color = "text-success"
             else:

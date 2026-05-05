@@ -234,10 +234,8 @@ def student_delete(request, id=None):
     if request.method == "POST":
         student = get_object_or_404(Student, id=id)
 
-        # Do not allow deletion of student, if he is assigned to a team with a project instance.
-        if TeamMember.objects.filter(
-            student=student, project_instance__isnull=False
-        ).exists():  # TODO: Use Team objects.
+        # Do not allow deletion of student, if he is assigned to a team.
+        if TeamMember.objects.filter(student=student, team__isnull=False).exists():
             messages.error(
                 request,
                 f'Achtung: Student "{student.name2}" kann nicht gelöscht werden, da er einem Team zugeordnet ist!',
