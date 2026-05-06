@@ -390,8 +390,6 @@ def get_teams_for_view() -> dict:
     Returns the prepared teams for the view.
     """
 
-    # TODO: Refactor to use Team + TeamMember instead of ProjectInstance + TeamMember.
-
     settings = Settings.load()
 
     data = {
@@ -406,7 +404,6 @@ def get_teams_for_view() -> dict:
     total_happiness_poll_score = 0
 
     teams = Team.objects.all()
-    # project_instances = ProjectInstance.objects.filter(teammember__isnull=False).values_list("id", flat=True).distinct()
     for team in teams:
         team_data = {
             "id": team.pk,

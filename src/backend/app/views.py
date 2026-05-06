@@ -258,7 +258,7 @@ def student_delete(request, id=None):
 
 @login_required
 @permission_required("app.view_student")
-def student_set_team(request, id=None):  # TODO: Use Team objects.
+def student_set_team(request, id=None):
     if request.method == "POST":
         student = get_object_or_404(Student, id=id)
         team_id = request.POST.get("team_id")

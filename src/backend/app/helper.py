@@ -258,7 +258,7 @@ def get_statistics_for_view() -> dict:
     project_ids = get_project_ids_ordered_by_score()
 
     # Sets the project information per project.
-    teams_exist = TeamMember.objects.exists()  # TODO: Use Team objects.
+    teams_exist = TeamMember.objects.exists()
     projects = []
     for project_id in project_ids:
         # Sets the score and average score.
