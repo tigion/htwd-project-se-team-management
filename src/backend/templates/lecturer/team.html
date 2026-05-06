@@ -5,7 +5,8 @@
 {% block content %}
 
 <div class="container my-5">
-  <h3>Team {% if team %}ändern{% else %}hinzufügen{% endif %}</h3>
+  <h2 class="mb-4"><i class="bi bi-people-fill me-1"></i> {{ team.project_instance.piid }} - {{ team.project_instance.project.name }}</h2>
+  <h3>Informationen ändern</h3>
   <form method="post" class="form">
     {% csrf_token %}
     {% bootstrap_form TeamForm %}
@@ -26,5 +27,28 @@
 
   </form>
 </div>
+
+<div class="container my-5">
+  <h3>Ansprechpartner ändern</h3>
+  <form action="{% url 'team-set-contact-person' team.pk %}" method="POST">
+    {% csrf_token %}
+    <div class="mb-3">
+      <select class="form-select" name="student_id" required>
+        <option value="0" {% if not team.ap %}selected{% endif %}>- Kein Ansprechpartner -</option>
+        {% for student in students %}
+        <option value="{{ student.pk }}" {% if student.is_initial_contact %}selected{% endif %}>{{ student.name }} ({{ student.s_number }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="">
+      <a href="{% url 'teams' %}" type="button" class="btn btn-light">Zurück</a>
+      <div class="float-end">
+        <button class="btn btn-light" type="reset">Reset</button>
+        <button class="btn btn-warning" type="submit">Ändern</button>
+      </div>
+    </div>
+  </form>
+</div>
+
 
 {% endblock content %}

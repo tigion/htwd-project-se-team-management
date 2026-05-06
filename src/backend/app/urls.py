@@ -25,6 +25,7 @@ urlpatterns = [
     path("teams/delete", views.teams_delete, name="teams-delete"),
     path("teams/print", views.teams_print, name="teams-print"),
     path("teams/<int:id>", views.team_edit, name="team-update"),
+    path("teams/<int:id>/setcp", views.team_set_contact_person, name="team-set-contact-person"),
     # Statistics
     path("stats/", views.stats, name="stats"),
     # Settings

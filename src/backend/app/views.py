@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.forms import AuthenticationForm
-from django.db.models import ProtectedError
+from django.db.models import F, ProtectedError
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -388,6 +388,10 @@ def team_edit(request, id=None):
         team = get_object_or_404(Team, pk=id)
         form = TeamForm(request.POST or None, instance=team)
         context["team"] = Team.objects.get(pk=id)
+        # Gets the students for the team and annotates if they are the initial contact person for the team.
+        context["students"] = Student.objects.filter(teammember__team=team).annotate(
+            is_initial_contact=F("teammember__student_is_initial_contact")
+        )
 
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -395,6 +399,50 @@ def team_edit(request, id=None):
 
     context["TeamForm"] = form
     return render(request, "lecturer/team.html", context)
+
+
+@login_required
+@permission_required("app.view_team")
+@permission_required("app.add_team")
+@permission_required("app.change_team")
+def team_set_contact_person(request, id=None):
+    if request.method == "POST":
+        team = get_object_or_404(Team, pk=id)
+        student_id = request.POST.get("student_id")
+
+        if not student_id:
+            messages.error(request, "Achtung: Es muss ein Student ausgewählt werden!")
+            return redirect("teams")
+
+        # Remove contact person assignment if student_id is "0".
+        if student_id == "0":
+            TeamMember.objects.filter(team=team, student_is_initial_contact=True).update(
+                student_is_initial_contact=False
+            )
+            messages.success(request, f"Anspechpartner für Team {team.project_instance.piid} wurde entfernt!")
+            return redirect("teams")
+
+        student = Student.objects.filter(pk=student_id).first()
+        if not student:
+            messages.error(request, "Achtung: Es muss ein gültiger Student ausgewählt werden!")
+            return redirect("teams")
+
+        TeamMember.objects.filter(team=team).update(student_is_initial_contact=False)
+        team_member = TeamMember.objects.filter(team=team, student=student).first()
+        if team_member:
+            team_member.student_is_initial_contact = True
+            team_member.save()
+            messages.success(
+                request,
+                f'Student "{student.name2}" wurde als Anspechpartner für Team {team.project_instance.piid} festgelegt!',
+            )
+        else:
+            messages.error(
+                request,
+                f'Achtung: Zuweisung des Anspechpartners fehlgeschlagen! Student "{student.name2}" ist nicht Mitglied des Teams {team.project_instance.piid}.',
+            )
+
+    return redirect("teams")
 
 
 @login_required
