@@ -423,6 +423,7 @@ def get_teams_for_view() -> dict:
             "students": [],
             "student_active_count": 0,
             "emails": [],
+            "ap": {"name": None, "email": None},
             "happiness": {},
         }
         team_happiness_score = 0
@@ -445,9 +446,11 @@ def get_teams_for_view() -> dict:
                 "css_classes": [],
             }
 
-            # Sets the css classes.
+            # Sets the contact (AP) data and css classes.
             if student["is_initial_contact"]:
                 student["css_classes"].append("fw-semibold")
+                team_data["ap"]["name"] = student["name"]
+                team_data["ap"]["email"] = team_member.student.email
             if not student["is_visible"]:
                 student["css_classes"].append("text-decoration-line-through")
             if student["is_out"]:
