@@ -54,7 +54,12 @@ def read_students_from_file_to_db(file, mode):
 
     # Deletes all existing students if mode is "new".
     if mode == "new":
-        Student.objects.all().delete()
+        try:
+            Student.objects.all().delete()
+        except ProtectedError as e:
+            print(f"Error deleting students: {e}")
+            # TODO: Show error message in the UI.
+            return
 
     # Gets the study program IDs.
     study_program_ids = [sp[0] for sp in STUDY_PROGRAM_CHOICES]
