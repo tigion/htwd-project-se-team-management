@@ -16,6 +16,10 @@
   {% endif %}
 </div>
 
+{% if settings.feedback_is_visible %}
+{% include "student/feedback.inc.html" %}
+{% endif %}
+
 {% if settings.teams_is_visible %}
 {% include "student/teams.inc.html" %}
 {% endif %}

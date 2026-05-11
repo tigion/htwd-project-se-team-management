@@ -43,6 +43,9 @@
 
     {% if user.is_authenticated %}
     <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+      {% if settings.feedback_is_visible %}
+      <li><a href="/#feedback" class="nav-link px-2">Feedback</a></li>
+      {% endif %}
       {% if settings.teams_is_visible %}
       <li><a href="/#teams" class="nav-link px-2">Teams</a></li>
       {% endif %}

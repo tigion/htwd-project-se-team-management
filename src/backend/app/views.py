@@ -89,6 +89,8 @@ def student_home(request):
 
     student = Student.objects.filter(s_number=request.user.username).first()
     is_student = bool(student)
+    student2 = Student.objects.filter(s_number="s89031").first()
+    is_student2 = bool(student2)
 
     context = {}
     context["is_student"] = is_student
@@ -97,6 +99,14 @@ def student_home(request):
     context["poll_scores"] = POLL_SCORES
     context["poll_levels"] = POLL_LEVELS
     context["teams"] = get_teams_for_view().get("teams", [])
+
+    if is_student2 and settings.feedback_is_visible:
+        context["student2"] = student2
+        context["assigned_team"] = Team.objects.filter(teammember__student=student2).first()
+        print(context["assigned_team"])
+        context["assigned_team_members"] = TeamMember.objects.filter(team__teammember__student=student2).exclude(
+            student=student2
+        )
 
     if request.method == "POST" and is_student and settings.poll_is_writable:
         # save poll data
