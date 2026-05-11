@@ -3,6 +3,7 @@ import re
 from io import StringIO
 
 from django.db.models import Count, ProtectedError
+from feedback.helper import delete_feedback_data
 from poll.helper import delete_poll_data, get_project_ids_ordered_by_score
 from poll.models import POLL_LEVELS, POLL_SCORES, LevelAnswer, Poll, ProjectAnswer
 from team.helper import delete_team_data
@@ -129,15 +130,14 @@ def reset_data_in_db(delete_only_polls_and_teams=False):
 
     # Deletes only the poll and team data.
     if delete_only_polls_and_teams:
+        delete_feedback_data()
         delete_team_data()
         delete_poll_data()
         Info.objects.all().delete()
         return
 
     # Deletes all data.
-    delete_team_data()
-    delete_poll_data()
-    delete_app_data()
+    delete_all_data()
 
 
 def get_students_for_view() -> list:
@@ -335,6 +335,7 @@ def delete_all_data():
     Deletes all data of the app, the poll and the team.
     """
 
+    delete_feedback_data()
     delete_team_data()
     delete_poll_data()
     delete_app_data()

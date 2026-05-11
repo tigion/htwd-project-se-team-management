@@ -10,6 +10,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from feedback.helper import delete_feedback_data_for_student, load_peer_feedback_1_data_for_form
+from feedback.models import FEEDBACK_SCORES, PeerFeedback1
 from poll.helper import (
     delete_poll_data_for_student,
     generate_missing_poll_data,
@@ -107,11 +109,89 @@ def student_home(request):
         )
         return redirect("home")
 
-    # load poll data to context for prefilled form
+    # Loads the poll data to display in the form.
     form_poll_data = load_poll_data_for_form(student, projects)
     context["form_poll_data"] = form_poll_data
 
+    # Loads the feedback data, if feedback is visible.
+    if is_student and settings.peer_feedback_1_is_visible:
+        context["student"] = student
+        context["assigned_team"] = Team.objects.filter(teammember__student=student).first()
+        context["feedback_scores"] = FEEDBACK_SCORES
+        context["assigned_team_members"] = load_peer_feedback_1_data_for_form(student)
+
     return render(request, "student/home.html", context)
+
+
+@login_required
+def student_set_peer_feedback_1(request):
+    settings = Settings.load()
+    student = Student.objects.filter(s_number=request.user.username).first()
+    is_student = student is not None
+    if not is_student and not settings.peer_feedback_1_is_writable and not settings.peer_feedback_1_is_visible:
+        return redirect("home")
+
+    if request.method == "POST":
+        # The reviewing student based on the logged in user.
+        reviewing_student = Student.objects.filter(s_number=request.user.username).first()
+        if not reviewing_student:
+            messages.error(request, "Achtung: Es wurde kein gültiger Student für die Abgabe des Feedbacks gefunden!")
+            return redirect("home")
+
+        # The reviewed student based on the selected team member in the form.
+        team_member_id = request.POST.get("team_member_id")
+        team_member = TeamMember.objects.filter(pk=team_member_id).first()
+        if not team_member:
+            messages.error(request, "Achtung: Es wurde kein gültiges Teammitglied ausgewählt!")
+            return redirect("home")
+        reviewed_student = team_member.student
+
+        # The peer feedback data from the form.
+        contribution_score = request.POST.get("contribution_score")
+        collaboration_score = request.POST.get("collaboration_score")
+        reliability_score = request.POST.get("reliability_score")
+        reason = request.POST.get("reason")
+
+        # Validates the scores.
+        try:
+            contribution_score = int(contribution_score)
+            collaboration_score = int(collaboration_score)
+            reliability_score = int(reliability_score)
+
+            if (
+                contribution_score not in FEEDBACK_SCORES["choices"]
+                or collaboration_score not in FEEDBACK_SCORES["choices"]
+                or reliability_score not in FEEDBACK_SCORES["choices"]
+            ):
+                raise ValueError("Invalid score")
+        except (ValueError, TypeError):
+            messages.error(
+                request, "Achtung: Ungültige Bewertung! Die Bewertung muss einem der definierten Werte entsprechen."
+            )
+            return redirect("home")
+
+        # Validates the reason.
+        if reason is not None and reason.strip() == "":
+            reason = ""
+
+        # Saves the peer feedback data to the database.
+        values = {
+            "contribution_score": contribution_score,
+            "collaboration_score": collaboration_score,
+            "reliability_score": reliability_score,
+            "reason": reason,
+        }
+        PeerFeedback1.objects.update_or_create(
+            team=team_member.team,
+            reviewing_student=reviewing_student,
+            reviewed_student=reviewed_student,
+            defaults=values,
+        )
+        messages.success(
+            request, "Feedback gespeichert. Änderungen sind möglich, solange das Peer-Feedback nicht gesperrt ist."
+        )
+
+    return redirect("home")
 
 
 @login_required
@@ -243,8 +323,9 @@ def student_delete(request, id=None):
             return redirect("students")
 
         try:
-            delete_poll_data_for_student(student.pk)
+            delete_feedback_data_for_student(student.pk)
             delete_team_member_data_for_student(student.pk)
+            delete_poll_data_for_student(student.pk)
             student.delete()
             messages.success(request, f'Student "{student.name2}" wurde gelöscht!')
         except ProtectedError:

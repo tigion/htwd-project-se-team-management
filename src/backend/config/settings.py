@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "app",
     "poll",
     "team",
+    "feedback",
 ]
 
 MIDDLEWARE = [
