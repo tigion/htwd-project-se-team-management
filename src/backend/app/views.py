@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from feedback.helper import delete_feedback_data_for_student
 from feedback.models import FEEDBACK_SCORES, PeerFeedback1
 from poll.helper import (
     delete_poll_data_for_student,
@@ -368,8 +369,9 @@ def student_delete(request, id=None):
             return redirect("students")
 
         try:
-            delete_poll_data_for_student(student.pk)
+            delete_feedback_data_for_student(student.pk)
             delete_team_member_data_for_student(student.pk)
+            delete_poll_data_for_student(student.pk)
             student.delete()
             messages.success(request, f'Student "{student.name2}" wurde gelöscht!')
         except ProtectedError:
