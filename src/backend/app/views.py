@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from feedback.helper import delete_feedback_data_for_student
+from feedback.helper import delete_feedback_data_for_student, load_peer_feedback_1_data_for_form
 from feedback.models import FEEDBACK_SCORES, PeerFeedback1
 from poll.helper import (
     delete_poll_data_for_student,
@@ -100,13 +100,6 @@ def student_home(request):
     context["poll_levels"] = POLL_LEVELS
     context["teams"] = get_teams_for_view().get("teams", [])
 
-    # if is_student and settings.feedback_is_visible:
-    #     context["student"] = student
-    #     context["assigned_team"] = Team.objects.filter(teammember__student=student).first()
-    #     context["assigned_team_members"] = TeamMember.objects.filter(team__teammember__student=student).exclude(
-    #         student=student
-    #     )
-
     if request.method == "POST" and is_student and settings.poll_is_writable:
         # save poll data
         save_poll_data_to_db(student, request.POST, projects)
@@ -116,55 +109,16 @@ def student_home(request):
         )
         return redirect("home")
 
-    # load poll data to context for prefilled form
+    # Loads the poll data to display in the form.
     form_poll_data = load_poll_data_for_form(student, projects)
     context["form_poll_data"] = form_poll_data
 
     # Loads the feedback data, if feedback is visible.
     if is_student and settings.feedback_is_visible:
-        # Gets the assigned team and team members for the student.
         context["student"] = student
         context["assigned_team"] = Team.objects.filter(teammember__student=student).first()
         context["feedback_scores"] = FEEDBACK_SCORES
-        context["assigned_team_members"] = []
-        assigned_team_members = TeamMember.objects.filter(team__teammember__student=student).exclude(student=student)
-        for team_member in assigned_team_members:
-            peer_feedback = PeerFeedback1.objects.filter(
-                reviewing_student=student, reviewed_student=team_member.student
-            ).first()
-            context["assigned_team_members"].append({
-                "id": team_member.pk,
-                "student": team_member.student,
-                "has_peer_feedback": bool(peer_feedback),
-                "peer_feedback": {
-                    "contribution_score": peer_feedback.contribution_score
-                    if peer_feedback
-                    else FEEDBACK_SCORES["default"],
-                    "collaboration_score": peer_feedback.collaboration_score
-                    if peer_feedback
-                    else FEEDBACK_SCORES["default"],
-                    "reliability_score": peer_feedback.reliability_score
-                    if peer_feedback
-                    else FEEDBACK_SCORES["default"],
-                    "reason": format_html("{}", peer_feedback.reason) if peer_feedback else "",
-                },
-            })
-        print(context["assigned_team_members"])
-
-        # context["assigned_team_members"] = TeamMember.objects.filter(team__teammember__student=student).exclude(
-        #     student=student
-        # )
-        # Gets the peer feedback data for the student.
-        # peer_feedback_qs = PeerFeedback1.objects.filter(reviewing_student=student)
-        # peer_feedback_data = {}
-        # for feedback in peer_feedback_qs:
-        #     peer_feedback_data[feedback.reviewed_student_id] = {
-        #         "contribution_score": feedback.contribution_score,
-        #         "collaboration_score": feedback.collaboration_score,
-        #         "reliability_score": feedback.reliability_score,
-        #         "reason": feedback.reason,
-        #     }
-        # context["peer_feedback_data"] = peer_feedback_data
+        context["assigned_team_members"] = load_peer_feedback_1_data_for_form(student)
 
     return render(request, "student/home.html", context)
 
@@ -173,7 +127,7 @@ def student_home(request):
 def student_set_peer_feedback_1(request):
     settings = Settings.load()
     student = Student.objects.filter(s_number=request.user.username).first()
-    is_student = bool(student)
+    is_student = student is not None
     if not is_student and not settings.feedback_is_writable and not settings.feedback_is_visible:
         return redirect("home")
 
