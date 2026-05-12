@@ -34,7 +34,7 @@
             <div class="row g-3">
               <div class="col mb-3">
                 <label for="contribution" class="form-label">Beitrag</label>
-                <select class="form-select form-select-sm" id="contribution" name="contribution_score">
+                <select class="form-select form-select-sm" id="contribution" name="contribution_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
                   {% for key, score in feedback_scores.choices.items %}
                   <option value="{{ score.value }}" {% if team_member.peer_feedback.contribution_score == score.value %}selected{% endif %}>{{ score.value }} - {{ score.name }}</option>
                   {% endfor %}
@@ -42,7 +42,7 @@
               </div>
               <div class="col mb-3">
                 <label for="collaboration" class="form-label">Zusammenarbeit</label>
-                <select class="form-select form-select-sm" id="collaboration" name="collaboration_score">
+                <select class="form-select form-select-sm" id="collaboration" name="collaboration_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
                   {% for key, score in feedback_scores.choices.items %}
                   <option value="{{ score.value }}" {% if team_member.peer_feedback.collaboration_score == score.value %}selected{% endif %}>{{ score.value }} - {{ score.name }}</option>
                   {% endfor %}
@@ -50,7 +50,7 @@
               </div>
               <div class="col mb-3">
                 <label for="reliability" class="form-label">Zuverlässigkeit</label>
-                <select class="form-select form-select-sm" id="reliability" name="reliability_score">
+                <select class="form-select form-select-sm" id="reliability" name="reliability_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
                   {% for key, score in feedback_scores.choices.items %}
                   <option value="{{ score.value }}" {% if team_member.peer_feedback.reliability_score == score.value %}selected{% endif %}>{{ score.value }} - {{ score.name }}</option>
                   {% endfor %}
@@ -59,9 +59,11 @@
             </div>
             <div class="mb-3">
               <label for="reason" class="form-label">Bitte geben Sie eine kurze Begründung Ihrer Bewertung an:</label>
-              <textarea class="form-control form-control-sm" id="reason" name="reason" rows="3">{{ team_member.peer_feedback.reason }}</textarea>
+              <textarea class="form-control form-control-sm" id="reason" name="reason" rows="3" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>{{ team_member.peer_feedback.reason }}</textarea>
             </div>
+            {% if settings.peer_feedback_1_is_writable %}
             {% bootstrap_button button_type='submit' content='Feedback absenden' %}
+            {% endif %}
           </form>
         </div>
 

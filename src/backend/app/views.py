@@ -114,7 +114,7 @@ def student_home(request):
     context["form_poll_data"] = form_poll_data
 
     # Loads the feedback data, if feedback is visible.
-    if is_student and settings.feedback_is_visible:
+    if is_student and settings.peer_feedback_1_is_visible:
         context["student"] = student
         context["assigned_team"] = Team.objects.filter(teammember__student=student).first()
         context["feedback_scores"] = FEEDBACK_SCORES
@@ -128,17 +128,17 @@ def student_set_peer_feedback_1(request):
     settings = Settings.load()
     student = Student.objects.filter(s_number=request.user.username).first()
     is_student = student is not None
-    if not is_student and not settings.feedback_is_writable and not settings.feedback_is_visible:
+    if not is_student and not settings.peer_feedback_1_is_writable and not settings.peer_feedback_1_is_visible:
         return redirect("home")
 
     if request.method == "POST":
-        # Gets the reviewing student based on the logged in user.
+        # The reviewing student based on the logged in user.
         reviewing_student = Student.objects.filter(s_number=request.user.username).first()
         if not reviewing_student:
             messages.error(request, "Achtung: Es wurde kein gültiger Student für die Abgabe des Feedbacks gefunden!")
             return redirect("home")
 
-        # Gets the reviewed student based on the selected team member in the form.
+        # The reviewed student based on the selected team member in the form.
         team_member_id = request.POST.get("team_member_id")
         team_member = TeamMember.objects.filter(pk=team_member_id).first()
         if not team_member:
@@ -146,7 +146,7 @@ def student_set_peer_feedback_1(request):
             return redirect("home")
         reviewed_student = team_member.student
 
-        # Gets the peer feedback data from the form.
+        # The peer feedback data from the form.
         contribution_score = request.POST.get("contribution_score")
         collaboration_score = request.POST.get("collaboration_score")
         reliability_score = request.POST.get("reliability_score")
@@ -172,7 +172,7 @@ def student_set_peer_feedback_1(request):
 
         # Validates the reason.
         if reason is not None and reason.strip() == "":
-            reason = None
+            reason = ""
 
         # Saves the peer feedback data to the database.
         values = {

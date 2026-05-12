@@ -160,15 +160,15 @@ class Settings(Singleton):
         verbose_name="Teams anzeigen",
         help_text="Wenn aktiv, sind die Teams für die Studenten sichtbar. Solange die Teams sichtbar sind, können keine Teams generiert oder verändert werden!",
     )
-    feedback_is_visible = models.BooleanField(
+    peer_feedback_1_is_visible = models.BooleanField(
         default=False,
-        verbose_name="Feedback-Fragebogen anzeigen",
-        help_text="Wenn aktiv, ist der Feedback-Fragebogen für die Studenten sichtbar.",
+        verbose_name="SE I Peer-Feedback Fragebogen anzeigen",
+        help_text="Wenn aktiv, ist der Fragebogen für die Studenten sichtbar.",
     )
-    feedback_is_writable = models.BooleanField(
+    peer_feedback_1_is_writable = models.BooleanField(
         default=False,
-        verbose_name="Feedback-Fragebogen is ausfüllbar (schreibbar)",
-        help_text="Wenn aktiv, kann der Feedback-Fragebogen von den Studenten beantwortet bzw. geändert und abgesendet werden.",
+        verbose_name="SE I Peer-Feedback Fragebogen is ausfüllbar (schreibbar)",
+        help_text="Wenn aktiv, kann der Fragebogen von den Studenten beantwortet bzw. geändert und abgesendet werden.",
     )
     team_min_member = models.PositiveIntegerField(
         default=6,
