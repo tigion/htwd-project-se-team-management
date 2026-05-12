@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from feedback.models import FEEDBACK_SCORES, PeerFeedback1
 from poll.helper import (
     delete_poll_data_for_student,
     generate_missing_poll_data,
@@ -89,8 +90,6 @@ def student_home(request):
 
     student = Student.objects.filter(s_number=request.user.username).first()
     is_student = bool(student)
-    student2 = Student.objects.filter(s_number="s89031").first()
-    is_student2 = bool(student2)
 
     context = {}
     context["is_student"] = is_student
@@ -100,13 +99,12 @@ def student_home(request):
     context["poll_levels"] = POLL_LEVELS
     context["teams"] = get_teams_for_view().get("teams", [])
 
-    if is_student2 and settings.feedback_is_visible:
-        context["student2"] = student2
-        context["assigned_team"] = Team.objects.filter(teammember__student=student2).first()
-        print(context["assigned_team"])
-        context["assigned_team_members"] = TeamMember.objects.filter(team__teammember__student=student2).exclude(
-            student=student2
-        )
+    # if is_student and settings.feedback_is_visible:
+    #     context["student"] = student
+    #     context["assigned_team"] = Team.objects.filter(teammember__student=student).first()
+    #     context["assigned_team_members"] = TeamMember.objects.filter(team__teammember__student=student).exclude(
+    #         student=student
+    #     )
 
     if request.method == "POST" and is_student and settings.poll_is_writable:
         # save poll data
@@ -121,7 +119,124 @@ def student_home(request):
     form_poll_data = load_poll_data_for_form(student, projects)
     context["form_poll_data"] = form_poll_data
 
+    # Loads the feedback data, if feedback is visible.
+    if is_student and settings.feedback_is_visible:
+        # Gets the assigned team and team members for the student.
+        context["student"] = student
+        context["assigned_team"] = Team.objects.filter(teammember__student=student).first()
+        context["feedback_scores"] = FEEDBACK_SCORES
+        context["assigned_team_members"] = []
+        assigned_team_members = TeamMember.objects.filter(team__teammember__student=student).exclude(student=student)
+        for team_member in assigned_team_members:
+            peer_feedback = PeerFeedback1.objects.filter(
+                reviewing_student=student, reviewed_student=team_member.student
+            ).first()
+            context["assigned_team_members"].append({
+                "id": team_member.pk,
+                "student": team_member.student,
+                "has_peer_feedback": bool(peer_feedback),
+                "peer_feedback": {
+                    "contribution_score": peer_feedback.contribution_score
+                    if peer_feedback
+                    else FEEDBACK_SCORES["default"],
+                    "collaboration_score": peer_feedback.collaboration_score
+                    if peer_feedback
+                    else FEEDBACK_SCORES["default"],
+                    "reliability_score": peer_feedback.reliability_score
+                    if peer_feedback
+                    else FEEDBACK_SCORES["default"],
+                    "reason": format_html("{}", peer_feedback.reason) if peer_feedback else "",
+                },
+            })
+        print(context["assigned_team_members"])
+
+        # context["assigned_team_members"] = TeamMember.objects.filter(team__teammember__student=student).exclude(
+        #     student=student
+        # )
+        # Gets the peer feedback data for the student.
+        # peer_feedback_qs = PeerFeedback1.objects.filter(reviewing_student=student)
+        # peer_feedback_data = {}
+        # for feedback in peer_feedback_qs:
+        #     peer_feedback_data[feedback.reviewed_student_id] = {
+        #         "contribution_score": feedback.contribution_score,
+        #         "collaboration_score": feedback.collaboration_score,
+        #         "reliability_score": feedback.reliability_score,
+        #         "reason": feedback.reason,
+        #     }
+        # context["peer_feedback_data"] = peer_feedback_data
+
     return render(request, "student/home.html", context)
+
+
+@login_required
+def student_set_peer_feedback_1(request):
+    settings = Settings.load()
+    student = Student.objects.filter(s_number=request.user.username).first()
+    is_student = bool(student)
+    if not is_student and not settings.feedback_is_writable and not settings.feedback_is_visible:
+        return redirect("home")
+
+    if request.method == "POST":
+        # Gets the reviewing student based on the logged in user.
+        reviewing_student = Student.objects.filter(s_number=request.user.username).first()
+        if not reviewing_student:
+            messages.error(request, "Achtung: Es wurde kein gültiger Student für die Abgabe des Feedbacks gefunden!")
+            return redirect("home")
+
+        # Gets the reviewed student based on the selected team member in the form.
+        team_member_id = request.POST.get("team_member_id")
+        team_member = TeamMember.objects.filter(pk=team_member_id).first()
+        if not team_member:
+            messages.error(request, "Achtung: Es wurde kein gültiges Teammitglied ausgewählt!")
+            return redirect("home")
+        reviewed_student = team_member.student
+
+        # Gets the peer feedback data from the form.
+        contribution_score = request.POST.get("contribution_score")
+        collaboration_score = request.POST.get("collaboration_score")
+        reliability_score = request.POST.get("reliability_score")
+        reason = request.POST.get("reason")
+
+        # Validates the scores.
+        try:
+            contribution_score = int(contribution_score)
+            collaboration_score = int(collaboration_score)
+            reliability_score = int(reliability_score)
+
+            if (
+                contribution_score not in FEEDBACK_SCORES["choices"]
+                or collaboration_score not in FEEDBACK_SCORES["choices"]
+                or reliability_score not in FEEDBACK_SCORES["choices"]
+            ):
+                raise ValueError("Invalid score")
+        except (ValueError, TypeError):
+            messages.error(
+                request, "Achtung: Ungültige Bewertung! Die Bewertung muss einem der definierten Werte entsprechen."
+            )
+            return redirect("home")
+
+        # Validates the reason.
+        if reason is not None and reason.strip() == "":
+            reason = None
+
+        # Saves the peer feedback data to the database.
+        values = {
+            "contribution_score": contribution_score,
+            "collaboration_score": collaboration_score,
+            "reliability_score": reliability_score,
+            "reason": reason,
+        }
+        PeerFeedback1.objects.update_or_create(
+            team=team_member.team,
+            reviewing_student=reviewing_student,
+            reviewed_student=reviewed_student,
+            defaults=values,
+        )
+        messages.success(
+            request, "Feedback gespeichert. Änderungen sind möglich, solange das Peer-Feedback nicht gesperrt ist."
+        )
+
+    return redirect("home")
 
 
 @login_required
