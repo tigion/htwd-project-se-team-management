@@ -3,13 +3,14 @@
 {% load django_bootstrap5 %}
 
 <div id="feedback" class="container my-5" style="scroll-margin-top: 120px">
-  <h2>Peer-Feedback</h2>
+  <h2>Feedback</h2>
   {% if student %}
   <p>
     <i class="bi bi-people-fill me-2"></i>{{ assigned_team|default:'Ohne Team' }} - {{ assigned_team.project_instance.project.name }}<br />
     <i class="bi bi-person-fill me-2"></i>{{ student.name|default:'Kein Student' }}
   </p>
   {% endif %}
+  <h3 class="mt-3">SE I - Peer-Feedback</h3>
   <div>
     <p>Bitte bewerten Sie die Mitglieder Ihres Teams mit PUNKTEN in den folgenden Kriterien:</p>
     <ul>
