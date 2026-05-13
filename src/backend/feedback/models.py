@@ -1,5 +1,5 @@
 from app.models import Student
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinLengthValidator, MinValueValidator
 from django.db import models
 from team.models import Team
 
@@ -67,7 +67,7 @@ class PeerFeedback1(models.Model):
         default=FEEDBACK_SCORES["default"],
         validators=[MinValueValidator(FEEDBACK_SCORES["min"]), MaxValueValidator(FEEDBACK_SCORES["max"])],
     )
-    reason = models.TextField(blank=True, null=True, verbose_name="Begründung")
+    reason = models.TextField(validators=[MinLengthValidator(20)], verbose_name="Begründung")
 
     class Meta:
         constraints = (

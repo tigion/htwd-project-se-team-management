@@ -171,8 +171,13 @@ def student_set_peer_feedback_1(request):
             return redirect("home")
 
         # Validates the reason.
-        if reason is not None and reason.strip() == "":
-            reason = ""
+        reason = (reason or "").strip()
+        if len(reason) < 20:
+            messages.error(
+                request,
+                f"Achtung: Fehler bei der Bewertung von {reviewed_student.name}! Die Begründung muss mindestens 20 Zeichen lang sein.",
+            )
+            return redirect("home")
 
         # Saves the peer feedback data to the database.
         values = {
