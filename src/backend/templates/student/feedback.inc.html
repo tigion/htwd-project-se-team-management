@@ -58,8 +58,8 @@
               </div>
             </div>
             <div class="mb-3">
-              <label for="reason" class="form-label">Bitte geben Sie eine kurze Begründung Ihrer Bewertung an:</label>
-              <textarea class="form-control form-control-sm" id="reason" name="reason" rows="3" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %} required>{{ team_member.peer_feedback.reason }}</textarea>
+              <label for="reason" class="form-label">Bitte geben Sie eine kurze Begründung Ihrer Bewertung (mindestens 20 Zeichen) an:</label>
+              <textarea class="form-control form-control-sm" id="reason" name="reason" rows="3" minlength="20" required {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>{{ team_member.peer_feedback.reason }}</textarea>
             </div>
             {% if settings.peer_feedback_1_is_writable %}
             {% bootstrap_button button_type='submit' content='Feedback absenden' %}
