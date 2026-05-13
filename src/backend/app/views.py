@@ -193,7 +193,8 @@ def student_set_peer_feedback_1(request):
             defaults=values,
         )
         messages.success(
-            request, "Feedback gespeichert. Änderungen sind möglich, solange das Peer-Feedback nicht gesperrt ist."
+            request,
+            f"Feedback für  {reviewed_student.name} gespeichert. Änderungen sind möglich, solange das Peer-Feedback nicht gesperrt ist.",
         )
 
     return redirect("home")

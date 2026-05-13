@@ -4,10 +4,12 @@
 
 <div id="feedback" class="container my-5" style="scroll-margin-top: 120px">
   <h2>Peer-Feedback</h2>
+  {% if student %}
   <p>
-    <i class="bi bi-people-fill me-2"></i>{{ assigned_team }} - {{ assigned_team.project_instance.project.name }}<br />
-    <i class="bi bi-person-fill me-2"></i>{{ student.name }}
+    <i class="bi bi-people-fill me-2"></i>{{ assigned_team|default:'Ohne Team' }} - {{ assigned_team.project_instance.project.name }}<br />
+    <i class="bi bi-person-fill me-2"></i>{{ student.name|default:'Kein Student' }}
   </p>
+  {% endif %}
   <div>
     <p>Bitte bewerten Sie die Mitglieder Ihres Teams mit PUNKTEN in den folgenden Kriterien:</p>
     <ul>
@@ -34,7 +36,7 @@
             <div class="row g-3">
               <div class="col mb-3">
                 <label for="contribution" class="form-label">Beitrag</label>
-                <select class="form-select form-select-sm" id="contribution" name="contribution_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
+                <select class="form-select form-select-sm" id="contribution-{{ team_member.id }}" name="contribution_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
                   {% for key, score in feedback_scores.choices.items %}
                   <option value="{{ score.value }}" {% if team_member.peer_feedback.contribution_score == score.value %}selected{% endif %}>{{ score.value }} - {{ score.name }}</option>
                   {% endfor %}
@@ -42,7 +44,7 @@
               </div>
               <div class="col mb-3">
                 <label for="collaboration" class="form-label">Zusammenarbeit</label>
-                <select class="form-select form-select-sm" id="collaboration" name="collaboration_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
+                <select class="form-select form-select-sm" id="collaboration-{{ team_member.id }}" name="collaboration_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
                   {% for key, score in feedback_scores.choices.items %}
                   <option value="{{ score.value }}" {% if team_member.peer_feedback.collaboration_score == score.value %}selected{% endif %}>{{ score.value }} - {{ score.name }}</option>
                   {% endfor %}
@@ -50,7 +52,7 @@
               </div>
               <div class="col mb-3">
                 <label for="reliability" class="form-label">Zuverlässigkeit</label>
-                <select class="form-select form-select-sm" id="reliability" name="reliability_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
+                <select class="form-select form-select-sm" id="reliability-{{ team_member.id }}" name="reliability_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
                   {% for key, score in feedback_scores.choices.items %}
                   <option value="{{ score.value }}" {% if team_member.peer_feedback.reliability_score == score.value %}selected{% endif %}>{{ score.value }} - {{ score.name }}</option>
                   {% endfor %}
@@ -59,7 +61,7 @@
             </div>
             <div class="mb-3">
               <label for="reason" class="form-label">Bitte geben Sie eine kurze Begründung Ihrer Bewertung (mindestens 20 Zeichen) an:</label>
-              <textarea class="form-control form-control-sm" id="reason" name="reason" rows="3" minlength="20" required {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>{{ team_member.peer_feedback.reason }}</textarea>
+              <textarea class="form-control form-control-sm" id="reason-{{ team_member.id }}" name="reason" rows="3" minlength="20" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %} required>{{ team_member.peer_feedback.reason|default:"" }}</textarea>
             </div>
             {% if settings.peer_feedback_1_is_writable %}
             {% bootstrap_button button_type='submit' content='Feedback absenden' %}
@@ -71,7 +73,7 @@
     </div>
     {% endfor %}
   </div>
-  {% else %}
+  {% elif student %}
   <div>Keine Teammitglieder vorhanden!</div>
   {% endif %}
 
