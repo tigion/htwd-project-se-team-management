@@ -1,4 +1,8 @@
+import csv
+import io
+
 from django.db.models import ProtectedError
+from django.http import FileResponse
 from django.utils.html import format_html
 from team.models import Team, TeamMember
 
@@ -62,6 +66,7 @@ def get_peer_feedback_1_statistics_for_view():
             "total_count": 0,
             "filled_count": 0,
             "filled_percent": 0,
+            "empty_count": 0,
         },
         "feedbacks_per_team": [],
     }
@@ -78,12 +83,14 @@ def get_peer_feedback_1_statistics_for_view():
         filled_feedback_count = PeerFeedback1.objects.filter(team=team).count()
         feedback_stats.append({
             "team_id": team.project_instance.piid,
+            "team_member_count": member_count,
             "feedback": {
                 "total_count": possible_feedback_count,
                 "filled_count": filled_feedback_count,
                 "filled_percent": (filled_feedback_count / possible_feedback_count * 100)
                 if possible_feedback_count > 0
                 else 0,
+                "empty_count": possible_feedback_count - filled_feedback_count,
             },
         })
 
@@ -95,9 +102,48 @@ def get_peer_feedback_1_statistics_for_view():
     stats["total_feedback"]["total_count"] = total_possible_feedback_count
     stats["total_feedback"]["filled_count"] = total_filled_feedback_count
     stats["total_feedback"]["filled_percent"] = total_filled_feedback_percent
+    stats["total_feedback"]["empty_count"] = total_possible_feedback_count - total_filled_feedback_count
     stats["feedbacks_per_team"] = feedback_stats
 
     return stats
+
+
+def generate_peer_feedback_1_csv():
+    # TODO: average score per team and overall
+
+    csv_data = [
+        [
+            "Projektinstanz",
+            "Bewertender Student",
+            "Bewerteter Student",
+            "Beitrag",
+            "Zusammenarbeit",
+            "Zuverlässigkeit",
+            "Begründung",
+        ]
+    ]
+    feedback_entries = PeerFeedback1.objects.all()
+    for feedback in feedback_entries:
+        csv_data.append([
+            feedback.team.project_instance.piid,
+            feedback.reviewing_student.name,
+            feedback.reviewed_student.name,
+            feedback.contribution_score,
+            feedback.collaboration_score,
+            feedback.reliability_score,
+            feedback.reason,
+        ])
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, delimiter=",")
+    writer.writerows(csv_data)
+
+    # StringIO -> BytesIO
+    bytes_buffer = io.BytesIO()
+    bytes_buffer.write(buffer.getvalue().encode("utf-8-sig"))
+    bytes_buffer.seek(0)
+
+    return bytes_buffer
 
 
 def delete_feedback_data_for_student(student_id: int):
