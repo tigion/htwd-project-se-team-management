@@ -1,6 +1,6 @@
 from django.db.models import ProtectedError
 from django.utils.html import format_html
-from team.models import TeamMember
+from team.models import Team, TeamMember
 
 from .models import FEEDBACK_SCORES, PeerFeedback1
 
@@ -50,6 +50,54 @@ def load_peer_feedback_1_data_for_form(student):
         })
 
     return feedback_data
+
+
+def get_peer_feedback_1_statistics_for_view():
+    """
+    Returns the peer feedback 1 statistics for the view.
+    """
+
+    stats = {
+        "total_feedback": {
+            "total_count": 0,
+            "filled_count": 0,
+            "filled_percent": 0,
+        },
+        "feedbacks_per_team": [],
+    }
+
+    total_possible_feedback_count = 0
+    feedback_stats = []
+
+    teams = Team.objects.all()
+    for team in teams:
+        member_count = TeamMember.objects.filter(team=team).count()
+        possible_feedback_count = member_count * (member_count - 1)
+        total_possible_feedback_count += possible_feedback_count
+
+        filled_feedback_count = PeerFeedback1.objects.filter(team=team).count()
+        feedback_stats.append({
+            "team_id": team.project_instance.piid,
+            "feedback": {
+                "total_count": possible_feedback_count,
+                "filled_count": filled_feedback_count,
+                "filled_percent": (filled_feedback_count / possible_feedback_count * 100)
+                if possible_feedback_count > 0
+                else 0,
+            },
+        })
+
+    total_filled_feedback_count = PeerFeedback1.objects.count()
+    total_filled_feedback_percent = (
+        total_filled_feedback_count / total_possible_feedback_count * 100 if total_possible_feedback_count > 0 else 0
+    )
+
+    stats["total_feedback"]["total_count"] = total_possible_feedback_count
+    stats["total_feedback"]["filled_count"] = total_filled_feedback_count
+    stats["total_feedback"]["filled_percent"] = total_filled_feedback_percent
+    stats["feedbacks_per_team"] = feedback_stats
+
+    return stats
 
 
 def delete_feedback_data_for_student(student_id: int):

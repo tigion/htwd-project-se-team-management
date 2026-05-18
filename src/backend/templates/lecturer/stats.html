@@ -44,28 +44,6 @@
 </div>
 
 <div class="container my-5">
-  <h3>Angestrebtes Ergebnis</h3>
-  <table class="table w-auto align-middle">
-    <thead>
-      <tr>
-        <th scope="col">Ambitionsniveau</th>
-        <th scope="col">Count</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for level in stats.level %}
-      <tr>
-        <td>{{ level.level.name }}</td>
-        <td class="text-secondary">
-          <small><i class="bu bi-{{ level.level.icon }}" style="color:{{ level.level.color }}"></i> {{ level.count }}×</small>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-
-<div class="container my-5">
   <h3>Beliebtheit Projekte</h3>
   <table class="table w-auto align-middle">
     <thead>
@@ -97,6 +75,59 @@
             {% endfor %}
           </small>
         </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="container my-5">
+  <h3>Angestrebtes Ergebnis</h3>
+  <table class="table w-auto align-middle">
+    <thead>
+      <tr>
+        <th scope="col">Ambitionsniveau</th>
+        <th scope="col">Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for level in stats.level %}
+      <tr>
+        <td>{{ level.level.name }}</td>
+        <td class="text-secondary">
+          <small><i class="bu bi-{{ level.level.icon }}" style="color:{{ level.level.color }}"></i> {{ level.count }}×</small>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="container my-5">
+  <h3>SE I - Peer-Feedback</h3>
+  <div class="progress mt-3 mb-1" role="progressbar" aria-label="Example with label" aria-valuenow="{{ stats.peer_feedback_1.filled.percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100">
+    <div class="progress-bar" style="width: {{ stats.peer_feedback_1.filled.percent|stringformat:".2f" }}%">{{ stats.peer_feedback_1.filled.percent|stringformat:".2f" }}%</div>
+  </div>
+  <p>Beantwortet: <strong>{{ stats.peer_feedback_1.filled.percent|stringformat:".2f" }}%</strong></p>
+
+  <table class="table align-middle">
+    <thead>
+      <tr>
+        <th scope="col">Team</th>
+        <th scope="col">Peer-Feedback</th>
+        <th scope="col">Beantwortet</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for team_feedback in stats.team_feedbacks %}
+      <tr>
+        <td>{{ team_feedback.team_id }}</td>
+        <td>
+          <div class="progress mt-0 mb-0" role="progressbar" aria-label="Example with label" aria-valuenow="{{ team_feedback.feedback.filled_percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar bg-success" style="width: {{ team_feedback.feedback.filled_percent|stringformat:".2f" }}%">{{ team_feedback.feedback.filled_count }}</div>
+          </div>
+        </td>
+        <td class="text-secondary"><small><strong>{{ team_feedback.feedback.filled_count }}</strong> von <strong>{{ team_feedback.feedback.all_count }}</strong></small></td>
       </tr>
       {% endfor %}
     </tbody>

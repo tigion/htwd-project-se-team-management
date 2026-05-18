@@ -641,3 +641,13 @@ def dev_settings(request):
 
     context["DevSettingsForm"] = form
     return render(request, "lecturer/dev-settings.html", context)
+
+
+@login_required
+def feedback(request):
+    settings = Settings.load()
+
+    context = {}
+    context["settings"] = settings
+
+    return render(request, "lecturer/feedback.html", context)
