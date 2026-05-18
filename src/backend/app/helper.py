@@ -4,6 +4,7 @@ from io import StringIO
 
 from django.db.models import Count, ProtectedError
 from feedback.helper import delete_feedback_data
+from feedback.models import PeerFeedback1
 from poll.helper import delete_poll_data, get_project_ids_ordered_by_score
 from poll.models import POLL_LEVELS, POLL_SCORES, LevelAnswer, Poll, ProjectAnswer
 from team.helper import delete_team_data

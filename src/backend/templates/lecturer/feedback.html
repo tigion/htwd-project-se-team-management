@@ -1,0 +1,76 @@
+{# vim: set filetype=htmldjango: #}
+
+{% extends 'base.html' %}
+
+{% load django_bootstrap5 %}
+
+{% block content %}
+
+<div class="container my-5">
+  <h2>Feedback</h2>
+</div>
+
+<div class="container my-5">
+  <h3 class="clearfix">
+    SE I - Peer-Feedback
+    <span class="float-end text-muted fs-6">
+      <form action="{% url 'peer-feedback-1-export' %}" method="POST">
+        {% csrf_token %}
+        <button id="buttonExportPeerFeedback1" class="btn btn-light" type="submit"><i class="bi bi-filetype-csv me-2"></i>SE I - Peer-Feedback exportieren</button>
+      </form>
+    </span>
+  </h3>
+
+  {% if peer_feedback_1_results %}
+  <div class="accordion" id="accordion-peer-feedback-1">
+    {% for result in peer_feedback_1_results %}
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="accordion-header-peer-feedback-1-{{ result.team }}">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-peer-feedback-1-team-{{ result.team }}" aria-expanded="false" aria-controls="accordion-collapse-peer-feedback-1-team-{{ result.team }}">
+          <span class="badge bg-light text-dark fs-6 me-3 flex-shrink-0" style="display:inline-block; width:70px"><i class="bi bi-people-fill me-2"></i>{{ result.team.project_instance.piid }}</span>
+          <span class="me-3">{{ result.team.project_instance.project.name }}</span>
+        </button>
+      </h2>
+      <div id="accordion-collapse-peer-feedback-1-team-{{ result.team }}" class="accordion-collapse collapse" aria-labelledby="accordion-header-peer-feedback-1-team-{{ result.team }}">
+        <div class="accordion-body">
+          {% if result.members|length > 0 %}
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th scope="col"><small>Name</small></th>
+                <th class="text-center" scope="col"><small>Bewertungen</small></th>
+                <th class="text-center" scope="col"><small>⌀ Beitrag</small></th>
+                <th class="text-center" scope="col"><small>⌀ Zusammenarbeit</small></th>
+                <th class="text-center" scope="col"><small>⌀ Zuverlässigkeit</small></th>
+                <th class="text-center" scope="col"><small>⌀ Gesamt</small></th>
+                <th class="text-center" scope="col"><small>Bewertung</small></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for member in result.members %}
+              <tr>
+                <td>{{ member.student.name }}</td>
+                <td class="text-center text-secondary"><span class="badge {{ member.possible_feedback_color }}">{{ member.feedback_count }}/{{ result.possible_feedback_count }}</span></td>
+                <td class="text-center text-secondary">{{ member.avg_contribution|stringformat:".2f" }}</td>
+                <td class="text-center text-secondary">{{ member.avg_collaboration|stringformat:".2f" }}</td>
+                <td class="text-center text-secondary">{{ member.avg_reliability|stringformat:".2f" }}</td>
+                <td class="text-center text-secondary"><strong>{{ member.avg_total|stringformat:".2f" }}</strong></td>
+                <td class="text-center text-secondary"><strong>{{ member.avg_total_percent_str }}</strong></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="text-secondary"><small>Keine Feedbacks vorhanden.</small></p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-secondary">Keine Teams vorhanden!</div>
+  {% endif %}
+</div>
+
+{% endblock content %}

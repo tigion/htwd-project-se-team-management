@@ -10,7 +10,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from feedback.helper import delete_feedback_data_for_student, load_peer_feedback_1_data_for_form
+from feedback.helper import (
+    delete_feedback_data_for_student,
+    generate_peer_feedback_1_csv,
+    get_peer_feedback_1_results_for_view,
+    get_peer_feedback_1_statistics_for_view,
+    load_peer_feedback_1_data_for_form,
+)
 from feedback.models import FEEDBACK_SCORES, PeerFeedback1
 from poll.helper import (
     delete_poll_data_for_student,
@@ -541,8 +547,34 @@ def stats(request):
     context["settings"] = settings
     context["poll_scores"] = POLL_SCORES
     context["stats"] = get_statistics_for_view()
+    context["peer_feedback_1_stats"] = get_peer_feedback_1_statistics_for_view()
 
     return render(request, "lecturer/stats.html", context)
+
+
+@login_required
+def feedback(request):
+    settings = Settings.load()
+
+    context = {}
+    context["settings"] = settings
+    context["peer_feedback_1_results"] = get_peer_feedback_1_results_for_view()
+
+    return render(request, "lecturer/feedback.html", context)
+
+
+@login_required
+def peer_feedback_1_export(request):
+    if request.method == "POST":
+        timestamp = timezone.localtime(timezone.now()).strftime("%Y%m%d-%H%M%S")
+        filename = f"peer_feedback_1_{timestamp}.csv"
+        response = FileResponse(
+            generate_peer_feedback_1_csv(), as_attachment=True, filename=filename, content_type="text/csv"
+        )
+
+        return response
+
+    return redirect("feedback")
 
 
 @login_required
