@@ -546,6 +546,7 @@ def stats(request):
     context["settings"] = settings
     context["poll_scores"] = POLL_SCORES
     context["stats"] = get_statistics_for_view()
+    context["peer_feedback_1_stats"] = get_peer_feedback_1_statistics_for_view()
 
     return render(request, "lecturer/stats.html", context)
 

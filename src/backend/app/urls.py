@@ -35,6 +35,6 @@ urlpatterns = [
     path("settings/dev", views.dev_settings, name="dev"),
     # Feedback
     path("feedback/", views.feedback, name="feedback"),
-    path("peer-feedback-1/set", views.student_set_peer_feedback_1, name="set-peer-feedback-1"),
+    path("feedback/peer-feedback-1/set", views.student_set_peer_feedback_1, name="set-peer-feedback-1"),
     path("feedback/peer-feedback-1/export", views.peer_feedback_1_export, name="peer-feedback-1-export"),
 ]
