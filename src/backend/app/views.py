@@ -13,6 +13,7 @@ from django.utils.safestring import mark_safe
 from feedback.helper import (
     delete_feedback_data_for_student,
     generate_peer_feedback_1_csv,
+    get_peer_feedback_1_results_for_view,
     get_peer_feedback_1_statistics_for_view,
     load_peer_feedback_1_data_for_form,
 )
@@ -557,7 +558,7 @@ def feedback(request):
 
     context = {}
     context["settings"] = settings
-    context["peer_feedback_1_stats"] = get_peer_feedback_1_statistics_for_view()
+    context["peer_feedback_1_results"] = get_peer_feedback_1_results_for_view()
 
     return render(request, "lecturer/feedback.html", context)
 

@@ -12,42 +12,35 @@
 
 <div class="container my-5">
   <h3>SE I - Peer-Feedback</h3>
-  <div class="progress mt-3 mb-1" role="progressbar" aria-label="Example with label" aria-valuenow="{{ peer_feedback_1_stats.total_feedback.filled_percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100">
-    <div class="progress-bar" style="width: {{ peer_feedback_1_stats.total_feedback.filled_percent|stringformat:".2f" }}%">{{ peer_feedback_1_stats.total_feedback.filled_percent|stringformat:".2f" }}%</div>
-  </div>
-  <p>Beantwortet: <strong>{{ peer_feedback_1_stats.total_feedback.filled_percent|stringformat:".2f" }}%</strong></p>
-
-  <table class="table align-middle">
+  {% for result in peer_feedback_1_results %}
+  <h4>{{ result.team.project_instance.piid }}</h4>
+  {% if result.results|length > 0 %}
+  <table class="table w-auto align-middle">
     <thead>
       <tr>
-        <th class="text-center" style="min-width:80px" scope="col">Team</th>
-        <th class="text-center" scope="col">Studenten</th>
-        <th class="text-center" scope="col">Fortschritt</th>
-        <th class="text-center" scope="col">Beantwortet</th>
+        <th scope="col">Name</th>
+        <th class="text-center" scope="col">⌀ Beitrag</th>
+        <th class="text-center" scope="col">⌀ Zusammenarbeit</th>
+        <th class="text-center" scope="col">⌀ Zuverlässigkeit</th>
+        <th class="text-center" scope="col">⌀ Gesamt</th>
       </tr>
     </thead>
     <tbody>
-      {% for team_feedback in peer_feedback_1_stats.feedbacks_per_team %}
+      {% for result2 in result.results %}
       <tr>
-        <td class="text-center"><i class="bi bi-people-fill me-2"></i>{{ team_feedback.team_id }}</td>
-        <td class="text-secondary text-center"><i class="bi bi-person-fill me-1"></i>{{ team_feedback.team_member_count }}</td>
-        <td class="w-50">
-          <div class="progress mt-0 mb-0" role="progressbar" aria-label="Example with label" aria-valuenow="{{ team_feedback.feedback.filled_percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100">
-            <div class="progress-bar bg-success" style="width: {{ team_feedback.feedback.filled_percent|stringformat:".2f" }}%">{{ team_feedback.feedback.filled_count }}</div>
-          </div>
-        </td>
-        <td class="text-secondary text-center"><small><strong>{{ team_feedback.feedback.filled_count }}</strong> von <strong>{{ team_feedback.feedback.total_count }}</strong></small></td>
+        <td>{{ result2.student.name }}</td>
+        <td class="text-center">{{ result2.avg_contribution_score|stringformat:".2f" }}</td>
+        <td class="text-center">{{ result2.avg_collaboration_score|stringformat:".2f" }}</td>
+        <td class="text-center">{{ result2.avg_reliability_score|stringformat:".2f" }}</td>
+        <td class="text-center">{{ result2.avg_total_score|stringformat:".2f" }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-
-  <div class="ms-3 my-4 bd-highlight">
-    <form action="{% url 'peer-feedback-1-export' %}" method="POST">
-      {% csrf_token %}
-      <button id="buttonExportPeerFeedback1" class="btn btn-light" type="submit" {% if not peer_feedback_1_stats.feedbacks_per_team %} disabled{% endif %}><i class="bi bi-filetype-csv me-2"></i>Peer-Feedback exportieren</button>
-    </form>
-  </div>
+  {% else %}
+  <p class="text-secondary"><small>Keine Feedbacks vorhanden.</small></p>
+  {% endif %}
+  {% endfor %}
 </div>
 
 {% endblock content %}

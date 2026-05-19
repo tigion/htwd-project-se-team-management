@@ -1,7 +1,7 @@
 import csv
 import io
 
-from django.db.models import ProtectedError
+from django.db.models import Avg, ProtectedError
 from django.http import FileResponse
 from django.utils.html import format_html
 from team.models import Team, TeamMember
@@ -106,6 +106,38 @@ def get_peer_feedback_1_statistics_for_view():
     stats["feedbacks_per_team"] = feedback_stats
 
     return stats
+
+
+def get_peer_feedback_1_results_for_view():
+    results = []
+
+    teams = Team.objects.all()
+    for team in teams:
+        feedbacks = PeerFeedback1.objects.filter(team=team).annotate(
+            avg_contribution_score=Avg("contribution_score"),
+            avg_collaboration_score=Avg("collaboration_score"),
+            avg_reliability_score=Avg("reliability_score"),
+        )
+        results2 = []
+        for feedback in feedbacks:
+            avg_contribution_score = feedback.avg_contribution_score or 0  # type: ignore
+            avg_collaboration_score = feedback.avg_collaboration_score or 0  # type: ignore
+            avg_reliability_score = feedback.avg_reliability_score or 0  # type: ignore
+            avg_total_score = (avg_contribution_score + avg_collaboration_score + avg_reliability_score) / 3
+            results2.append({
+                "student": feedback.reviewed_student,
+                "avg_contribution_score": avg_contribution_score,
+                "avg_collaboration_score": avg_collaboration_score,
+                "avg_reliability_score": avg_reliability_score,
+                "avg_total_score": avg_total_score,
+            })
+
+        results.append({
+            "team": team,
+            "results": results2,
+        })
+
+    return results
 
 
 def generate_peer_feedback_1_csv():
