@@ -1,5 +1,6 @@
 import csv
 import io
+import math
 
 from django.db.models import Avg, Count, F, Prefetch, ProtectedError, Q
 from django.utils.html import format_html
@@ -138,39 +139,49 @@ def get_peer_feedback_1_results_for_view():
         )
     )
 
-    # reasons = PeerFeedback1.objects.values("reviewed_student_id").annotate(
-    #     _reasons=Count("reason", filter=Q(reason__isnull=False) &
-    #                         Q(team_id=F("team_id"))),
-    # ).values("reviewed_student_id", "_reasons")
-    # reasons_map = {reason["reviewed_student_id"]: reason["_reasons"] for reason in reasons}
-
     results = []
 
     for team in teams:
         member_results = []
         members = team.teammember_set.all()  # type: ignore
+        possible_feedback_count = members.count() - 1
         for member in members:
             avg_total = None
+            avg_total_percent_str = ""
             if (
                 member.avg_contribution is not None
                 and member.avg_collaboration is not None
                 and member.avg_reliability is not None
             ):
                 avg_total = (member.avg_contribution + member.avg_collaboration + member.avg_reliability) / 3
+                avg_total_percent = round(
+                    (avg_total - FEEDBACK_SCORES["min"]) / (FEEDBACK_SCORES["max"] - FEEDBACK_SCORES["min"]) * 100, 1
+                )
+                if avg_total_percent == 100:
+                    avg_total_percent = 100
+                avg_total_percent_str = f"{avg_total_percent}%"
+
+            possible_feedback_color = "text-bg-danger"
+            if member.feedback_count == possible_feedback_count:
+                possible_feedback_color = "text-bg-success"
+            elif member.feedback_count >= math.ceil(possible_feedback_count / 2):
+                possible_feedback_color = "text-bg-warning"
 
             member_results.append({
                 "student": member.student,
                 "feedback_count": member.feedback_count,
-                "avg_contribution": member.avg_contribution,  # or 0.0,
+                "possible_feedback_color": possible_feedback_color,
+                "avg_contribution": member.avg_contribution,
                 "avg_collaboration": member.avg_collaboration,
                 "avg_reliability": member.avg_reliability,
                 "avg_total": avg_total,
+                "avg_total_percent_str": avg_total_percent_str,
             })
 
         results.append({
             "team": team,
             "members": member_results,
-            "member_count": members.count(),  # type: ignore
+            "possible_feedback_count": possible_feedback_count,
         })
 
     return results

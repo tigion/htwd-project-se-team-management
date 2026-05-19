@@ -37,23 +37,25 @@
           <table class="table align-middle">
             <thead>
               <tr>
-                <th scope="col">Name</th>
-                <th class="text-center" scope="col">Bewertungen</th>
-                <th class="text-center" scope="col">⌀ Beitrag</th>
-                <th class="text-center" scope="col">⌀ Zusammenarbeit</th>
-                <th class="text-center" scope="col">⌀ Zuverlässigkeit</th>
-                <th class="text-center" scope="col">⌀ Gesamt</th>
+                <th scope="col"><small>Name</small></th>
+                <th class="text-center" scope="col"><small>Bewertungen</small></th>
+                <th class="text-center" scope="col"><small>⌀ Beitrag</small></th>
+                <th class="text-center" scope="col"><small>⌀ Zusammenarbeit</small></th>
+                <th class="text-center" scope="col"><small>⌀ Zuverlässigkeit</small></th>
+                <th class="text-center" scope="col"><small>⌀ Gesamt</small></th>
+                <th class="text-center" scope="col"><small>Bewertung</small></th>
               </tr>
             </thead>
             <tbody>
               {% for member in result.members %}
               <tr>
                 <td>{{ member.student.name }}</td>
-                <td class="text-center text-secondary"><small>{{ member.feedback_count }}/{{ result.member_count }}</small></td>
+                <td class="text-center text-secondary"><span class="badge {{ member.possible_feedback_color }}">{{ member.feedback_count }}/{{ result.possible_feedback_count }}</span></td>
                 <td class="text-center text-secondary">{{ member.avg_contribution|stringformat:".2f" }}</td>
                 <td class="text-center text-secondary">{{ member.avg_collaboration|stringformat:".2f" }}</td>
                 <td class="text-center text-secondary">{{ member.avg_reliability|stringformat:".2f" }}</td>
-                <td class="text-center">{{ member.avg_total|stringformat:".2f" }}</td>
+                <td class="text-center text-secondary"><strong>{{ member.avg_total|stringformat:".2f" }}</strong></td>
+                <td class="text-center text-secondary"><strong>{{ member.avg_total_percent_str }}</strong></td>
               </tr>
               {% endfor %}
             </tbody>
@@ -65,12 +67,6 @@
       </div>
     </div>
     {% endfor %}
-    <div class="ms-3 my-4 bd-highlight">
-      <form action="{% url 'peer-feedback-1-export' %}" method="POST">
-        {% csrf_token %}
-        <button id="buttonExportPeerFeedback1" class="btn btn-light" type="submit"><i class="bi bi-filetype-csv me-2"></i>SE I - Peer-Feedback exportieren</button>
-      </form>
-    </div>
   </div>
   {% else %}
   <div class="text-secondary">Keine Teams vorhanden!</div>
