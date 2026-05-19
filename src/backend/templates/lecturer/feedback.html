@@ -16,7 +16,6 @@
   {% if peer_feedback_1_results %}
   <div class="accordion" id="accordion-peer-feedback-1">
     {% for result in peer_feedback_1_results %}
-
     <div class="accordion-item">
       <h2 class="accordion-header" id="accordion-header-peer-feedback-1-{{ result.team }}">
         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-peer-feedback-1-team-{{ result.team }}" aria-expanded="false" aria-controls="accordion-collapse-peer-feedback-1-team-{{ result.team }}">
@@ -57,14 +56,16 @@
         </div>
       </div>
     </div>
-
     {% endfor %}
+    <div class="ms-3 my-4 bd-highlight">
+      <form action="{% url 'peer-feedback-1-export' %}" method="POST">
+        {% csrf_token %}
+        <button id="buttonExportPeerFeedback1" class="btn btn-light" type="submit"><i class="bi bi-filetype-csv me-2"></i>SE I - Peer-Feedback exportieren</button>
+      </form>
+    </div>
   </div>
   {% else %}
-
-  <!-- <p class="text-secondary"><small>Keine Feedbacks vorhanden.</small></p> -->
-  <div>Keine Teams vorhanden!</div>
-
+  <div class="text-secondary">Keine Teams vorhanden!</div>
   {% endif %}
 </div>
 
