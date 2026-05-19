@@ -1,8 +1,9 @@
 import csv
 import io
 
-from django.db.models import Avg, ProtectedError
-from django.http import FileResponse
+from app.models import Student
+from django.db.models import Avg, F, Count, Prefetch, ProtectedError, Q
+from django.db.models.functions import Coalesce
 from django.utils.html import format_html
 from team.models import Team, TeamMember
 
@@ -109,23 +110,96 @@ def get_peer_feedback_1_statistics_for_view():
 
 
 def get_peer_feedback_1_results_for_view():
+    teams = Team.objects.prefetch_related(
+        Prefetch(
+            "teammember_set",
+            queryset=(
+                TeamMember.objects.select_related("student").annotate(
+                    # Coalesce(Avg(...), 0.0),
+                    feedback_count=Count(
+                        "student__received_peer_feedback",
+                        filter=Q(student__received_peer_feedback__team_id=F("team_id")),
+                    ),
+                    avg_contribution=Avg(
+                        "student__received_peer_feedback__contribution_score",
+                        filter=Q(student__received_peer_feedback__team_id=F("team_id")),
+                    ),
+                    avg_collaboration=Avg(
+                        "student__received_peer_feedback__collaboration_score",
+                        filter=Q(student__received_peer_feedback__team_id=F("team_id")),
+                    ),
+                    avg_reliability=Avg(
+                        "student__received_peer_feedback__reliability_score",
+                        filter=Q(student__received_peer_feedback__team_id=F("team_id")),
+                    ),
+                )
+            ),
+        )
+    )
+
     results = []
 
-    teams = Team.objects.all()
     for team in teams:
-        feedbacks = PeerFeedback1.objects.filter(team=team).annotate(
-            avg_contribution_score=Avg("contribution_score"),
-            avg_collaboration_score=Avg("collaboration_score"),
-            avg_reliability_score=Avg("reliability_score"),
+        member_results = []
+        for member in team.teammember_set.all():  # type: ignore
+            avg_total = None
+            if (
+                member.avg_contribution is not None
+                and member.avg_collaboration is not None
+                and member.avg_reliability is not None
+            ):
+                avg_total = (member.avg_contribution + member.avg_collaboration + member.avg_reliability) / 3
+
+            member_results.append({
+                "student": member.student,
+                "student_count": 10,
+                "feedback_count": member.feedback_count,
+                "avg_contribution": member.avg_contribution,  # or 0.0,
+                "avg_collaboration": member.avg_collaboration,
+                "avg_reliability": member.avg_reliability,
+                "avg_total": avg_total,
+            })
+
+        results.append({
+            "team": team,
+            "members": member_results,
+        })
+
+    return results
+
+
+def get_peer_feedback_1_results_for_view2():
+    results = []
+
+    students = {student.pk: student for student in Student.objects.all()}
+    teams = Team.objects.all()
+
+    get_peer_feedback_1_results_for_view2()
+
+    for team in teams:
+        team_feedbacks = (
+            # Team feedbacks grouped by reviewed student, with average scores.
+            PeerFeedback1.objects
+            .filter(team=team)
+            .values("reviewed_student")
+            .annotate(
+                avg_contribution_score=Avg("contribution_score"),
+                avg_collaboration_score=Avg("collaboration_score"),
+                avg_reliability_score=Avg("reliability_score"),
+            )
         )
-        results2 = []
-        for feedback in feedbacks:
-            avg_contribution_score = feedback.avg_contribution_score or 0  # type: ignore
-            avg_collaboration_score = feedback.avg_collaboration_score or 0  # type: ignore
-            avg_reliability_score = feedback.avg_reliability_score or 0  # type: ignore
+
+        team_results = []
+        for feedback in team_feedbacks:
+            student = students[feedback["reviewed_student"]]
+            avg_contribution_score = feedback["avg_contribution_score"] or 0
+            avg_collaboration_score = feedback["avg_collaboration_score"] or 0
+            avg_reliability_score = feedback["avg_reliability_score"] or 0
+
             avg_total_score = (avg_contribution_score + avg_collaboration_score + avg_reliability_score) / 3
-            results2.append({
-                "student": feedback.reviewed_student,
+
+            team_results.append({
+                "student": student,
                 "avg_contribution_score": avg_contribution_score,
                 "avg_collaboration_score": avg_collaboration_score,
                 "avg_reliability_score": avg_reliability_score,
@@ -134,7 +208,7 @@ def get_peer_feedback_1_results_for_view():
 
         results.append({
             "team": team,
-            "results": results2,
+            "results": team_results,
         })
 
     return results
