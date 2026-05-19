@@ -11,7 +11,15 @@
 </div>
 
 <div class="container my-5">
-  <h3>SE I - Peer-Feedback</h3>
+  <h3 class="clearfix">
+    SE I - Peer-Feedback
+    <span class="float-end text-muted fs-6">
+      <form action="{% url 'peer-feedback-1-export' %}" method="POST">
+        {% csrf_token %}
+        <button id="buttonExportPeerFeedback1" class="btn btn-light" type="submit"><i class="bi bi-filetype-csv me-2"></i>SE I - Peer-Feedback exportieren</button>
+      </form>
+    </span>
+  </h3>
 
   {% if peer_feedback_1_results %}
   <div class="accordion" id="accordion-peer-feedback-1">
