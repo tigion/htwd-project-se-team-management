@@ -114,7 +114,9 @@ def get_peer_feedback_1_results_for_view():
         Prefetch(
             "teammember_set",
             queryset=(
-                TeamMember.objects.select_related("student").annotate(
+                TeamMember.objects
+                .select_related("student")
+                .annotate(
                     # Coalesce(Avg(...), 0.0),
                     feedback_count=Count(
                         "student__received_peer_feedback",
@@ -133,6 +135,7 @@ def get_peer_feedback_1_results_for_view():
                         filter=Q(student__received_peer_feedback__team_id=F("team_id")),
                     ),
                 )
+                .order_by("student__last_name")
             ),
         )
     )
@@ -141,7 +144,8 @@ def get_peer_feedback_1_results_for_view():
 
     for team in teams:
         member_results = []
-        for member in team.teammember_set.all():  # type: ignore
+        members = team.teammember_set.all()  # type: ignore
+        for member in members:
             avg_total = None
             if (
                 member.avg_contribution is not None
@@ -152,7 +156,6 @@ def get_peer_feedback_1_results_for_view():
 
             member_results.append({
                 "student": member.student,
-                "student_count": 10,
                 "feedback_count": member.feedback_count,
                 "avg_contribution": member.avg_contribution,  # or 0.0,
                 "avg_collaboration": member.avg_collaboration,
@@ -163,6 +166,7 @@ def get_peer_feedback_1_results_for_view():
         results.append({
             "team": team,
             "members": member_results,
+            "member_count": members.count(),  # type: ignore
         })
 
     return results

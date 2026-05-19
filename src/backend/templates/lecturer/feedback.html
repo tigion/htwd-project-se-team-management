@@ -31,7 +31,7 @@
             <thead>
               <tr>
                 <th scope="col">Name</th>
-                <th class="text-center" scope="col">Feedback</th>
+                <th class="text-center" scope="col">Bewertungen</th>
                 <th class="text-center" scope="col">⌀ Beitrag</th>
                 <th class="text-center" scope="col">⌀ Zusammenarbeit</th>
                 <th class="text-center" scope="col">⌀ Zuverlässigkeit</th>
@@ -42,7 +42,7 @@
               {% for member in result.members %}
               <tr>
                 <td>{{ member.student.name }}</td>
-                <td class="text-center text-secondary"><small>{{ member.feedback_count }}/{{ team.member_count }}</small></td>
+                <td class="text-center text-secondary"><small>{{ member.feedback_count }}/{{ result.member_count }}</small></td>
                 <td class="text-center text-secondary">{{ member.avg_contribution|stringformat:".2f" }}</td>
                 <td class="text-center text-secondary">{{ member.avg_collaboration|stringformat:".2f" }}</td>
                 <td class="text-center text-secondary">{{ member.avg_reliability|stringformat:".2f" }}</td>
