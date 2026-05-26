@@ -109,6 +109,7 @@ def get_peer_feedback_1_statistics_for_view():
 
 
 def get_peer_feedback_1_results_for_view():
+    # Prefetch the team members with their average feedback scores and feedback count.
     teams = Team.objects.prefetch_related(
         Prefetch(
             "teammember_set",
@@ -138,6 +139,21 @@ def get_peer_feedback_1_results_for_view():
             ),
         )
     )
+
+    # Prefetch the reasons per reviewed student.
+    reasons_per_student = TeamMember.objects.prefetch_related(
+        Prefetch(
+            "student__received_peer_feedback",
+            queryset=PeerFeedback1.objects.all(),
+            to_attr="peer_feedbacks",
+        )
+    )
+    reasons_map = {
+        f"{data.team.project_instance.piid}-{data.student.pk}": [
+            feedback.reason for feedback in data.student.peer_feedbacks
+        ]
+        for data in reasons_per_student
+    }
 
     results = []
 
@@ -176,6 +192,7 @@ def get_peer_feedback_1_results_for_view():
                 "avg_reliability": member.avg_reliability,
                 "avg_total": avg_total,
                 "avg_total_percent_str": avg_total_percent_str,
+                "reasons": reasons_map.get(f"{team.project_instance.piid}-{member.student.pk}", []),
             })
 
         results.append({
