@@ -109,6 +109,10 @@ def get_peer_feedback_1_statistics_for_view():
 
 
 def get_peer_feedback_1_results_for_view():
+    """
+    Returns the peer feedback 1 results for the view.
+    """
+
     # Prefetch the team members with their average feedback scores and feedback count.
     teams = Team.objects.prefetch_related(
         Prefetch(
@@ -205,6 +209,10 @@ def get_peer_feedback_1_results_for_view():
 
 
 def generate_peer_feedback_1_csv():
+    """
+    Generates the CSV file content with the peer feedback 1 data.
+    """
+
     csv_data = [
         [
             "Team",
