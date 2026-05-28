@@ -161,6 +161,10 @@ def get_peer_feedback_1_results_for_view():
 
     results = []
 
+    min_score = FEEDBACK_SCORES["min"]
+    max_score = FEEDBACK_SCORES["max"]
+    max_percent = FEEDBACK_SCORES["max_percent"]
+
     for team in teams:
         member_results = []
         members = team.teammember_set.all()  # type: ignore
@@ -175,10 +179,11 @@ def get_peer_feedback_1_results_for_view():
             ):
                 avg_total = (member.avg_contribution + member.avg_collaboration + member.avg_reliability) / 3
                 avg_total_percent = round(
-                    (avg_total - FEEDBACK_SCORES["min"]) / (FEEDBACK_SCORES["max"] - FEEDBACK_SCORES["min"]) * 100, 1
+                    (avg_total - min_score) / (max_score - min_score) * max_percent,
+                    1,
                 )
-                if avg_total_percent == 100:
-                    avg_total_percent = 100
+                if avg_total_percent == max_percent:
+                    avg_total_percent = max_percent
                 avg_total_percent_str = f"{avg_total_percent}%"
 
             possible_feedback_color = "text-bg-danger"
