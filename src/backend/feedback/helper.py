@@ -108,12 +108,20 @@ def get_peer_feedback_1_statistics_for_view():
     return stats
 
 
-def get_peer_feedback_1_results_for_view():
+def get_peer_feedback_average_scores_by_team(number=1):
     """
-    Returns the peer feedback 1 results for the view.
+    Returns the teams with their average peer feedback 1 scores and count.
+
+    Args:
+        number (int): The number 1 (default) or 2 of the peer feedback to use.
     """
 
-    # Prefetch the team members with their average feedback scores and feedback count.
+    if number not in (1, 2):
+        raise ValueError("Invalid peer feedback number. Must be 1 or 2.")
+
+    feedback_relation = f"student__received_peer_feedback_{number}"
+    team_filter = Q(**{f"{feedback_relation}__team_id": F("team_id")})
+
     teams = Team.objects.prefetch_related(
         Prefetch(
             "teammember_set",
@@ -121,22 +129,22 @@ def get_peer_feedback_1_results_for_view():
                 TeamMember.objects
                 .select_related("student")
                 .annotate(
-                    # Coalesce(Avg(...), 0.0),
+                    # x = Coalesce(Avg(...), 0.0),
                     feedback_count=Count(
-                        "student__received_peer_feedback",
-                        filter=Q(student__received_peer_feedback__team_id=F("team_id")),
+                        feedback_relation,
+                        filter=team_filter,
                     ),
                     avg_contribution=Avg(
-                        "student__received_peer_feedback__contribution_score",
-                        filter=Q(student__received_peer_feedback__team_id=F("team_id")),
+                        f"{feedback_relation}__contribution_score",
+                        filter=team_filter,
                     ),
                     avg_collaboration=Avg(
-                        "student__received_peer_feedback__collaboration_score",
-                        filter=Q(student__received_peer_feedback__team_id=F("team_id")),
+                        f"{feedback_relation}__collaboration_score",
+                        filter=team_filter,
                     ),
                     avg_reliability=Avg(
-                        "student__received_peer_feedback__reliability_score",
-                        filter=Q(student__received_peer_feedback__team_id=F("team_id")),
+                        f"{feedback_relation}__reliability_score",
+                        filter=team_filter,
                     ),
                 )
                 .order_by("student__last_name")
@@ -144,47 +152,86 @@ def get_peer_feedback_1_results_for_view():
         )
     )
 
-    # Prefetch the reasons per reviewed student.
-    reasons_per_student = TeamMember.objects.prefetch_related(
+    return teams
+
+
+def get_peer_feedback_reasons_by_team_member(number=1):
+    """
+    Returns peer feedback reasons grouped by (project_instance_id, student_id).
+
+    Args:
+        number (int): The number 1 (default) or 2 of the peer feedback to use.
+    """
+
+    if number not in (1, 2):
+        raise ValueError("Invalid feedback number. Must be 1 or 2.")
+
+    relation = f"student__received_peer_feedback_{number}"
+
+    team_members = TeamMember.objects.prefetch_related(
         Prefetch(
-            "student__received_peer_feedback",
-            queryset=PeerFeedback1.objects.all(),
+            relation,
             to_attr="peer_feedbacks",
         )
     )
-    reasons_map = {
-        f"{data.team.project_instance.piid}-{data.student.pk}": [
-            feedback.reason for feedback in data.student.peer_feedbacks
-        ]
-        for data in reasons_per_student
-    }
 
-    results = []
+    reasons_by_student = {}
+    for team_member in team_members:
+        key = (team_member.team.project_instance.piid, team_member.student.pk)
+        reasons = [feedback.reason for feedback in team_member.student.peer_feedbacks]
+        reasons_by_student[key] = reasons
+
+    return reasons_by_student
+
+
+def calculate_peer_feedback_summary(avg_contribution, avg_collaboration, avg_reliability):
+    """
+    Returns the average total score and percentage for the given values.
+
+    Args:
+        avg_contribution (float): The average contribution score.
+        avg_collaboration (float): The average collaboration score.
+        avg_reliability (float): The average reliability score.
+    """
 
     min_score = FEEDBACK_SCORES["min"]
     max_score = FEEDBACK_SCORES["max"]
     max_percent = FEEDBACK_SCORES["max_percent"]
+
+    avg_total = None
+    avg_total_percent = None
+    avg_total_percent_str = ""
+
+    if avg_contribution is not None and avg_collaboration is not None and avg_reliability is not None:
+        avg_total = (avg_contribution + avg_collaboration + avg_reliability) / 3
+        avg_total_percent = round((avg_total - min_score) / (max_score - min_score) * max_percent, 1)
+        avg_total_percent_str = f"{avg_total_percent}%"
+
+    return {
+        "avg_total": avg_total,
+        "avg_total_percent": avg_total_percent,
+        "avg_total_percent_str": avg_total_percent_str,
+    }
+
+
+def get_peer_feedback_1_results_for_view():
+    """
+    Returns the peer feedback 1 results for the view.
+    """
+
+    teams = get_peer_feedback_average_scores_by_team()
+    reasons_map = get_peer_feedback_reasons_by_team_member()
+
+    results = []
 
     for team in teams:
         member_results = []
         members = team.teammember_set.all()  # type: ignore
         possible_feedback_count = members.count() - 1
         for member in members:
-            avg_total = None
-            avg_total_percent_str = ""
-            if (
-                member.avg_contribution is not None
-                and member.avg_collaboration is not None
-                and member.avg_reliability is not None
-            ):
-                avg_total = (member.avg_contribution + member.avg_collaboration + member.avg_reliability) / 3
-                avg_total_percent = round(
-                    (avg_total - min_score) / (max_score - min_score) * max_percent,
-                    1,
-                )
-                if avg_total_percent == max_percent:
-                    avg_total_percent = max_percent
-                avg_total_percent_str = f"{avg_total_percent}%"
+            peer_feedback_summary = calculate_peer_feedback_summary(
+                member.avg_contribution, member.avg_collaboration, member.avg_reliability
+            )
 
             possible_feedback_color = "text-bg-danger"
             if member.feedback_count == possible_feedback_count:
@@ -199,9 +246,9 @@ def get_peer_feedback_1_results_for_view():
                 "avg_contribution": member.avg_contribution,
                 "avg_collaboration": member.avg_collaboration,
                 "avg_reliability": member.avg_reliability,
-                "avg_total": avg_total,
-                "avg_total_percent_str": avg_total_percent_str,
-                "reasons": reasons_map.get(f"{team.project_instance.piid}-{member.student.pk}", []),
+                "avg_total": peer_feedback_summary["avg_total"],
+                "avg_total_percent_str": peer_feedback_summary["avg_total_percent_str"],
+                "reasons": reasons_map.get((team.project_instance.piid, member.student.pk), []),
             })
 
         results.append({
@@ -211,6 +258,57 @@ def get_peer_feedback_1_results_for_view():
         })
 
     return results
+
+
+def generate_peer_feedback_1_avg_csv():
+    """
+    Generates the CSV file content with the average peer feedback 1 scores and reasons.
+    """
+
+    teams = get_peer_feedback_average_scores_by_team()
+    reasons_map = get_peer_feedback_reasons_by_team_member()
+
+    csv_data = [
+        [
+            "Team",
+            "Bewerteter Student",
+            "ø Beitrag",
+            "ø Zusammenarbeit",
+            "ø Zuverlässigkeit",
+            "ø Gesamt",
+            f"% Bewertung (0 bis {FEEDBACK_SCORES['max_percent']}%)",
+            "Begründungen",
+        ]
+    ]
+
+    for team in teams:
+        members = team.teammember_set.all()  # type: ignore
+        for member in members:
+            reasons = reasons_map.get(f"{team.project_instance.piid}-{member.student.pk}", [])
+            average_total_values = calculate_peer_feedback_summary(
+                member.avg_contribution, member.avg_collaboration, member.avg_reliability
+            )
+            csv_data.append([
+                team.project_instance.piid,
+                member.student.name,
+                member.avg_contribution,
+                member.avg_collaboration,
+                member.avg_reliability,
+                average_total_values["avg_total"],
+                average_total_values["avg_total_percent"],
+                "\n---\n".join(reasons),
+            ])
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, delimiter=",")
+    writer.writerows(csv_data)
+
+    # StringIO -> BytesIO
+    bytes_buffer = io.BytesIO()
+    bytes_buffer.write(buffer.getvalue().encode("utf-8-sig"))
+    bytes_buffer.seek(0)
+
+    return bytes_buffer
 
 
 def generate_peer_feedback_1_csv():

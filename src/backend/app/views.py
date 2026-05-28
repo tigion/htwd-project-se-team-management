@@ -12,7 +12,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from feedback.helper import (
     delete_feedback_data_for_student,
-    generate_peer_feedback_1_csv,
+    generate_peer_feedback_1_avg_csv,
     get_peer_feedback_1_results_for_view,
     get_peer_feedback_1_statistics_for_view,
     load_peer_feedback_1_data_for_form,
@@ -569,7 +569,7 @@ def peer_feedback_1_export(request):
         timestamp = timezone.localtime(timezone.now()).strftime("%Y%m%d-%H%M%S")
         filename = f"peer_feedback_1_{timestamp}.csv"
         response = FileResponse(
-            generate_peer_feedback_1_csv(), as_attachment=True, filename=filename, content_type="text/csv"
+            generate_peer_feedback_1_avg_csv(), as_attachment=True, filename=filename, content_type="text/csv"
         )
 
         return response

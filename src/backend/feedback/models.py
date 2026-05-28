@@ -8,7 +8,9 @@ FEEDBACK_SCORES = {
     "min": 1,
     "max": 5,
     # "min_percent": 0,  # Min 0%
-    "max_percent": 120,  # Max 120% -> 1: 0%, 2: 30%, 3: 60%, 4: 90%, 5: 120%
+    # Max 100% -> 1: 0%, 2: 25%, 3: 50%, 4: 75%, 5: 100%
+    # Max 120% -> 1: 0%, 2: 30%, 3: 60%, 4: 90%, 5: 120%
+    "max_percent": 100,
     "choices": {
         1: {
             "value": 1,
@@ -55,8 +57,8 @@ FEEDBACK_SCORES = {
 
 class PeerFeedback1(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    reviewing_student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="given_peer_feedback")
-    reviewed_student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="received_peer_feedback")
+    reviewing_student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="given_peer_feedback_1")
+    reviewed_student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="received_peer_feedback_1")
     contribution_score = models.PositiveIntegerField(
         default=FEEDBACK_SCORES["default"],
         validators=[MinValueValidator(FEEDBACK_SCORES["min"]), MaxValueValidator(FEEDBACK_SCORES["max"])],
