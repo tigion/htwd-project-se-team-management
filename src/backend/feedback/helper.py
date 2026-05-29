@@ -207,10 +207,14 @@ def calculate_peer_feedback_summary(avg_contribution, avg_collaboration, avg_rel
         avg_total_percent = round((avg_total - min_score) / (max_score - min_score) * max_percent, 1)
         avg_total_percent_str = f"{avg_total_percent}%"
 
+    choice = FEEDBACK_SCORES["choices"].get(round(avg_total), {}) if avg_total is not None else {}
+
     return {
         "avg_total": avg_total,
         "avg_total_percent": avg_total_percent,
         "avg_total_percent_str": avg_total_percent_str,
+        "avg_total_color": choice.get("color", "gray") if avg_total is not None else "gray",
+        "avg_total_icon": choice.get("icon", "bi-record") if avg_total is not None else "bi-record",
     }
 
 
@@ -248,6 +252,8 @@ def get_peer_feedback_1_results_for_view():
                 "avg_reliability": member.avg_reliability,
                 "avg_total": peer_feedback_summary["avg_total"],
                 "avg_total_percent_str": peer_feedback_summary["avg_total_percent_str"],
+                "avg_total_color": peer_feedback_summary["avg_total_color"],
+                "avg_total_icon": peer_feedback_summary["avg_total_icon"],
                 "reasons": reasons_map.get((team.project_instance.piid, member.student.pk), []),
             })
 

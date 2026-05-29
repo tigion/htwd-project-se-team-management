@@ -49,7 +49,7 @@
             <tbody>
               {% for member in result.members %}
               <tr>
-                <td title="{{ member.reasons|join:'&#13;---&#13;' }}">{{ member.student.name }}</td>
+                <td title="{{ member.reasons|join:'&#13;---&#13;' }}"><i class="bi {{ member.avg_total_icon }} me-2" style="font-size:0.6em;color:{{ member.avg_total_color }}"></i>{{ member.student.name }}</td>
                 <td class="text-center text-secondary"><span class="badge {{ member.possible_feedback_color }}">{{ member.feedback_count }}/{{ result.possible_feedback_count }}</span></td>
                 <td class="text-center text-secondary">{{ member.avg_contribution|stringformat:".2f" }}</td>
                 <td class="text-center text-secondary">{{ member.avg_collaboration|stringformat:".2f" }}</td>
