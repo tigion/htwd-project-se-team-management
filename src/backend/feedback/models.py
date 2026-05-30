@@ -7,10 +7,8 @@ FEEDBACK_SCORES = {
     "default": 3,
     "min": 1,
     "max": 5,
-    # "min_percent": 0,  # Min 0%
-    # Max 100% -> 1: 0%, 2: 25%, 3: 50%, 4: 75%, 5: 100%
-    # Max 120% -> 1: 0%, 2: 30%, 3: 60%, 4: 90%, 5: 120%
-    "max_percent": 100,
+    "percent_min": 25,
+    "percent_max": 125,
     "choices": {
         1: {
             "value": 1,

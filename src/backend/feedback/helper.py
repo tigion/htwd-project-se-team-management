@@ -184,6 +184,27 @@ def get_peer_feedback_reasons_by_team_member(number=1):
     return reasons_by_student
 
 
+def score_to_percentage(score, score_min, score_max, percent_min, percent_max, round_digits=None):
+    """
+    Converts a score to a percentage value.
+
+    Args:
+        score (float): The score to convert.
+        score_min (float): The minimum possible score.
+        score_max (float): The maximum possible score.
+        percent_min (float): The minimum percentage value corresponding to the minimum score.
+        percent_max (float): The maximum percentage value corresponding to the maximum score.
+        round_digits (int, optional): The number of decimal places to round the percentage to. If None, no rounding is applied.
+    """
+
+    percent = percent_min + (score - score_min) * (percent_max - percent_min) / (score_max - score_min)
+
+    if round_digits is not None:
+        percent = round(percent, round_digits)
+
+    return percent
+
+
 def calculate_peer_feedback_summary(avg_contribution, avg_collaboration, avg_reliability):
     """
     Returns the average total score and percentage for the given values.
@@ -194,9 +215,10 @@ def calculate_peer_feedback_summary(avg_contribution, avg_collaboration, avg_rel
         avg_reliability (float): The average reliability score.
     """
 
-    min_score = FEEDBACK_SCORES["min"]
-    max_score = FEEDBACK_SCORES["max"]
-    max_percent = FEEDBACK_SCORES["max_percent"]
+    score_min = FEEDBACK_SCORES["min"]
+    score_max = FEEDBACK_SCORES["max"]
+    percent_min = FEEDBACK_SCORES["percent_min"]
+    percent_max = FEEDBACK_SCORES["percent_max"]
 
     avg_total = None
     avg_total_percent = None
@@ -204,7 +226,7 @@ def calculate_peer_feedback_summary(avg_contribution, avg_collaboration, avg_rel
 
     if avg_contribution is not None and avg_collaboration is not None and avg_reliability is not None:
         avg_total = (avg_contribution + avg_collaboration + avg_reliability) / 3
-        avg_total_percent = round((avg_total - min_score) / (max_score - min_score) * max_percent, 1)
+        avg_total_percent = score_to_percentage(avg_total, score_min, score_max, percent_min, percent_max, 1)
         avg_total_percent_str = f"{avg_total_percent}%"
 
     choice = FEEDBACK_SCORES["choices"].get(round(avg_total), {}) if avg_total is not None else {}
