@@ -360,53 +360,6 @@ def generate_peer_feedback_1_avg_csv():
     return bytes_buffer
 
 
-def generate_peer_feedback_1_csv():
-    """
-    Generates the CSV file content with the peer feedback 1 data.
-    """
-
-    csv_data = [
-        [
-            "Team",
-            "Bewerteter Student",
-            "Bewertender Student",
-            "Beitrag",
-            "Zusammenarbeit",
-            "Zuverlässigkeit",
-            "Begründung",
-        ]
-    ]
-    feedback_entries = PeerFeedback1.objects.all().order_by(
-        "team__project_instance__project__pid",
-        "team__project_instance__number",
-        "reviewed_student__last_name",
-        "reviewed_student__first_name",
-        "reviewing_student__last_name",
-        "reviewing_student__first_name",
-    )
-    for feedback in feedback_entries:
-        csv_data.append([
-            feedback.team.project_instance.piid,
-            feedback.reviewed_student.name,
-            feedback.reviewing_student.name,
-            feedback.contribution_score,
-            feedback.collaboration_score,
-            feedback.reliability_score,
-            feedback.reason,
-        ])
-
-    buffer = io.StringIO()
-    writer = csv.writer(buffer, delimiter=",")
-    writer.writerows(csv_data)
-
-    # StringIO -> BytesIO
-    bytes_buffer = io.BytesIO()
-    bytes_buffer.write(buffer.getvalue().encode("utf-8-sig"))
-    bytes_buffer.seek(0)
-
-    return bytes_buffer
-
-
 def delete_feedback_data_for_student(student_id: int):
     """
     Deletes the feedback data for the given student.
