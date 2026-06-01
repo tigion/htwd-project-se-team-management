@@ -304,7 +304,7 @@ def generate_peer_feedback_1_avg_csv():
             "ø Zusammenarbeit",
             "ø Zuverlässigkeit",
             "ø Gesamt",
-            f"% Bewertung (0 bis {FEEDBACK_SCORES['max_percent']}%)",
+            f"% Bewertung ({FEEDBACK_SCORES['percent_min']} bis {FEEDBACK_SCORES['percent_max']}%)",
             "Begründungen",
         ]
     ]
@@ -312,7 +312,7 @@ def generate_peer_feedback_1_avg_csv():
     for team in teams:
         members = team.teammember_set.all()  # type: ignore
         for member in members:
-            reasons = reasons_map.get(f"{team.project_instance.piid}-{member.student.pk}", [])
+            reasons = reasons_map.get((team.project_instance.piid, member.student.pk), [])
             average_total_values = calculate_peer_feedback_summary(
                 member.avg_contribution, member.avg_collaboration, member.avg_reliability
             )
@@ -324,7 +324,7 @@ def generate_peer_feedback_1_avg_csv():
                 member.avg_reliability,
                 average_total_values["avg_total"],
                 average_total_values["avg_total_percent"],
-                "\n---\n".join(reasons),
+                "\r\n---\r\n".join(reasons),
             ])
 
     buffer = io.StringIO()
