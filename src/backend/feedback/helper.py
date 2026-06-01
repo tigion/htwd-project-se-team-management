@@ -71,30 +71,41 @@ def get_peer_feedback_1_statistics_for_view():
         "feedbacks_per_team": [],
     }
 
+    teams = Team.objects.annotate(member_count=Count("teammember", distinct=True))
+    feedbacks = (
+        PeerFeedback1.objects
+        .exclude(reviewing_student=F("reviewed_student"))
+        .values("team_id")
+        .annotate(filled_count=Count("id"))
+    )
+    filled_feedback_counts = {feedback["team_id"]: feedback["filled_count"] for feedback in feedbacks}
+
     total_possible_feedback_count = 0
+    total_filled_feedback_count = 0
     feedback_stats = []
 
-    teams = Team.objects.all()
     for team in teams:
-        member_count = TeamMember.objects.filter(team=team).count()
-        possible_feedback_count = member_count * (member_count - 1)
-        total_possible_feedback_count += possible_feedback_count
+        member_count = team.member_count  # type: ignore
 
-        filled_feedback_count = PeerFeedback1.objects.filter(team=team).count()
+        possible_feedback_count = member_count * (member_count - 1)
+        filled_feedback_count = filled_feedback_counts.get(team.pk, 0)
+        filled_percent = (filled_feedback_count / possible_feedback_count * 100) if possible_feedback_count > 0 else 0
+        empty_count = possible_feedback_count - filled_feedback_count
+
         feedback_stats.append({
             "team_id": team.project_instance.piid,
             "team_member_count": member_count,
             "feedback": {
                 "total_count": possible_feedback_count,
                 "filled_count": filled_feedback_count,
-                "filled_percent": (filled_feedback_count / possible_feedback_count * 100)
-                if possible_feedback_count > 0
-                else 0,
-                "empty_count": possible_feedback_count - filled_feedback_count,
+                "filled_percent": filled_percent,
+                "empty_count": empty_count,
             },
         })
 
-    total_filled_feedback_count = PeerFeedback1.objects.count()
+        total_possible_feedback_count += possible_feedback_count
+        total_filled_feedback_count += filled_feedback_count
+
     total_filled_feedback_percent = (
         total_filled_feedback_count / total_possible_feedback_count * 100 if total_possible_feedback_count > 0 else 0
     )
@@ -120,7 +131,13 @@ def get_peer_feedback_average_scores_by_team(number=1):
         raise ValueError("Invalid peer feedback number. Must be 1 or 2.")
 
     feedback_relation = f"student__received_peer_feedback_{number}"
-    team_filter = Q(**{f"{feedback_relation}__team_id": F("team_id")})
+
+    feedback_filter = (
+        # Includes only feedback for the team members of the team.
+        Q(**{f"{feedback_relation}__team_id": F("team_id")})
+        # Excludes the self-feedback (reviewing_student = reviewed_student).
+        & ~Q(**{f"{feedback_relation}__reviewing_student_id": F("student_id")})
+    )
 
     teams = Team.objects.prefetch_related(
         Prefetch(
@@ -132,22 +149,22 @@ def get_peer_feedback_average_scores_by_team(number=1):
                     # x = Coalesce(Avg(...), 0.0),
                     feedback_count=Count(
                         feedback_relation,
-                        filter=team_filter,
+                        filter=feedback_filter,
                     ),
                     avg_contribution=Avg(
                         f"{feedback_relation}__contribution_score",
-                        filter=team_filter,
+                        filter=feedback_filter,
                     ),
                     avg_collaboration=Avg(
                         f"{feedback_relation}__collaboration_score",
-                        filter=team_filter,
+                        filter=feedback_filter,
                     ),
                     avg_reliability=Avg(
                         f"{feedback_relation}__reliability_score",
-                        filter=team_filter,
+                        filter=feedback_filter,
                     ),
                 )
-                .order_by("student__last_name")
+                .order_by("student__last_name", "student__first_name")
             ),
         )
     )
@@ -171,6 +188,7 @@ def get_peer_feedback_reasons_by_team_member(number=1):
     team_members = TeamMember.objects.prefetch_related(
         Prefetch(
             relation,
+            queryset=PeerFeedback1.objects.exclude(reviewing_student=F("reviewed_student")),
             to_attr="peer_feedbacks",
         )
     )
@@ -196,6 +214,9 @@ def score_to_percentage(score, score_min, score_max, percent_min, percent_max, r
         percent_max (float): The maximum percentage value corresponding to the maximum score.
         round_digits (int, optional): The number of decimal places to round the percentage to. If None, no rounding is applied.
     """
+
+    if score_max <= score_min:
+        raise ValueError("score_max must be greater than score_min")
 
     percent = percent_min + (score - score_min) * (percent_max - percent_min) / (score_max - score_min)
 
