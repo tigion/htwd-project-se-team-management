@@ -10,6 +10,7 @@ venv/
 
 # Django
 *.sqlite3
+*.sqlite3_*
 staticfiles/
 
 # Logs
