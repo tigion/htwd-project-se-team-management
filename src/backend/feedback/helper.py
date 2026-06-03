@@ -25,6 +25,7 @@ def load_peer_feedback_1_data_for_form(student):
         .exclude(student=student)
         .select_related("student")
         .distinct()
+        .order_by("student__last_name", "student__first_name")
     )
 
     # All peer feedbacks given by the student for the assigned team members.
