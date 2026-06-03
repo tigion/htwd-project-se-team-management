@@ -5,16 +5,21 @@
 {% block content %}
 
 <div class="container my-5">
-  <div class="alert alert-info" role="alert">
-    Im Rahmen des Moduls <strong>Software Engineering</strong> können Studenten auf dieser Website die verfügbaren <strong>Projekte</strong> einsehen,
-    ihre Präferenzen und Wünsche dazu im <strong>Fragebogen</strong> abgeben und
-    nach Veröffentlichung die <strong>Teams</strong> mit ihren Mitgliedern einsehen.
+  <div class="alert alert-light" role="alert">
+    Im Rahmen des Moduls <strong>Software Engineering</strong> können Studierende
+    auf dieser Website die verfügbaren <strong>Projekte</strong> einsehen,
+    ihre Präferenzen und Wünsche über einen <strong>Fragebogen</strong> abgeben und
+    nach der Veröffentlichung die <strong>Teams</strong> mit ihren Mitgliedern einsehen.
   </div>
 
   {% if not settings.projects_is_visible and not settings.poll_is_visible and not settings.teams_is_visible %}
   Aktuell sind noch keine Inhalte freigegeben!
   {% endif %}
 </div>
+
+{% if settings.peer_feedback_1_is_visible %}
+{% include "student/feedback.inc.html" %}
+{% endif %}
 
 {% if settings.teams_is_visible %}
 {% include "student/teams.inc.html" %}

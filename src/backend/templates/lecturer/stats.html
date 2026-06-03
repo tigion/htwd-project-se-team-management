@@ -1,3 +1,5 @@
+{# vim: set filetype=htmldjango: #}
+
 {% extends 'base.html' %}
 
 {% load django_bootstrap5 %}
@@ -44,28 +46,6 @@
 </div>
 
 <div class="container my-5">
-  <h3>Angestrebtes Ergebnis</h3>
-  <table class="table w-auto align-middle">
-    <thead>
-      <tr>
-        <th scope="col">Ambitionsniveau</th>
-        <th scope="col">Count</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for level in stats.level %}
-      <tr>
-        <td>{{ level.level.name }}</td>
-        <td class="text-secondary">
-          <small><i class="bu bi-{{ level.level.icon }}" style="color:{{ level.level.color }}"></i> {{ level.count }}×</small>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-
-<div class="container my-5">
   <h3>Beliebtheit Projekte</h3>
   <table class="table w-auto align-middle">
     <thead>
@@ -101,6 +81,69 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
+
+<div class="container my-5">
+  <h3>Angestrebtes Ergebnis</h3>
+  <table class="table w-auto align-middle">
+    <thead>
+      <tr>
+        <th scope="col">Ambitionsniveau</th>
+        <th scope="col">Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for level in stats.level %}
+      <tr>
+        <td>{{ level.level.name }}</td>
+        <td class="text-secondary">
+          <small><i class="bu bi-{{ level.level.icon }}" style="color:{{ level.level.color }}"></i> {{ level.count }}×</small>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="container my-5">
+  <h3>SE I - Peer-Feedback</h3>
+  <div class="d-flex gap-3 align-items-center">
+    <div class="flex-grow-1">
+      <div class="progress mt-3 mb-1" role="progressbar" aria-label="Example with label" aria-valuenow="{{ peer_feedback_1_stats.total_feedback.filled_percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar" style="width: {{ peer_feedback_1_stats.total_feedback.filled_percent|stringformat:".2f" }}%">{{ peer_feedback_1_stats.total_feedback.filled_percent|stringformat:".2f" }}%</div>
+      </div>
+      <p>Beantwortet: <strong>{{ peer_feedback_1_stats.total_feedback.filled_percent|stringformat:".2f" }}%</strong></p>
+    </div>
+    <div>
+      <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePeerFeedback1" aria-expanded="false" aria-controls="collapsePeerFeedback1">Details je Team</button>
+    </div>
+  </div>
+  <div class="collapse" id="collapsePeerFeedback1">
+    <table class="table w-auto align-middle">
+      <thead>
+        <tr>
+          <th class="text-center" style="min-width:80px" scope="col">Team</th>
+          <th class="text-center" scope="col">Studenten</th>
+          <th class="text-center" scope="col">Fortschritt</th>
+          <th class="text-center" scope="col">Beantwortet</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for team_feedback in peer_feedback_1_stats.feedbacks_per_team %}
+        <tr>
+          <td class="text-center"><i class="bi bi-people-fill me-2"></i>{{ team_feedback.team_id }}</td>
+          <td class="text-secondary text-center"><i class="bi bi-person-fill me-1"></i>{{ team_feedback.team_member_count }}</td>
+          <td class="w-50">
+            <div class="progress mt-0 mb-0" role="progressbar" aria-label="Example with label" aria-valuenow="{{ team_feedback.feedback.filled_percent|stringformat:".2f" }}" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-success" style="width: {{ team_feedback.feedback.filled_percent|stringformat:".2f" }}%">{{ team_feedback.feedback.filled_count }}</div>
+            </div>
+          </td>
+          <td class="text-secondary text-center"><small><strong>{{ team_feedback.feedback.filled_count }}</strong> von <strong>{{ team_feedback.feedback.total_count }}</strong></small></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 
 {% endblock content %}

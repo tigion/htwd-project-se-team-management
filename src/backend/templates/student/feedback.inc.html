@@ -1,0 +1,80 @@
+{# vim: set ft=htmldjango: #}
+
+{% load django_bootstrap5 %}
+
+<div id="feedback" class="container my-5" style="scroll-margin-top: 120px">
+  <h2>Feedback</h2>
+  {% if student %}
+  <p>
+    <i class="bi bi-people-fill me-2"></i>{{ assigned_team|default:'Ohne Team' }} - {{ assigned_team.project_instance.project.name }}<br />
+    <i class="bi bi-person-fill me-2"></i>{{ student.name|default:'Kein Student' }}
+  </p>
+  {% endif %}
+  <h3 class="mt-3">SE I - Peer-Feedback</h3>
+  <div>
+    <p>Bitte bewerten Sie die Mitglieder Ihres Teams in den folgenden Kriterien:</p>
+    <ul>
+      <li><strong>Beitrag</strong>: Wie gut waren der Umfang, die Qualität und der Nutzen der Beiträge dieses Teammitglieds?</li>
+      <li><strong>Zusammenarbeit</strong>: Wie gut haben Kommunikation und Zusammenarbeit funktioniert?</li>
+      <li><strong>Zuverlässigkeit</strong>: Wie zuverlässig, pünktlich und reaktionsschnell war das Teammitglied?</li>
+    </ul>
+  </div>
+  {% if assigned_team_members %}
+  <div class="accordion" id="accordion-peer-feedback">
+    {% for team_member in assigned_team_members %}
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="accordion-header-feedback-{{ team_member.id }}">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-feedback-{{ team_member.id }}" aria-expanded="false" aria-controls="accordion-collapse-feedback-{{ team_member.id }}">
+          <i class="bi bi-person-fill me-2"></i>{{ team_member.student.name }} {% if team_member.has_peer_feedback %}<i class="bi bi-check-lg ms-3 text-success"></i>{% else %}<i class="bi bi-question-lg ms-3 text-danger"></i>{% endif %}
+        </button>
+      </h2>
+      <div id="accordion-collapse-feedback-{{ team_member.id }}" class="accordion-collapse collapse" aria-labelledby="accordion-header-feedback-{{ team_member.id }}">
+        <div class="accordion-body">
+          <form method="post" class="form" action="{% url 'set-peer-feedback-1' %}">
+            {% csrf_token %}
+            <input type="hidden" name="team_member_id" value="{{ team_member.id }}" />
+            <div class="row g-3">
+              <div class="col mb-3">
+                <label for="contribution" class="form-label">Beitrag</label>
+                <select class="form-select form-select-sm" id="contribution-{{ team_member.id }}" name="contribution_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
+                  {% for key, score in feedback_scores.choices.items %}
+                  <option value="{{ score.value }}" {% if team_member.peer_feedback.contribution_score == score.value %}selected{% endif %}>{{ score.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col mb-3">
+                <label for="collaboration" class="form-label">Zusammenarbeit</label>
+                <select class="form-select form-select-sm" id="collaboration-{{ team_member.id }}" name="collaboration_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
+                  {% for key, score in feedback_scores.choices.items %}
+                  <option value="{{ score.value }}" {% if team_member.peer_feedback.collaboration_score == score.value %}selected{% endif %}>{{ score.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col mb-3">
+                <label for="reliability" class="form-label">Zuverlässigkeit</label>
+                <select class="form-select form-select-sm" id="reliability-{{ team_member.id }}" name="reliability_score" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %}>
+                  {% for key, score in feedback_scores.choices.items %}
+                  <option value="{{ score.value }}" {% if team_member.peer_feedback.reliability_score == score.value %}selected{% endif %}>{{ score.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="reason" class="form-label">Bitte geben Sie eine kurze Begründung Ihrer Bewertung (mindestens 20 Zeichen) an:</label>
+              <textarea class="form-control form-control-sm" id="reason-{{ team_member.id }}" name="reason" rows="3" minlength="20" {% if not settings.peer_feedback_1_is_writable %}disabled{% endif %} required>{{ team_member.peer_feedback.reason|default:"" }}</textarea>
+            </div>
+            {% if settings.peer_feedback_1_is_writable %}
+            {% bootstrap_button button_type='submit' content='Feedback absenden' %}
+            {% endif %}
+          </form>
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% elif student %}
+  <div>Keine Teammitglieder vorhanden!</div>
+  {% endif %}
+
+</div>

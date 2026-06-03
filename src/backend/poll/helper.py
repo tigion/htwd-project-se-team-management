@@ -91,6 +91,7 @@ def load_poll_data_for_form(student, projects):
 
     If the student has no poll, the default scores are used.
     """
+
     poll_data = {
         "projects": [],
         "level": POLL_LEVELS["default"],
