@@ -69,9 +69,11 @@ def generate_teams_pdf():
     for team in teams:
         data = []
 
-        # Skip teams with no students.
-        if show_empty_teams is False and len(team["students"]) == 0:
-            continue
+        # Skip teams with no active students.
+        if show_empty_teams is False:
+            active_students = [s for s in team["students"] if not s["is_out"] and s["is_visible"]]
+            if len(active_students) == 0:
+                continue
 
         # Adds the team name as first row.
         team_name = f"<b>{team['project_instance'].piid}</b> - {team['project_instance'].project.name}"
