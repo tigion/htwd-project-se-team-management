@@ -18,6 +18,11 @@ def generate_teams_pdf():
         The PDF file as a buffer.
     """
 
+    # Hides hidden or out students from the team view.
+    show_hidden_students = False
+    # Hides empty teams from the team view.
+    show_empty_teams = False
+
     # Creates a buffer to store the PDF data.
     buffer = BytesIO()
 
@@ -64,6 +69,10 @@ def generate_teams_pdf():
     for team in teams:
         data = []
 
+        # Skip teams with no students.
+        if show_empty_teams is False and len(team["students"]) == 0:
+            continue
+
         # Adds the team name as first row.
         team_name = f"<b>{team['project_instance'].piid}</b> - {team['project_instance'].project.name}"
         data.append([Paragraph(team_name, styles["project_name"])])
@@ -79,8 +88,11 @@ def generate_teams_pdf():
             #     student_name = f"{student_name} <i>(Wing)</i>"
 
             if student["is_out"] or not student["is_visible"]:
+                if not show_hidden_students:
+                    continue
                 student_name = f"<strike>{student_name}</strike>"
                 styles["student_name"].textColor = "#dc3545" if student["is_out"] else "#6c757d"
+
             data.append([Paragraph(student_name, styles["student_name"])])
 
         # Creates a table.
