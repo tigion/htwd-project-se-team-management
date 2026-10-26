@@ -121,16 +121,25 @@ def read_students_from_file_to_db(file, mode):
         Student.objects.update_or_create(s_number=s_number, defaults=values)
 
 
-def reset_data_in_db(delete_only_polls_and_teams=False):
+# def reset_data_in_db(delete_only_polls_and_teams=False):
+def reset_data_in_db(mode="all"):
     """
     Deletes all data and sets the settings to their default values.
 
     Args:
-        delete_only_polls_and_teams: If True, only the polls and teams are deleted.
+        mode: The mode to use. Can be "only_feedback", "only_polls_teams_and_feedback" or "all".
     """
 
-    # Deletes only the poll and team data.
-    if delete_only_polls_and_teams:
+    # (feedback (team (student, project)))
+    # (pool (student, project))
+
+    # Deletes only feedback data.
+    if mode == "only_feedback":
+        delete_feedback_data()
+        return
+
+    # Deletes only pool, team and feedback data.
+    if mode == "only_polls_teams_and_feedback":
         delete_feedback_data()
         delete_team_data()
         delete_poll_data()

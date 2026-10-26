@@ -65,11 +65,25 @@ class SettingsForm(ModelForm):
 
 
 class SettingsResetForm(forms.Form):
-    delete_only_polls_and_teams = forms.BooleanField(
-        required=False,
-        initial=False,
-        label="Nur Fragebogenantworten und Teams zurücksetzen",
-        help_text="Wenn aktiv, werden nur die Fragebogenantworten und Teams gelöscht. Die Projekte, Studenten und Einstellungen bleiben beim Zurücksetzen erhalten.",
+    MODE_CHOICES = (
+        (
+            "only_feedback",
+            "Nur Peer-Feedback zurücksetzen",
+        ),
+        (
+            "only_polls_teams_and_feedback",
+            "Nur Fragebogenantworten, Teams und Peer-Feedback zurücksetzen",
+        ),
+        (
+            "all",
+            "Alle Daten und Einstellungen zurücksetzen",
+        ),
+    )
+
+    mode = forms.ChoiceField(
+        choices=MODE_CHOICES,
+        initial="all",
+        widget=forms.RadioSelect(),
     )
     confirmed = forms.BooleanField(required=True, initial=False, label="Ich bin mir sicher")
 

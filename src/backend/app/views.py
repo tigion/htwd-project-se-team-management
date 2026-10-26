@@ -606,9 +606,13 @@ def settings(request):
 @permission_required("team.delete_team")
 @permission_required("poll.delete_poll")
 @permission_required("poll.delete_projectanswer")
+@permission_required("feedback.delete_peerfeedback1")
 def settings_reset(request):
     if request.method == "POST":
-        reset_data_in_db(request.POST.get("delete_only_polls_and_teams"))
+        if request.POST.get("confirm") != "true":
+            messages.error(request, "Zurücksetzen der Daten fehlgeschlagen! Bitte bestätigen Sie die Aktion.")
+            return redirect("settings")
+        reset_data_in_db(request.POST.get("mode", 1))
         messages.success(request, "Die Daten wurden zurückgesetzt!")
         return redirect("home")
 
